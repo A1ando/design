@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>设计预览工作室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(circle at 10% 20%, #0b1120, #0a0f1a);
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+            color: #eef2ff;
+            height: 100vh;
+            overflow: hidden;
+            backdrop-filter: blur(2px);
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+
+        .hero {
+            background: rgba(15, 25, 45, 0.65);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(96, 165, 250, 0.25);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 1rem;
+            z-index: 20;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .title-section h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #c084fc, #60a5fa, #34d399);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        .title-section p {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .main-dashboard {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 1rem;
+            padding: 1rem 1.5rem 1.5rem 1.5rem;
+        }
+
+        .gallery {
+            width: 320px;
+            background: rgba(18, 25, 45, 0.55);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.2s;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.4);
+        }
+
+        .gallery-header {
+            padding: 1.2rem 1.2rem 0.5rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+        }
+
+        .gallery-header h3 {
+            font-weight: 600;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, #e0e7ff, #a5b4fc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .add-btn {
+            background: rgba(52, 211, 153, 0.2);
+            border: 1px solid rgba(52, 211, 153, 0.5);
+            border-radius: 40px;
+            padding: 0.2rem 0.8rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #6ee7b7;
+            cursor: pointer;
+            transition: 0.2s;
+            backdrop-filter: blur(4px);
+        }
+
+        .add-btn:hover {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+            transform: scale(0.96);
+        }
+
+        .design-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.8rem 1rem 1.2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .design-card {
+            background: rgba(25, 35, 55, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 0.8rem 1rem;
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            transition: all 0.25s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .design-card:hover {
+            background: rgba(45, 65, 95, 0.8);
+            border-color: #3b82f6;
+            transform: translateX(4px);
+        }
+
+        .design-card.active {
+            background: linear-gradient(115deg, #1e293b, #0f172a);
+            border-left: 4px solid #38bdf8;
+            box-shadow: 0 8px 20px rgba(56, 189, 248, 0.2);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+        }
+
+        .card-info {
+            flex: 1;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: -0.2px;
+            word-break: break-word;
+        }
+
+        .card-path {
+            font-size: 0.65rem;
+            font-family: monospace;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .delete-icon {
+            opacity: 0.5;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.1s;
+            padding: 4px;
+            border-radius: 30px;
+        }
+
+        .delete-icon:hover {
+            opacity: 1;
+            color: #f87171;
+            background: rgba(248,113,113,0.2);
+        }
+
+        .preview-stage {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 32px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 40px -15px black;
+        }
+
+        .preview-toolbar {
+            padding: 0.8rem 1.5rem;
+            background: rgba(10, 16, 28, 0.7);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(96, 165, 250, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-title {
+            font-weight: 500;
+            font-size: 0.9rem;
+            background: rgba(255,255,240,0.1);
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: #cbd5e1;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.1s;
+            padding: 6px 14px;
+            border-radius: 40px;
+            min-width: 70px;
+            text-align: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .icon-btn:hover {
+            background: #1e293b;
+            color: white;
+        }
+
+        .iframe-container {
+            flex: 1;
+            background: white;
+            position: relative;
+            margin: 8px 12px 12px 12px;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #fff;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-card {
+            background: #111827;
+            border-radius: 40px;
+            width: 90%;
+            max-width: 460px;
+            padding: 1.8rem;
+            border: 1px solid #3b82f6;
+            box-shadow: 0 30px 40px rgba(0,0,0,0.5);
+            animation: fadeUp 0.25s ease;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-card input {
+            width: 100%;
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 0.8rem 1rem;
+            border-radius: 36px;
+            color: white;
+            font-size: 0.9rem;
+            margin: 12px 0;
+            outline: none;
+        }
+
+        .modal-card input:focus {
+            border-color: #60a5fa;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 1rem;
+        }
+
+        .modal-actions button {
+            background: #2d3748;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .modal-actions button.primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
+        .design-list::-webkit-scrollbar {
+            width: 5px;
+        }
+        .design-list::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 10px;
+        }
+        .design-list::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="hero">
+        <div class="title-section">
+            <h1>◈ 设计预览工作室 ◈</h1>
+            <p>私人创意集 · 一键切换所有HTML设计稿</p>
+        </div>
+    </div>
+
+    <div class="main-dashboard">
+        <div class="gallery">
+            <div class="gallery-header">
+                <h3>📁 设计手稿集</h3>
+                <div class="add-btn" id="openAddModalBtn">+ 添加新设计</div>
+            </div>
+            <div class="design-list" id="designListContainer">
+                <div class="empty-state">✨ 点击上方按钮添加你的第一个 HTML 设计<br>（例如：index.html 或 sub/design.html）</div>
+            </div>
+        </div>
+
+        <div class="preview-stage">
+            <div class="preview-toolbar">
+                <span class="preview-title" id="previewTitle">未选择设计</span>
+                <div class="action-buttons">
+                    <button class="icon-btn" id="refreshPreviewBtn" title="刷新预览">刷新</button>
+                    <button class="icon-btn" id="openNewTabBtn" title="新窗口打开">新窗</button>
+                </div>
+            </div>
+            <div class="iframe-container">
+                <iframe id="liveFrame" title="design preview" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-downloads"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="addModal" class="modal">
+    <div class="modal-card">
+        <h2>🎯 载入新设计</h2>
+        <p style="font-size:0.75rem; color:#94a3b8;">输入相对于仓库根目录的路径，例如 <code>parser.html</code> 或 <code>sub/design.html</code><br>页面将通过 GitHub Pages 预览（确保文件已上传）</p>
+        <input type="text" id="newFilePath" placeholder="例如: fancy-design.html" autocomplete="off">
+        <input type="text" id="newDisplayName" placeholder="显示名称（可选）">
+        <div class="modal-actions">
+            <button id="cancelModalBtn">取消</button>
+            <button id="confirmAddBtn" class="primary">✨ 添加并预览</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let designs = [];
+    let activeDesignId = null;
+
+    const designContainer = document.getElementById('designListContainer');
+    const previewIframe = document.getElementById('liveFrame');
+    const previewTitleSpan = document.getElementById('previewTitle');
+    const refreshBtn = document.getElementById('refreshPreviewBtn');
+    const openNewTabBtn = document.getElementById('openNewTabBtn');
+    const openModalBtn = document.getElementById('openAddModalBtn');
+    const modal = document.getElementById('addModal');
+    const cancelModal = document.getElementById('cancelModalBtn');
+    const confirmAdd = document.getElementById('confirmAddBtn');
+    const newFilePathInput = document.getElementById('newFilePath');
+    const newDisplayNameInput = document.getElementById('newDisplayName');
+
+    function getRepoBaseURL() {
+        let currentUrl = window.location.href;
+        const match = currentUrl.match(/^(https?:\/\/[^\/]+)\/([^\/]+)\//);
+        if (match) {
+            return `${match[1]}/${match[2]}/`;
+        }
+        return './';
+    }
+
+    let baseUrl = getRepoBaseURL();
+
+    function buildFullPreviewUrl(filePath) {
+        let cleanPath = filePath.replace(/^\/+/, '');
+        let base = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+        return base + cleanPath;
+    }
+
+    function persistDesigns() {
+        localStorage.setItem('design_studio_items', JSON.stringify(designs));
+    }
+
+    function loadDesignsFromStorage() {
+        const stored = localStorage.getItem('design_studio_items');
+        if (stored) {
+            try {
+                designs = JSON.parse(stored);
+                if (!Array.isArray(designs)) designs = [];
+            } catch(e) { designs = []; }
+        } else {
+            designs = [];
+        }
+        // 自动屏蔽 parser.html
+        const filtered = designs.filter(d => d.path !== 'parser.html');
+        if (filtered.length !== designs.length) {
+            designs = filtered;
+            persistDesigns();
+        }
+        renderGallery();
+        const lastActive = localStorage.getItem('design_studio_active');
+        if (lastActive && designs.some(d => d.path === lastActive)) {
+            setActiveDesign(lastActive);
+        } else if (designs.length > 0) {
+            setActiveDesign(designs[0].path);
+        } else {
+            previewIframe.srcdoc = "<html style='background:#0f172a; display:flex; align-items:center;justify-content:center;color:white;font-family:system-ui;'><h2>✨ 暂无设计</h2><p>点击「添加新设计」导入你的 HTML 文件路径</p></html>";
+            previewTitleSpan.innerText = "无设计";
+        }
+    }
+
+    function renderGallery() {
+        if (!designContainer) return;
+        if (designs.length === 0) {
+            designContainer.innerHTML = `<div class="empty-state">🎨 画廊为空，点击上方按钮添加设计 <br> 例如：新设计.html</div>`;
+            return;
+        }
+        const container = document.createElement('div');
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.gap = '12px';
+        designs.forEach((design) => {
+            const card = document.createElement('div');
+            card.className = `design-card ${activeDesignId === design.path ? 'active' : ''}`;
+            card.setAttribute('data-path', design.path);
+            const displayName = design.name || design.path.split('/').pop() || design.path;
+            card.innerHTML = `
+                <div class="card-icon">📄</div>
+                <div class="card-info">
+                    <div class="card-title">${escapeHtml(displayName)}</div>
+                    <div class="card-path">${escapeHtml(design.path)}</div>
+                </div>
+                <div class="delete-icon" data-path="${design.path}">🗑️</div>
+            `;
+            card.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-icon')) return;
+                setActiveDesign(design.path);
+            });
+            const delBtn = card.querySelector('.delete-icon');
+            delBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteDesign(design.path);
+            });
+            container.appendChild(card);
+        });
+        designContainer.innerHTML = '';
+        designContainer.appendChild(container);
+    }
+
+    function deleteDesign(path) {
+        if (!confirm(`从画廊移除「${path}」吗？不会删除仓库中的原始文件。`)) return;
+        const idx = designs.findIndex(d => d.path === path);
+        if (idx !== -1) {
+            designs.splice(idx, 1);
+            persistDesigns();
+            if (activeDesignId === path) {
+                if (designs.length > 0) setActiveDesign(designs[0].path);
+                else {
+                    activeDesignId = null;
+                    previewIframe.srcdoc = "<html style='background:#0f172a; display:flex; align-items:center;justify-content:center;color:white;font-family:system-ui;'><h2>✨ 暂无设计</h2><p>点击「添加新设计」导入你的 HTML 文件路径</p></html>";
+                    previewTitleSpan.innerText = "无设计";
+                    renderGallery();
+                }
+            }
+            renderGallery();
+        }
+    }
+
+    function setActiveDesign(path) {
+        const design = designs.find(d => d.path === path);
+        if (!design) return;
+        activeDesignId = path;
+        const fullUrl = buildFullPreviewUrl(design.path);
+        previewIframe.src = fullUrl;
+        const showName = design.name || design.path;
+        previewTitleSpan.innerText = `🔍 ${showName}`;
+        localStorage.setItem('design_studio_active', path);
+        renderGallery();
+        previewIframe.onerror = () => {
+            previewIframe.srcdoc = `<html style="background:#111;color:#ffb4a2; display:flex; align-items:center; justify-content:center;"><div><h3>⚠️ 无法加载</h3><p>请确认文件 "${design.path}" 已上传到仓库且 Pages 可访问。<br>URL: ${fullUrl}</p></div></html>`;
+        };
+    }
+
+    function addNewDesign() {
+        let rawPath = newFilePathInput.value.trim();
+        if (!rawPath) {
+            alert("请输入文件路径，例如 mypage.html");
+            return;
+        }
+        let cleanPath = rawPath.replace(/^(\.\.\/|\/)+/, '');
+        if (cleanPath === '') {
+            alert("路径无效");
+            return;
+        }
+        if (designs.some(d => d.path === cleanPath)) {
+            alert(`「${cleanPath}」已经在画廊中，无需重复添加`);
+            modal.style.display = 'none';
+            newFilePathInput.value = '';
+            newDisplayNameInput.value = '';
+            return;
+        }
+        let displayName = newDisplayNameInput.value.trim();
+        if (!displayName) {
+            let fileName = cleanPath.split('/').pop();
+            displayName = fileName.replace(/\.html$/i, '').replace(/[-_]/g, ' ');
+            displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+        }
+        designs.push({
+            path: cleanPath,
+            name: displayName,
+            createdAt: Date.now()
+        });
+        persistDesigns();
+        renderGallery();
+        setActiveDesign(cleanPath);
+        newFilePathInput.value = '';
+        newDisplayNameInput.value = '';
+        modal.style.display = 'none';
+    }
+
+    function refreshPreview() {
+        if (activeDesignId) {
+            const design = designs.find(d => d.path === activeDesignId);
+            if (design) {
+                const url = buildFullPreviewUrl(design.path);
+                previewIframe.src = url;
+            }
+        }
+    }
+
+    function openInNewTab() {
+        if (activeDesignId) {
+            const design = designs.find(d => d.path === activeDesignId);
+            if (design) {
+                const url = buildFullPreviewUrl(design.path);
+                window.open(url, '_blank');
+            }
+        }
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    openModalBtn.addEventListener('click', () => {
+        modal.style.display = 'flex';
+        newFilePathInput.focus();
+    });
+    cancelModal.addEventListener('click', () => {
+        modal.style.display = 'none';
+        newFilePathInput.value = '';
+        newDisplayNameInput.value = '';
+    });
+    confirmAdd.addEventListener('click', addNewDesign);
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+    });
+    refreshBtn.addEventListener('click', refreshPreview);
+    openNewTabBtn.addEventListener('click', openInNewTab);
+
+    window.addEventListener('load', () => {
+        baseUrl = getRepoBaseURL();
+        loadDesignsFromStorage();
+    });
+</script>
+</body>
+</html>
