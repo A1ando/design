@@ -3,31 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>GitHub 即时预览 · 代码工坊与版本控制</title>
+    <title>HTML 沙盒 · 即时预览 + GitHub 版本控制</title>
     <style>
         * {
             box-sizing: border-box;
+            user-select: none; /* 避免拖拽时选中文字 */
+        }
+
+        /* 主题变量（深色默认） */
+        :root {
+            --bg-body: #0d1117;
+            --bg-header: #010409;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --bg-editor: #0d1117;
+            --bg-sidebar: #161b22;
+            --bg-modal: #161b22;
+            --bg-input: #0d1117;
+            --bg-card: rgba(25, 35, 55, 0.7);
+            --shadow: rgba(0,0,0,0.3);
+            --btn-primary: #238636;
+            --btn-secondary: #1f6feb;
+            --btn-danger: #6e2e2e;
+            --preview-bg: white;
+            --preview-text: black;
+        }
+
+        body.light {
+            --bg-body: #f6f8fa;
+            --bg-header: #ffffff;
+            --border-color: #d0d7de;
+            --text-primary: #1f2328;
+            --text-secondary: #656d76;
+            --bg-editor: #ffffff;
+            --bg-sidebar: #f6f8fa;
+            --bg-modal: #ffffff;
+            --bg-input: #ffffff;
+            --bg-card: rgba(255,255,255,0.9);
+            --shadow: rgba(0,0,0,0.1);
+            --btn-primary: #2c974b;
+            --btn-secondary: #0969da;
+            --btn-danger: #cf222e;
+            --preview-bg: white;
+            --preview-text: black;
         }
 
         body {
             margin: 0;
-            background: #0d1117;
-            font-family: 'Segoe UI', 'Roboto', 'Fira Code', monospace, system-ui, -apple-system;
-            color: #e6edf3;
+            background: var(--bg-body);
+            font-family: 'Segoe UI', 'Roboto', 'Fira Code', monospace, system-ui;
+            color: var(--text-primary);
             display: flex;
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
+            transition: background 0.2s, color 0.2s;
         }
 
         /* 顶部栏 */
         .header {
-            background: #010409;
-            border-bottom: 1px solid #30363d;
+            background: var(--bg-header);
+            border-bottom: 1px solid var(--border-color);
             padding: 0.75rem 1.5rem;
             display: flex;
-            align-items: baseline;
             justify-content: space-between;
+            align-items: center;
             flex-wrap: wrap;
             gap: 10px;
             z-index: 10;
@@ -44,199 +85,230 @@
         .title p {
             font-size: 0.7rem;
             margin: 0;
-            color: #8b949e;
+            color: var(--text-secondary);
         }
-        .badge {
-            background: #21262d;
-            padding: 0.2rem 0.7rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
+        .right-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .status-msg {
             font-family: monospace;
+            font-size: 0.75rem;
+            background: var(--bg-sidebar);
+            padding: 0.2rem 0.8rem;
+            border-radius: 16px;
+            color: #7ee787;
+        }
+        body.light .status-msg {
+            color: #1a7f37;
+        }
+        .icon-btn {
+            background: var(--bg-sidebar);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.1s;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .icon-btn:hover {
+            background: var(--border-color);
+        }
+        .theme-btn {
+            font-size: 1rem;
+            padding: 0.3rem 0.6rem;
         }
 
-        /* 主工作区：左右布局 */
+        /* 主工作区 - 可拖拽布局 */
         .main-panel {
             display: flex;
             flex: 1;
             overflow: hidden;
-            gap: 1px;
-            background: #21262d;
+            position: relative;
         }
 
-        /* 编辑器区域 */
-        .editor-area {
-            flex: 1;
+        /* 编辑器容器 */
+        .editor-container {
+            width: 50%;
             display: flex;
             flex-direction: column;
-            background: #0d1117;
-            min-width: 0;
+            background: var(--bg-editor);
+            min-width: 200px;
+            overflow: hidden;
         }
+        /* 预览容器 */
+        .preview-container {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--preview-bg);
+            overflow: hidden;
+            position: relative;
+        }
+        /* 拖拽分隔条 */
+        .resizer {
+            width: 6px;
+            background: var(--border-color);
+            cursor: ew-resize;
+            transition: background 0.1s;
+            position: relative;
+            z-index: 10;
+        }
+        .resizer:hover {
+            background: #58a6ff;
+        }
+
         .area-header {
             padding: 0.5rem 1rem;
-            background: #161b22;
-            border-bottom: 1px solid #30363d;
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border-color);
             font-size: 0.8rem;
             font-weight: 500;
-            letter-spacing: 0.3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .clear-btn {
+            background: var(--btn-danger);
+            border: none;
+            border-radius: 6px;
+            padding: 0.2rem 0.8rem;
+            font-size: 0.7rem;
+            color: white;
+            cursor: pointer;
         }
         .code-container {
             flex: 1;
             padding: 12px;
-            background: #0d1117;
+            background: var(--bg-editor);
         }
         textarea {
             width: 100%;
             height: 100%;
-            background: #010409;
-            color: #e6edf3;
-            border: 1px solid #30363d;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 1rem;
-            font-family: 'Fira Code', 'Cascadia Code', 'SF Mono', monospace;
+            font-family: 'Fira Code', monospace;
             font-size: 13px;
             line-height: 1.5;
             resize: none;
             outline: none;
-            transition: border 0.2s;
         }
         textarea:focus {
             border-color: #58a6ff;
-            box-shadow: 0 0 0 1px #58a6ff;
         }
 
-        /* 预览区域 */
-        .preview-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #ffffff;
-            color: #000;
-            min-width: 0;
-        }
-        .preview-header {
-            padding: 0.5rem 1rem;
-            background: #161b22;
-            border-bottom: 1px solid #30363d;
-            color: #e6edf3;
-            font-size: 0.8rem;
-            display: flex;
-            justify-content: space-between;
-        }
         .iframe-wrapper {
             flex: 1;
-            background: white;
+            background: var(--preview-bg);
             position: relative;
+            margin: 8px 12px 12px 12px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px var(--shadow);
         }
         iframe {
             width: 100%;
             height: 100%;
             border: none;
-            background: white;
+            background: var(--preview-bg);
+        }
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .open-new-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+        }
+        .open-new-btn:hover {
+            background: var(--border-color);
         }
 
-        /* 底部控制栏 (GitHub 集成) */
-        .control-bar {
-            background: #161b22;
-            border-top: 1px solid #30363d;
-            padding: 0.8rem 1.5rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: flex-end;
-            font-size: 0.85rem;
-            z-index: 10;
-        }
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            min-width: 130px;
-        }
-        .control-group label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: #8b949e;
-            letter-spacing: 0.5px;
-        }
-        .control-group input, .control-group select {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            padding: 0.45rem 0.75rem;
-            color: #e6edf3;
-            font-size: 0.8rem;
-            outline: none;
-            transition: 0.1s;
-        }
-        .control-group input:focus {
-            border-color: #58a6ff;
-        }
-        button {
-            background: #238636;
-            border: none;
-            border-radius: 8px;
-            padding: 0.45rem 1rem;
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: white;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.05s;
-        }
-        button:hover {
-            background: #2ea043;
-        }
-        button.secondary {
-            background: #1f6feb;
-        }
-        button.secondary:hover {
-            background: #388bfd;
-        }
-        button.danger {
-            background: #6e2e2e;
-        }
-        button.danger:hover {
-            background: #8b3c3c;
-        }
-        .status {
-            flex: 2;
-            font-size: 0.75rem;
-            font-family: monospace;
-            background: #010409;
-            padding: 0.3rem 0.8rem;
-            border-radius: 12px;
-            color: #7ee787;
-            word-break: break-word;
-            max-height: 60px;
-            overflow-y: auto;
-        }
-        hr {
-            border-color: #30363d;
-            margin: 0;
-        }
-        .commit-row {
-            display: flex;
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
             align-items: center;
-            gap: 8px;
-            min-width: 240px;
         }
-        .commit-row input {
-            flex: 1;
+        .modal-card {
+            background: var(--bg-modal);
+            border-radius: 24px;
+            width: 90%;
+            max-width: 550px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 35px var(--shadow);
         }
-        .token-warning {
-            font-size: 0.7rem;
-            color: #e3b341;
+        .modal-card h3 {
+            margin-bottom: 1.2rem;
         }
-        @media (max-width: 800px) {
-            .main-panel {
-                flex-direction: column;
-            }
-            .control-bar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .commit-row {
-                flex-wrap: wrap;
-            }
+        .modal-card .field {
+            margin-bottom: 1rem;
+        }
+        .modal-card label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: var(--text-secondary);
+        }
+        .modal-card input, .modal-card textarea {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 1.2rem;
+        }
+        .modal-actions button {
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+        }
+        .modal-actions button.load {
+            background: var(--btn-secondary);
+            color: white;
+        }
+        .modal-actions button.save {
+            background: var(--btn-primary);
+            color: white;
+        }
+        .modal-actions button.cancel {
+            background: var(--bg-sidebar);
+            color: var(--text-primary);
         }
     </style>
 </head>
@@ -245,27 +317,30 @@
 <div class="header">
     <div class="title">
         <h1>📄 HTML 沙盒 · 即时预览 + GitHub 版本控制</h1>
-        <p>粘贴代码 | 实时渲染 | 保存到仓库 (带描述，永久历史)</p>
+        <p>粘贴代码 | 实时渲染 | 保存到仓库（带描述）</p>
     </div>
-    <div class="badge">⚡ 支持直接修改 | 每次保存 = 一个 Commit</div>
+    <div class="right-area">
+        <div class="status-msg" id="statusMsg">✅ 就绪</div>
+        <button class="icon-btn theme-btn" id="themeToggleBtn">主题</button>
+        <button class="icon-btn" id="settingsBtn">上传</button>
+    </div>
 </div>
 
-<div class="main-panel">
-    <!-- 左侧编辑器 -->
-    <div class="editor-area">
+<div class="main-panel" id="mainPanel">
+    <div class="editor-container" id="editorContainer">
         <div class="area-header">
-            ✏️ HTML 代码编辑器 <span style="color:#8b949e;">(支持任意HTML/CSS/JS)</span>
+            <span>✏️ HTML 代码编辑器</span>
+            <button class="clear-btn" id="clearBtn">🗑️ 清空</button>
         </div>
         <div class="code-container">
-            <textarea id="htmlCode" spellcheck="false" placeholder="<!-- 粘贴或编写你的 HTML 代码 -->&#10;&lt;!DOCTYPE html&gt;&#10;&lt;html&gt;&#10;&lt;head&gt;&lt;title&gt;预览示例&lt;/title&gt;&lt;/head&gt;&#10;&lt;body&gt;&#10;  &lt;h1&gt;✨ 即时预览&lt;/h1&gt;&#10;  &lt;p&gt;修改左侧代码，右侧立刻更新。&lt;/p&gt;&#10;&lt;/body&gt;&#10;&lt;/html&gt;"></textarea>
+            <textarea id="htmlCode" spellcheck="false" placeholder="<!-- 粘贴或编写 HTML 代码 -->"></textarea>
         </div>
     </div>
-
-    <!-- 右侧预览区 -->
-    <div class="preview-area">
+    <div class="resizer" id="resizer"></div>
+    <div class="preview-container" id="previewContainer">
         <div class="preview-header">
-            <span>🔍 实时预览 (渲染效果)</span>
-            <span style="font-size:0.7rem;">自动同步 · 所见即所得</span>
+            <span>🔍 实时预览</span>
+            <button class="open-new-btn" id="openNewTabBtn">🔗 新标签打开</button>
         </div>
         <div class="iframe-wrapper">
             <iframe id="previewFrame" title="live preview" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe>
@@ -273,99 +348,175 @@
     </div>
 </div>
 
-<!-- GitHub 控制栏 -->
-<div class="control-bar">
-    <div class="control-group" style="min-width: 180px;">
-        <label>🔑 GitHub Token (repo 权限)</label>
-        <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off">
-        <div class="token-warning">⚠️ 仅存本地浏览器，需开启 repo 范围</div>
-    </div>
-    <div class="control-group">
-        <label>👤 仓库所有者</label>
-        <input type="text" id="repoOwner" placeholder="用户名/组织" value="">
-    </div>
-    <div class="control-group">
-        <label>📁 仓库名称</label>
-        <input type="text" id="repoName" placeholder="repo-name" value="">
-    </div>
-    <div class="control-group">
-        <label>📂 文件路径</label>
-        <input type="text" id="filePath" value="preview-demo.html" placeholder="例如: index.html / demo/test.html">
-    </div>
-    <div class="commit-row">
-        <div class="control-group" style="flex:2">
-            <label>✍️ 本次提交描述 (版本记录)</label>
-            <input type="text" id="commitMessage" placeholder="描述本次更改... 用于版本控制">
+<!-- 设置弹窗（集成保存/加载） -->
+<div id="settingsModal" class="modal">
+    <div class="modal-card">
+        <h3>⚙️ GitHub 配置与操作</h3>
+        <div class="field">
+            <label>🔑 GitHub Token (repo 权限)</label>
+            <input type="password" id="githubToken" placeholder="ghp_xxxx 或 github_pat_xxxx">
         </div>
-        <button id="loadFromGitBtn" class="secondary" style="margin-bottom:2px;">📥 加载文件</button>
-        <button id="saveToGitBtn" style="background:#2ea043;">💾 保存到 GitHub</button>
-    </div>
-    <div class="status" id="statusMsg">
-        ✅ 就绪 | 粘贴代码即自动预览，填写 Token 与仓库后可保存并产生版本记录
+        <div class="field">
+            <label>👤 仓库所有者</label>
+            <input type="text" id="repoOwner" placeholder="用户名/组织" value="A1ando">
+        </div>
+        <div class="field">
+            <label>📁 仓库名称</label>
+            <input type="text" id="repoName" placeholder="repo-name" value="design">
+        </div>
+        <div class="field">
+            <label>📂 文件路径</label>
+            <input type="text" id="filePath">
+        </div>
+        <div class="field">
+            <label>✍️ 提交描述</label>
+            <textarea id="commitMessage" rows="2" placeholder="更新 HTML 内容"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="cancel" id="cancelModalBtn">取消</button>
+            <button class="save" id="saveAndUploadBtn">保存并上传</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // ---------- DOM 元素 ----------
+    // DOM 元素
     const htmlCodeArea = document.getElementById('htmlCode');
     const previewFrame = document.getElementById('previewFrame');
+    const statusDiv = document.getElementById('statusMsg');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const modal = document.getElementById('settingsModal');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const loadFromGitBtn = document.getElementById('loadFromGitBtn');
+    const saveAndUploadBtn = document.getElementById('saveAndUploadBtn');
+    const openNewTabBtn = document.getElementById('openNewTabBtn');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    
+    // 弹窗内的输入框
     const tokenInput = document.getElementById('githubToken');
     const ownerInput = document.getElementById('repoOwner');
     const repoNameInput = document.getElementById('repoName');
     const filePathInput = document.getElementById('filePath');
-    const commitMsgInput = document.getElementById('commitMessage');
-    const loadBtn = document.getElementById('loadFromGitBtn');
-    const saveBtn = document.getElementById('saveToGitBtn');
-    const statusDiv = document.getElementById('statusMsg');
+    const commitMsgTextarea = document.getElementById('commitMessage');
+
+    // 存储当前配置
+    let currentConfig = {
+        token: '',
+        owner: 'A1ando',
+        repo: 'design',
+        filePath: '',
+        commitMessage: ''
+    };
+
+    // ---------- 主题切换 ----------
+    function initTheme() {
+        const savedTheme = localStorage.getItem('preview_theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light');
+        } else {
+            document.body.classList.remove('light');
+        }
+    }
+    function toggleTheme() {
+        if (document.body.classList.contains('light')) {
+            document.body.classList.remove('light');
+            localStorage.setItem('preview_theme', 'dark');
+        } else {
+            document.body.classList.add('light');
+            localStorage.setItem('preview_theme', 'light');
+        }
+    }
+    themeToggleBtn.addEventListener('click', toggleTheme);
+
+    // ---------- 拖拽调整比例 ----------
+    const editorContainer = document.getElementById('editorContainer');
+    const previewContainer = document.getElementById('previewContainer');
+    const resizer = document.getElementById('resizer');
+    let startX, startEditorWidth, startPreviewWidth;
+    function onMouseMove(e) {
+        const containerRect = document.getElementById('mainPanel').getBoundingClientRect();
+        const newEditorWidth = e.clientX - containerRect.left - (resizer.offsetWidth / 2);
+        if (newEditorWidth > 150 && newEditorWidth < containerRect.width - 150) {
+            editorContainer.style.width = newEditorWidth + 'px';
+            previewContainer.style.width = (containerRect.width - newEditorWidth - resizer.offsetWidth) + 'px';
+        }
+    }
+    function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        // 保存比例
+        const mainRect = document.getElementById('mainPanel').getBoundingClientRect();
+        const editorWidth = editorContainer.offsetWidth;
+        const ratio = editorWidth / mainRect.width;
+        localStorage.setItem('editor_ratio', ratio);
+    }
+    function initResizer() {
+        const savedRatio = localStorage.getItem('editor_ratio');
+        if (savedRatio) {
+            const mainRect = document.getElementById('mainPanel').getBoundingClientRect();
+            const newEditorWidth = mainRect.width * parseFloat(savedRatio);
+            if (newEditorWidth > 150 && newEditorWidth < mainRect.width - 150) {
+                editorContainer.style.width = newEditorWidth + 'px';
+                previewContainer.style.width = (mainRect.width - newEditorWidth - resizer.offsetWidth) + 'px';
+            }
+        }
+        resizer.addEventListener('mousedown', (e) => {
+            startX = e.clientX;
+            startEditorWidth = editorContainer.offsetWidth;
+            startPreviewWidth = previewContainer.offsetWidth;
+            document.body.style.cursor = 'ew-resize';
+            document.body.style.userSelect = 'none';
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+            e.preventDefault();
+        });
+    }
 
     // ---------- 辅助函数 ----------
-    function showStatus(message, isError = false) {
-        statusDiv.innerHTML = isError ? `❌ ${message}` : `✅ ${message}`;
+    function showStatus(msg, isError = false) {
+        statusDiv.innerHTML = isError ? `❌ ${msg}` : `✅ ${msg}`;
         statusDiv.style.color = isError ? '#f85149' : '#7ee787';
         setTimeout(() => {
-            if (statusDiv.innerHTML === `✅ ${message}` || statusDiv.innerHTML === `❌ ${message}`) {
-                // 不清除太频繁，保留最后状态3秒后淡化样式但不丢失重要信息
-                setTimeout(() => {
-                    if (statusDiv.innerHTML === `✅ ${message}` || statusDiv.innerHTML === `❌ ${message}`) {
-                        statusDiv.style.color = '#b1bac4';
-                    }
-                }, 3500);
+            if (statusDiv.innerHTML === `✅ ${msg}` || statusDiv.innerHTML === `❌ ${msg}`) {
+                statusDiv.style.color = '#b1bac4';
+                statusDiv.innerHTML = '✅ 就绪';
             }
         }, 4000);
     }
 
-    // base64 编码支持 UTF-8 (处理中文)
-    function utf8ToBase64(str) {
-        try {
-            // 使用 TextEncoder 更稳健
-            const encoder = new TextEncoder();
-            const bytes = encoder.encode(str);
-            let binary = '';
-            for (let i = 0; i < bytes.length; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            return btoa(binary);
-        } catch(e) {
-            // fallback 老方法
-            return btoa(unescape(encodeURIComponent(str)));
+    // 确保文件路径以 .html 结尾
+    function normalizeFilePath(path) {
+        let trimmed = path.trim();
+        if (!trimmed) return '';
+        if (!trimmed.toLowerCase().endsWith('.html')) {
+            return trimmed + '.html';
         }
+        return trimmed;
+    }
+
+    // base64 编码
+    function utf8ToBase64(str) {
+        const encoder = new TextEncoder();
+        const bytes = encoder.encode(str);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
     }
 
     function base64ToUtf8(base64) {
-        try {
-            const binary = atob(base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            return new TextDecoder('utf-8').decode(bytes);
-        } catch(e) {
-            // fallback
-            return decodeURIComponent(escape(atob(base64)));
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
         }
+        return new TextDecoder('utf-8').decode(bytes);
     }
 
-    // 获取当前要保存的文件 SHA (如果文件存在)
     async function getExistingFileSha(owner, repo, path, token) {
         const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
         const response = await fetch(url, {
@@ -378,14 +529,12 @@
             const data = await response.json();
             return data.sha;
         } else if (response.status === 404) {
-            return null; // 文件不存在
+            return null;
         } else {
-            const errorText = await response.text();
-            throw new Error(`获取文件信息失败 (${response.status}): ${errorText.slice(0, 100)}`);
+            throw new Error(`获取文件信息失败 (${response.status})`);
         }
     }
 
-    // 保存内容到 GitHub (创建或更新)
     async function saveToGitHub(owner, repo, path, content, commitMessage, token) {
         const sha = await getExistingFileSha(owner, repo, path, token);
         const encodedContent = utf8ToBase64(content);
@@ -393,11 +542,9 @@
         const payload = {
             message: commitMessage,
             content: encodedContent,
-            branch: undefined  // 使用仓库默认分支(main/master)
+            branch: undefined
         };
-        if (sha) {
-            payload.sha = sha;
-        }
+        if (sha) payload.sha = sha;
         const response = await fetch(url, {
             method: 'PUT',
             headers: {
@@ -409,13 +556,11 @@
         });
         if (!response.ok) {
             const errData = await response.text();
-            throw new Error(`保存失败 ${response.status}: ${errData.slice(0, 200)}`);
+            throw new Error(`保存失败 ${response.status}: ${errData.slice(0, 150)}`);
         }
-        const result = await response.json();
-        return result;
+        return await response.json();
     }
 
-    // 从 GitHub 加载文件内容
     async function loadFromGitHub(owner, repo, path, token) {
         const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
         const response = await fetch(url, {
@@ -425,285 +570,197 @@
             }
         });
         if (response.status === 404) {
-            throw new Error(`文件 "${path}" 不存在于仓库 ${owner}/${repo} 中`);
+            throw new Error(`文件 "${path}" 不存在`);
         }
         if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`加载失败 (${response.status}): ${errText.slice(0, 120)}`);
+            throw new Error(`加载失败 (${response.status})`);
         }
         const data = await response.json();
-        if (data.encoding !== 'base64') {
-            throw new Error('文件编码不是 base64，暂不支持');
-        }
-        const decodedContent = base64ToUtf8(data.content);
-        return decodedContent;
+        if (data.encoding !== 'base64') throw new Error('文件编码不是 base64');
+        return base64ToUtf8(data.content);
     }
 
-    // 预览更新 (iframe 实时渲染)
     function updatePreview() {
         const code = htmlCodeArea.value;
         const iframe = previewFrame;
-        // 使用 document.write 方式刷新 iframe 内容，确保完整页面渲染
         try {
             const doc = iframe.contentDocument || iframe.contentWindow.document;
             doc.open();
             doc.write(code);
             doc.close();
         } catch (err) {
-            console.warn('预览更新失败', err);
-            // fallback srcdoc 方案基本不会触发，但避免崩溃
             iframe.srcdoc = code;
         }
     }
 
-    // 保存配置到 localStorage
+    function clearEditor() {
+        if (confirm('确定要清空所有代码吗？')) {
+            htmlCodeArea.value = '';
+            updatePreview();
+            showStatus('代码已清空');
+        }
+    }
+
     function saveConfigToLocal() {
-        const token = tokenInput.value;
-        const owner = ownerInput.value;
-        const repo = repoNameInput.value;
-        const path = filePathInput.value;
-        if (token) localStorage.setItem('gh_preview_token', token);
-        if (owner) localStorage.setItem('gh_preview_owner', owner);
-        if (repo) localStorage.setItem('gh_preview_repo', repo);
-        if (path) localStorage.setItem('gh_preview_path', path);
-        // 注意commit描述不自动存，避免固定
+        localStorage.setItem('parser_config', JSON.stringify(currentConfig));
     }
 
     function loadConfigFromLocal() {
-        const savedToken = localStorage.getItem('gh_preview_token');
-        const savedOwner = localStorage.getItem('gh_preview_owner');
-        const savedRepo = localStorage.getItem('gh_preview_repo');
-        const savedPath = localStorage.getItem('gh_preview_path');
-        if (savedToken) tokenInput.value = savedToken;
-        if (savedOwner) ownerInput.value = savedOwner;
-        if (savedRepo) repoNameInput.value = savedRepo;
-        if (savedPath) filePathInput.value = savedPath;
+        const saved = localStorage.getItem('parser_config');
+        if (saved) {
+            try {
+                const cfg = JSON.parse(saved);
+                currentConfig = cfg;
+                tokenInput.value = cfg.token || '';
+                ownerInput.value = cfg.owner || 'A1ando';
+                repoNameInput.value = cfg.repo || 'design';
+                filePathInput.value = cfg.filePath || '';
+                commitMsgTextarea.value = cfg.commitMessage || '';
+            } catch(e) {}
+        } else {
+            ownerInput.value = 'A1ando';
+            repoNameInput.value = 'design';
+            filePathInput.value = '';
+            commitMsgTextarea.value = '';
+            currentConfig.owner = 'A1ando';
+            currentConfig.repo = 'design';
+            currentConfig.filePath = '';
+            currentConfig.commitMessage = '';
+        }
     }
 
-    // 验证必要字段是否填写
-    function validateGitHubConfig() {
-        const token = tokenInput.value.trim();
-        const owner = ownerInput.value.trim();
-        const repo = repoNameInput.value.trim();
-        if (!token || !owner || !repo) {
-            showStatus('请填写 GitHub Token、仓库所有者及仓库名称', true);
+    function saveSettingsOnly() {
+        currentConfig.token = tokenInput.value.trim();
+        currentConfig.owner = ownerInput.value.trim();
+        currentConfig.repo = repoNameInput.value.trim();
+        currentConfig.filePath = filePathInput.value.trim();
+        currentConfig.commitMessage = commitMsgTextarea.value.trim();
+        saveConfigToLocal();
+    }
+
+    function isConfigValid() {
+        if (!currentConfig.token || !currentConfig.owner || !currentConfig.repo) {
+            showStatus('请填写 Token、仓库所有者及仓库名称', true);
             return false;
         }
-        if (!token.startsWith('github_pat_') && !token.startsWith('ghp_') && !token.startsWith('gho_')) {
-            // 警告但不强制，可能是细粒度令牌
-            if (token.length < 20) {
-                showStatus('Token 格式可能不正确，请确保拥有 repo 权限', true);
-                return false;
-            }
+        if (!currentConfig.filePath) {
+            showStatus('请填写文件路径', true);
+            return false;
         }
         return true;
     }
 
-    // 保存主逻辑
-    async function handleSave() {
-        if (!validateGitHubConfig()) return;
-        const token = tokenInput.value.trim();
-        const owner = ownerInput.value.trim();
-        const repo = repoNameInput.value.trim();
-        let path = filePathInput.value.trim();
-        if (!path) {
-            showStatus('文件路径不能为空，例如 index.html', true);
-            return;
-        }
-        let commitMessage = commitMsgInput.value.trim();
-        if (!commitMessage) {
-            showStatus('请填写本次提交描述 (用于版本控制历史)', true);
-            return;
-        }
+    async function handleSaveAndUpload() {
+        saveSettingsOnly();
+        if (!isConfigValid()) return;
+        
+        let filePathToSave = normalizeFilePath(currentConfig.filePath);
         const htmlContent = htmlCodeArea.value;
-        // 可选: 如果内容为空，提示但不阻止
         if (!htmlContent.trim()) {
-            if (!confirm('代码为空，确定要保存空白文件吗？')) return;
+            if (!confirm('代码为空，确定保存吗？')) return;
         }
-        // 禁用按钮防止重复提交
-        saveBtn.disabled = true;
-        const originalText = saveBtn.innerText;
-        saveBtn.innerText = '⏳ 提交中...';
+        const commitMsg = currentConfig.commitMessage || '更新 HTML 内容';
+        
+        saveAndUploadBtn.disabled = true;
+        const originalText = saveAndUploadBtn.innerText;
+        saveAndUploadBtn.innerText = '⏳ 上传中...';
         try {
-            const result = await saveToGitHub(owner, repo, path, htmlContent, commitMessage, token);
-            const commitUrl = result.commit.html_url || `https://github.com/${owner}/${repo}/commit/${result.commit.sha}`;
-            showStatus(`保存成功！版本已记录: "${commitMessage}" → <a href="${commitUrl}" target="_blank" style="color:#58a6ff;">查看提交</a>`, false);
-            // 保存配置到本地
-            saveConfigToLocal();
-            // 可选额外显示简短commit信息
-            if (result.content) {
-                setTimeout(() => {
-                    statusDiv.innerHTML += `<span style="display:block;font-size:0.7rem;">🔖 新版本 SHA: ${result.commit.sha.slice(0,7)}</span>`;
-                }, 200);
-            }
+            const result = await saveToGitHub(
+                currentConfig.owner,
+                currentConfig.repo,
+                filePathToSave,
+                htmlContent,
+                commitMsg,
+                currentConfig.token
+            );
+            const commitUrl = result.commit.html_url || `https://github.com/${currentConfig.owner}/${currentConfig.repo}/commit/${result.commit.sha}`;
+            showStatus(`保存成功！版本: "${commitMsg}" → <a href="${commitUrl}" target="_blank" style="color:#58a6ff;">查看提交</a>`, false);
+            modal.style.display = 'none';
         } catch (err) {
-            console.error(err);
             showStatus(`保存失败: ${err.message}`, true);
         } finally {
-            saveBtn.disabled = false;
-            saveBtn.innerText = originalText;
+            saveAndUploadBtn.disabled = false;
+            saveAndUploadBtn.innerText = originalText;
         }
     }
 
-    // 加载文件逻辑 (从仓库读取并覆盖编辑器+预览)
     async function handleLoad() {
-        if (!validateGitHubConfig()) return;
-        const token = tokenInput.value.trim();
-        const owner = ownerInput.value.trim();
-        const repo = repoNameInput.value.trim();
-        let path = filePathInput.value.trim();
-        if (!path) {
-            showStatus('请填写文件路径，例如 preview.html', true);
-            return;
-        }
-        loadBtn.disabled = true;
-        const originalLoadText = loadBtn.innerText;
-        loadBtn.innerText = '⏳ 读取中...';
+        saveSettingsOnly();
+        if (!isConfigValid()) return;
+        
+        let filePathToLoad = normalizeFilePath(currentConfig.filePath);
+        loadFromGitBtn.disabled = true;
+        const originalText = loadFromGitBtn.innerText;
+        loadFromGitBtn.innerText = '⏳ 读取中...';
         try {
-            const fileContent = await loadFromGitHub(owner, repo, path, token);
-            htmlCodeArea.value = fileContent;
-            updatePreview();  // 立即更新预览
-            showStatus(`成功加载 "${path}"，现在可以编辑并再次保存 (新版本)`, false);
-            saveConfigToLocal();
-            // 自动填充一个友好的默认commit描述 ? 不覆盖用户输入，但可以提示上次修改
-            if (!commitMsgInput.value.trim()) {
-                commitMsgInput.value = `更新 ${path} · 从Git加载后编辑`;
-            }
+            const content = await loadFromGitHub(
+                currentConfig.owner,
+                currentConfig.repo,
+                filePathToLoad,
+                currentConfig.token
+            );
+            htmlCodeArea.value = content;
+            updatePreview();
+            showStatus(`成功加载 "${filePathToLoad}"`, false);
+            modal.style.display = 'none';
         } catch (err) {
-            console.error(err);
             showStatus(`加载失败: ${err.message}`, true);
         } finally {
-            loadBtn.disabled = false;
-            loadBtn.innerText = originalLoadText;
+            loadFromGitBtn.disabled = false;
+            loadFromGitBtn.innerText = originalText;
         }
     }
 
-    // 实时保存用户输入的配置到localStorage (防抖)
-    let configTimeout;
-    function autoSaveSettings() {
-        if (configTimeout) clearTimeout(configTimeout);
-        configTimeout = setTimeout(() => {
-            saveConfigToLocal();
-        }, 800);
+    function openModal() {
+        tokenInput.value = currentConfig.token;
+        ownerInput.value = currentConfig.owner;
+        repoNameInput.value = currentConfig.repo;
+        filePathInput.value = currentConfig.filePath;
+        commitMsgTextarea.value = currentConfig.commitMessage;
+        modal.style.display = 'flex';
+    }
+    function closeModal() {
+        modal.style.display = 'none';
     }
 
-    // 监听配置修改自动存储
-    function bindAutoConfigSave() {
-        tokenInput.addEventListener('input', autoSaveSettings);
-        ownerInput.addEventListener('input', autoSaveSettings);
-        repoNameInput.addEventListener('input', autoSaveSettings);
-        filePathInput.addEventListener('input', autoSaveSettings);
+    function openInNewTab() {
+        const iframeSrc = previewFrame.src;
+        if (iframeSrc && iframeSrc !== 'about:blank') {
+            window.open(iframeSrc, '_blank');
+        } else {
+            showStatus('没有可打开的预览页面，请先编辑代码', true);
+        }
     }
 
-    // 设置默认示例代码 (展示漂亮demo)
-    function setDefaultDemoCode() {
-        const demo = `<!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎨 动态演示 | GitHub 版本控制预览</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: system-ui, 'Segoe UI', sans-serif;
-            background: linear-gradient(145deg, #f6f9fc 0%, #eef2f5 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem;
-        }
-        .card {
-            background: rgba(255,255,255,0.9);
-            backdrop-filter: blur(2px);
-            border-radius: 2rem;
-            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25);
-            padding: 2rem;
-            max-width: 600px;
-            width: 100%;
-            border: 1px solid rgba(255,255,255,0.5);
-            transition: all 0.2s;
-        }
-        h1 { color: #1f2b3c; margin-bottom: 0.5rem; font-weight: 700; }
-        .badge-github {
-            background: #0d1117;
-            color: white;
-            padding: 0.2rem 0.8rem;
-            border-radius: 40px;
-            display: inline-block;
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
-        }
-        button {
-            background: #238636;
-            border: none;
-            padding: 0.5rem 1.3rem;
-            border-radius: 50px;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 1rem;
-            transition: 0.1s;
-        }
-        button:hover { background: #2ea043; transform: scale(0.98);}
-        footer { margin-top: 1.5rem; font-size: 0.75rem; color: #4b5563; }
-        input { padding: 0.5rem; border-radius: 40px; border: 1px solid #ccc; margin-top: 0.5rem; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <span class="badge-github">✨ GitHub 实时版本控制</span>
-        <h1>即时 HTML 编辑器</h1>
-        <p>左侧直接修改代码，右侧立即预览。填写 GitHub 信息后，每次保存都会生成永久记录。</p>
-        <div style="background:#eef2fa; padding:1rem; border-radius:1rem; margin:1rem 0;">
-            <p>✅ 支持粘贴任意 HTML/CSS/JS</p>
-            <p>💾 版本控制: 每一次保存 + 描述 = 独立 Commit</p>
-        </div>
-        <button onclick="document.getElementById('demoTrigger')?.click() || alert('互动生效')">🌟 体验实时编辑</button>
-        <footer>修改我，保存到仓库产生新版本历史</footer>
-    </div>
-</body>
-</html>`;
-        htmlCodeArea.value = demo;
-        updatePreview();
-    }
+    // 清空初始代码
+    htmlCodeArea.value = '';
+    updatePreview();
 
-    // 编辑器内容变化同步预览 (防抖优化)
     let previewTimeout;
-    function onCodeChange() {
-        if (previewTimeout) clearTimeout(previewTimeout);
-        previewTimeout = setTimeout(() => {
-            updatePreview();
-        }, 30);
-    }
+    htmlCodeArea.addEventListener('input', () => {
+        clearTimeout(previewTimeout);
+        previewTimeout = setTimeout(updatePreview, 30);
+    });
 
-    // 初始化事件监听 & 加载缓存 & 设置演示内容
-    function init() {
-        loadConfigFromLocal();
-        setDefaultDemoCode();           // 初始精彩示例
-        // 绑定监听
-        htmlCodeArea.addEventListener('input', onCodeChange);
-        // 监听保存/加载按钮
-        saveBtn.addEventListener('click', handleSave);
-        loadBtn.addEventListener('click', handleLoad);
-        bindAutoConfigSave();
-        // 页面关闭前保存一次配置
-        window.addEventListener('beforeunload', () => {
-            saveConfigToLocal();
-        });
-        // 第一次手动更新预览确保显示
-        updatePreview();
-        // 如果已有commit描述缓存的提示
-        if (!commitMsgInput.value) {
-            commitMsgInput.value = "✨ 初始版本 / 更新HTML内容";
-        }
-        // 提供友好的指导
-        showStatus('就绪 | 填写 GitHub Token 和仓库信息即可保存，每一次保存都有版本描述', false);
-    }
+    settingsBtn.addEventListener('click', openModal);
+    cancelModalBtn.addEventListener('click', closeModal);
+    loadFromGitBtn.addEventListener('click', handleLoad);
+    saveAndUploadBtn.addEventListener('click', handleSaveAndUpload);
+    clearBtn.addEventListener('click', clearEditor);
+    openNewTabBtn.addEventListener('click', openInNewTab);
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
 
-    // 启动应用
-    init();
+    // 初始化
+    loadConfigFromLocal();
+    initTheme();
+    initResizer();
+    if (currentConfig.token && currentConfig.owner && currentConfig.repo && currentConfig.filePath) {
+        showStatus('配置已加载，可在设置中保存或加载文件');
+    } else {
+        showStatus('请点击「上传」完成 GitHub 配置');
+    }
 </script>
 </body>
 </html>
