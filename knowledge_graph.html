@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《民法典》核心法律知识图谱</title>
+    <!-- 引入 ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Microsoft YaHei', sans-serif; background-color: #f5f7fa; }
+        #graph-container { width: 100vw; height: 100vh; }
+        .header {
+            position: absolute; top: 20px; left: 20px; z-index: 100;
+            background: rgba(255, 255, 255, 0.9); padding: 15px 25px;
+            border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header h1 { margin: 0; font-size: 24px; color: #333; }
+        .header p { margin: 5px 0 0; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>《民法典》关联知识图谱</h1>
+        <p>核心：民法典 | 关联：常用关键词及相关法规</p>
+    </div>
+
+    <!-- 图谱容器 -->
+    <div id="graph-container"></div>
+
+    <script>
+        var chartDom = document.getElementById('graph-container');
+        var myChart = echarts.init(chartDom);
+        var option;
+
+        // 模拟数据：以民法典为核心，关联关键词，再关联具体法规
+        const data = [
+            // 核心节点
+            { id: '0', name: '中华人民共和国民法典', symbolSize: 80, category: 0, draggable: true },
+            
+            // 第一层：常用法律关键词
+            { id: '1', name: '居住权', symbolSize: 50, category: 1, draggable: true },
+            { id: '2', name: '好意同乘', symbolSize: 50, category: 1, draggable: true },
+            { id: '3', name: '遗产管理人', symbolSize: 50, category: 1, draggable: true },
+            { id: '4', name: '高空抛物', symbolSize: 50, category: 1, draggable: true },
+            { id: '5', name: '离婚冷静期', symbolSize: 50, category: 1, draggable: true },
+
+            // 第二层：关联的其他法律法规或具体条款
+            { id: '1-1', name: '《不动产登记暂行条例》', symbolSize: 30, category: 2, draggable: true },
+            { id: '2-1', name: '《道路交通安全法》', symbolSize: 30, category: 2, draggable: true },
+            { id: '3-1', name: '《继承法》(已废止/被吸收)', symbolSize: 30, category: 2, draggable: true },
+            { id: '4-1', name: '《刑法》(高空抛物罪)', symbolSize: 30, category: 2, draggable: true },
+            { id: '5-1', name: '《婚姻登记条例》', symbolSize: 30, category: 2, draggable: true },
+            { id: '5-2', name: '原《婚姻法》', symbolSize: 30, category: 2, draggable: true }
+        ];
+
+        const links = [
+            // 核心 -> 关键词
+            { source: '0', target: '1', name: '包含' },
+            { source: '0', target: '2', name: '包含' },
+            { source: '0', target: '3', name: '包含' },
+            { source: '0', target: '4', name: '包含' },
+            { source: '0', target: '5', name: '包含' },
+
+            // 关键词 -> 关联法规
+            { source: '1', target: '1-1', name: '关联登记' },
+            { source: '2', target: '2-1', name: '交通关联' },
+            { source: '3', target: '3-1', name: '制度演变' },
+            { source: '4', target: '4-1', name: '刑民交叉' },
+            { source: '5', target: '5-1', name: '登记规范' },
+            { source: '5', target: '5-2', name: '新旧对比' }
+        ];
+
+        option = {
+            tooltip: {
+                trigger: 'item',
+                formatter: function (params) {
+                    if (params.dataType === 'edge') {
+                        return params.data.source + ' > ' + params.data.target + ' : ' + params.data.name;
+                    }
+                    return params.data.name;
+                }
+            },
+            legend: {
+                data: ['核心法律', '常用关键词', '关联法规'],
+                top: '20px',
+                textStyle: { fontSize: 14 }
+            },
+            series: [
+                {
+                    type: 'graph',
+                    layout: 'force', // 力引导布局
+                    data: data,
+                    links: links,
+                    categories: [
+                        { name: '核心法律', itemStyle: { color: '#ee6666' } },
+                        { name: '常用关键词', itemStyle: { color: '#5470c6' } },
+                        { name: '关联法规', itemStyle: { color: '#91cc75' } }
+                    ],
+                    roam: true, // 开启鼠标缩放和平移
+                    label: {
+                        show: true,
+                        position: 'right',
+                        formatter: '{b}',
+                        fontSize: 12
+                    },
+                    force: {
+                        repulsion: 300, // 节点之间的斥力
+                        edgeLength: 120 // 边的长度
+                    },
+                    lineStyle: {
+                        color: 'source',
+                        curveness: 0.1 // 边的曲度
+                    },
+                    emphasis: {
+                        focus: 'adjacency', // 悬停时高亮相邻节点
+                        lineStyle: { width: 4 }
+                    }
+                }
+            ]
+        };
+
+        myChart.setOption(option);
+
+        // 响应窗口大小变化
+        window.addEventListener('resize', function() {
+            myChart.resize();
+        });
+    </script>
+</body>
+</html>
