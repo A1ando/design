@@ -333,7 +333,7 @@
             <button class="clear-btn" id="clearBtn">🗑️ 清空</button>
         </div>
         <div class="code-container">
-            <textarea id="htmlCode" spellcheck="false" placeholder="<!-- 粘贴或编写 HTML 代码 -->"></textarea>
+            <textarea id="htmlCode" spellcheck="false" placeholder=""></textarea>
         </div>
     </div>
     <div class="resizer" id="resizer"></div>
@@ -348,7 +348,6 @@
     </div>
 </div>
 
-<!-- 设置弹窗（集成保存/加载） -->
 <div id="settingsModal" class="modal">
     <div class="modal-card">
         <h3>⚙️ GitHub 配置与操作</h3>
@@ -388,7 +387,6 @@
     const clearBtn = document.getElementById('clearBtn');
     const modal = document.getElementById('settingsModal');
     const cancelModalBtn = document.getElementById('cancelModalBtn');
-    const loadFromGitBtn = document.getElementById('loadFromGitBtn');
     const saveAndUploadBtn = document.getElementById('saveAndUploadBtn');
     const openNewTabBtn = document.getElementById('openNewTabBtn');
     const themeToggleBtn = document.getElementById('themeToggleBtn');
@@ -487,7 +485,6 @@
         }, 4000);
     }
 
-    // 确保文件路径以 .html 结尾
     function normalizeFilePath(path) {
         let trimmed = path.trim();
         if (!trimmed) return '';
@@ -497,7 +494,6 @@
         return trimmed;
     }
 
-    // base64 编码
     function utf8ToBase64(str) {
         const encoder = new TextEncoder();
         const bytes = encoder.encode(str);
@@ -506,15 +502,6 @@
             binary += String.fromCharCode(bytes[i]);
         }
         return btoa(binary);
-    }
-
-    function base64ToUtf8(base64) {
-        const binary = atob(base64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
-        }
-        return new TextDecoder('utf-8').decode(bytes);
     }
 
     async function getExistingFileSha(owner, repo, path, token) {
@@ -541,8 +528,7 @@
         const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
         const payload = {
             message: commitMessage,
-            content: encodedContent,
-            branch: undefined
+            content: encodedContent
         };
         if (sha) payload.sha = sha;
         const response = await fetch(url, {
@@ -559,25 +545,6 @@
             throw new Error(`保存失败 ${response.status}: ${errData.slice(0, 150)}`);
         }
         return await response.json();
-    }
-
-    async function loadFromGitHub(owner, repo, path, token) {
-        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
-        if (response.status === 404) {
-            throw new Error(`文件 "${path}" 不存在`);
-        }
-        if (!response.ok) {
-            throw new Error(`加载失败 (${response.status})`);
-        }
-        const data = await response.json();
-        if (data.encoding !== 'base64') throw new Error('文件编码不是 base64');
-        return base64ToUtf8(data.content);
     }
 
     function updatePreview() {
@@ -684,33 +651,6 @@
         }
     }
 
-    async function handleLoad() {
-        saveSettingsOnly();
-        if (!isConfigValid()) return;
-        
-        let filePathToLoad = normalizeFilePath(currentConfig.filePath);
-        loadFromGitBtn.disabled = true;
-        const originalText = loadFromGitBtn.innerText;
-        loadFromGitBtn.innerText = '⏳ 读取中...';
-        try {
-            const content = await loadFromGitHub(
-                currentConfig.owner,
-                currentConfig.repo,
-                filePathToLoad,
-                currentConfig.token
-            );
-            htmlCodeArea.value = content;
-            updatePreview();
-            showStatus(`成功加载 "${filePathToLoad}"`, false);
-            modal.style.display = 'none';
-        } catch (err) {
-            showStatus(`加载失败: ${err.message}`, true);
-        } finally {
-            loadFromGitBtn.disabled = false;
-            loadFromGitBtn.innerText = originalText;
-        }
-    }
-
     function openModal() {
         tokenInput.value = currentConfig.token;
         ownerInput.value = currentConfig.owner;
@@ -723,16 +663,20 @@
         modal.style.display = 'none';
     }
 
+    // 修复后的新标签页打开逻辑
     function openInNewTab() {
-        const iframeSrc = previewFrame.src;
-        if (iframeSrc && iframeSrc !== 'about:blank') {
-            window.open(iframeSrc, '_blank');
+        const code = htmlCodeArea.value;
+        if (code.trim()) {
+            // 使用 Blob 动态生成临时的网页 URL，避免 about:blank 无法打开的问题
+            const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
+            const blobUrl = URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
         } else {
             showStatus('没有可打开的预览页面，请先编辑代码', true);
         }
     }
 
-    // 清空初始代码
+    // 初始化内容
     htmlCodeArea.value = '';
     updatePreview();
 
@@ -742,9 +686,9 @@
         previewTimeout = setTimeout(updatePreview, 30);
     });
 
+    // 事件绑定
     settingsBtn.addEventListener('click', openModal);
     cancelModalBtn.addEventListener('click', closeModal);
-    loadFromGitBtn.addEventListener('click', handleLoad);
     saveAndUploadBtn.addEventListener('click', handleSaveAndUpload);
     clearBtn.addEventListener('click', clearEditor);
     openNewTabBtn.addEventListener('click', openInNewTab);
@@ -752,7 +696,7 @@
         if (e.target === modal) closeModal();
     });
 
-    // 初始化
+    // 初始化配置
     loadConfigFromLocal();
     initTheme();
     initResizer();
