@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>💡 My Prompts Hub · 智能提示词管理看板</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
@@ -54,20 +54,22 @@
             height: 100vh;
             overflow: hidden;
             transition: background 0.2s, color 0.2s;
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
         /* 顶部导航 */
         .header {
             background: var(--bg-header);
             border-bottom: 1px solid var(--border-color);
-            padding: 0.75rem 1.5rem;
+            padding: 0.75rem 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 10;
+            padding-top: env(safe-area-inset-top, 0.75rem);
         }
         .header h1 {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 600;
             background: linear-gradient(135deg, #58a6ff, #bc8cff);
             -webkit-background-clip: text;
@@ -75,32 +77,34 @@
             color: transparent;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
-        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .header-actions { display: flex; align-items: center; gap: 8px; }
         .status-badge {
-            font-size: 0.8rem;
-            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
             border-radius: 12px;
             background: var(--bg-sidebar);
             color: #7ee787;
             border: 1px solid var(--border-color);
+            white-space: nowrap;
         }
         body.light .status-badge { color: #1a7f37; background: #eaeef2; }
 
         /* 主布局区 */
-        .main-container { display: flex; flex: 1; overflow: hidden; }
+        .main-container { display: flex; flex: 1; overflow: hidden; flex-direction: row; }
 
         /* 左侧侧边栏 */
         .sidebar {
-            width: 280px;
+            width: 260px;
             background: var(--bg-sidebar);
             border-right: 1px solid var(--border-color);
-            padding: 1.25rem;
+            padding: 1rem;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 1.25rem;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .search-box { position: relative; }
         .search-box i { position: absolute; left: 10px; top: 11px; color: var(--text-secondary); }
@@ -112,11 +116,12 @@
             border-radius: 6px;
             color: var(--text-primary);
             outline: none;
+            font-size: 14px;
         }
-        .section-title { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem; }
-        .tag-list { display: flex; flex-direction: column; gap: 5px; }
+        .section-title { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 0.4rem; }
+        .tag-list { display: flex; flex-direction: column; gap: 4px; }
         .tag-item {
-            padding: 0.4rem 0.6rem;
+            padding: 0.5rem 0.6rem;
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.85rem;
@@ -130,12 +135,12 @@
         .tag-count { font-size: 0.75rem; opacity: 0.6; }
 
         /* 右侧主看板 */
-        .content-area { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; }
-        .toolbar { display: flex; justify-content: space-between; align-items: center; }
+        .content-area { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; -webkit-overflow-scrolling: touch; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-            gap: 1.25rem;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
         }
 
         /* Prompt 卡片 */
@@ -143,212 +148,164 @@
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 1.25rem;
+            padding: 1rem;
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
             position: relative;
-            transition: transform 0.2s, box-shadow 0.2s;
         }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; }
-        .card-title { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .card-title { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* 顶部右侧操作栏：新增查看按钮并拉开间距 */
-        .card-meta-actions { display: flex; align-items: center; gap: 14px; }
-        .action-icon-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.95rem; transition: 0.1s; display: flex; align-items: center; gap: 4px; }
+        .card-meta-actions { display: flex; align-items: center; gap: 12px; }
+        .action-icon-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.9rem; padding: 4px; transition: 0.1s; display: flex; align-items: center; gap: 4px; }
         .action-icon-btn:hover { color: var(--accent-color); }
         .action-icon-btn.del:hover { color: var(--btn-danger); }
         
-        /* 主页卡片内容：纯文本无 MD 格式干扰查看区 */
+        /* 主页卡片内容：纯文本无 MD 格式 */
         .card-body-plaintext {
-            font-size: 0.875rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
-            padding: 0.75rem;
+            padding: 0.6rem;
             line-height: 1.5;
             background: var(--bg-body);
             border-radius: 8px;
             border: 1px solid var(--border-color);
-            height: 140px;
+            height: 120px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-break: break-all;
+            -webkit-overflow-scrolling: touch;
         }
 
         /* 底部布局 */
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: auto;
-            gap: 10px;
-        }
-        .card-tags { display: flex; flex-wrap: wrap; gap: 5px; flex: 1; }
-        .badge { font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 10px; background: #388bfd1a; color: var(--accent-color); border: 1px solid #388bfd33; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; gap: 10px; }
+        .card-tags { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; overflow: hidden; max-height: 32px; }
+        .badge { font-size: 0.7rem; padding: 0.15rem 0.3rem; border-radius: 10px; background: #388bfd1a; color: var(--accent-color); border: 1px solid #388bfd33; white-space: nowrap; }
 
         /* 右下角大复制按钮 */
         .giant-copy-btn {
             background: var(--accent-color);
             color: white !important;
             border: none;
-            padding: 0.5rem 1.1rem;
+            padding: 0.45rem 0.9rem;
             border-radius: 8px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-            transition: opacity 0.1s, transform 0.1s;
             white-space: nowrap;
         }
-        .giant-copy-btn:hover { opacity: 0.9; transform: scale(1.02); }
-        .giant-copy-btn:active { transform: scale(0.98); }
 
         /* 通用按钮 */
         .btn {
             background: var(--bg-sidebar);
             border: 1px solid var(--border-color);
             color: var(--text-primary);
-            padding: 0.4rem 0.8rem;
+            padding: 0.45rem 0.75rem;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             display: flex;
             align-items: center;
-            gap: 5px;
-            transition: 0.2s;
+            gap: 4px;
+            white-space: nowrap;
         }
-        .btn:hover { background: var(--border-color); }
         .btn-primary { background: var(--btn-success); border-color: var(--btn-success); color: white; }
-        .btn-primary:hover { background: #2ea043; }
 
-        /* 模态弹窗基础（1.3倍大小） */
+        /* 模态弹窗 */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100;
-            justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); z-index: 100;
+            justify-content: center; align-items: center; padding: 10px;
         }
         .modal-content {
             background: var(--bg-sidebar); border: 1px solid var(--border-color);
-            border-radius: 16px; 
-            width: 90%; 
-            max-width: 715px; 
-            padding: 2rem;    
-            display: flex; flex-direction: column; gap: 1.3rem;
+            border-radius: 16px; width: 95%; max-width: 715px; padding: 1.5rem;
+            display: flex; flex-direction: column; gap: 1rem; max-height: 90vh; overflow-y: auto;
         }
-        .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
-        .form-group label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; }
+        .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+        .form-group label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
         .form-group input {
             background: var(--bg-input); border: 1px solid var(--border-color);
-            border-radius: 8px; padding: 0.65rem; color: var(--text-primary); outline: none;
-            font-size: 0.9rem;
+            border-radius: 8px; padding: 0.6rem; color: var(--text-primary); outline: none;
+            font-size: 14px;
         }
 
-        /* 弹窗编辑器顶栏（含切页Tab） */
-        .editor-header-tabs {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: -0.5rem;
-        }
-        .tab-btn-group {
-            display: flex;
-            background: var(--bg-body);
-            padding: 3px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
-        .tab-btn {
-            background: none; border: none; color: var(--text-secondary);
-            padding: 0.3rem 0.8rem; font-size: 0.8rem; border-radius: 4px;
-            cursor: pointer; font-weight: 500;
-        }
-        .tab-btn.active {
-            background: var(--bg-card); color: var(--text-primary);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
+        /* 编辑器顶栏 */
+        .editor-header-tabs { display: flex; justify-content: space-between; align-items: center; }
+        .tab-btn-group { display: flex; background: var(--bg-body); padding: 2px; border-radius: 6px; border: 1px solid var(--border-color); }
+        .tab-btn { background: none; border: none; color: var(--text-secondary); padding: 0.25rem 0.6rem; font-size: 0.75rem; border-radius: 4px; cursor: pointer; }
+        .tab-btn.active { background: var(--bg-card); color: var(--text-primary); font-weight: bold; }
 
-        /* 编辑与预览容器 */
+        /* 编辑器框架 */
         .editor-container-wrapper {
-            display: flex;
-            width: 100%;
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            overflow: hidden;
-            height: 340px;
+            display: flex; width: 100%; background: var(--bg-input);
+            border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; height: 280px;
         }
-        /* 弹窗专用行号列 */
         .modal-line-gutter {
-            width: 42px;
-            background: var(--line-num-bg);
-            border-right: 1px solid var(--border-color);
-            padding: 0.65rem 0;
-            font-family: 'Fira Code', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            text-align: right;
-            padding-right: 8px;
-            color: var(--line-num-text);
-            user-select: none;
-            overflow: hidden;
-            white-space: pre;
+            width: 38px; background: var(--line-num-bg); border-right: 1px solid var(--border-color);
+            padding: 0.6rem 0; font-family: monospace; font-size: 12px; line-height: 1.6;
+            text-align: right; padding-right: 6px; color: var(--line-num-text); user-select: none; overflow: hidden; white-space: pre;
         }
-        /* 弹窗专用输入框 */
         .modal-textarea {
-            flex: 1;
-            background: var(--bg-input);
-            border: none;
-            padding: 0.65rem;
-            color: var(--text-primary);
-            outline: none;
-            font-family: 'Fira Code', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            resize: none;
-            overflow-y: auto;
-            white-space: pre;
+            flex: 1; background: var(--bg-input); border: none; padding: 0.6rem;
+            color: var(--text-primary); outline: none; font-family: monospace; font-size: 13px; line-height: 1.6;
+            resize: none; overflow-y: auto; white-space: pre; -webkit-user-select: text; user-select: text;
         }
-        /* 弹窗专用预览区 */
-        .modal-preview-markdown {
-            flex: 1;
-            padding: 1rem;
-            overflow-y: auto;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            display: none; /* 默认隐藏，切换时显示 */
-            background: var(--bg-input);
-        }
-        /* Markdown 样式渲染微调 */
-        .markdown-render p { margin-bottom: 0.5rem; }
-        .markdown-render code { background: var(--code-bg); padding: 0.15rem 0.3rem; border-radius: 4px; font-family: monospace; }
-        .markdown-render pre { background: var(--code-bg); padding: 0.75rem; border-radius: 6px; overflow-x: auto; margin: 0.5rem 0; }
-        .markdown-render ul, .markdown-render ol { padding-left: 1.3rem; margin-bottom: 0.5rem; }
-        .markdown-render h1, .markdown-render h2, .markdown-render h3 { margin: 0.8rem 0 0.4rem 0; font-weight: 600; color: var(--accent-color); }
+        .modal-preview-markdown { flex: 1; padding: 0.8rem; overflow-y: auto; font-size: 0.85rem; line-height: 1.6; display: none; background: var(--bg-input); -webkit-overflow-scrolling: touch; }
 
-        /* 🚀 全屏/大视窗只读查看弹窗特有样式 */
-        .view-modal-body {
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1.25rem;
-            height: 450px;
-            overflow-y: auto;
-        }
+        /* Markdown 渲染排版 */
+        .markdown-render p { margin-bottom: 0.4rem; }
+        .markdown-render code { background: var(--code-bg); padding: 0.1rem 0.2rem; border-radius: 4px; font-family: monospace; font-size: 0.8rem; }
+        .markdown-render pre { background: var(--code-bg); padding: 0.5rem; border-radius: 6px; overflow-x: auto; margin: 0.4rem 0; }
+        .markdown-render ul, .markdown-render ol { padding-left: 1.2rem; margin-bottom: 0.4rem; }
+        .markdown-render h1, .markdown-render h2, .markdown-render h3 { margin: 0.6rem 0 0.3rem 0; font-weight: 600; color: var(--accent-color); font-size: 1.1rem; }
+
+        /* 查看窗口大弹窗（高阶PC大屏覆盖，移动端弹性适配） */
+        #viewPromptModal .modal-content { max-width: 900px; width: 95%; }
+        .view-modal-body { background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; height: 50vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         
-        .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 0.5rem; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 0.3rem; }
+
+        /* 📱 针对 iPhone 移动端的多设备高级媒体查询适配 */
+        @media (max-width: 768px) {
+            body { overflow-y: auto; height: auto; }
+            .main-container { flex-direction: column; height: auto; overflow: visible; }
+            
+            /* 手机端侧边栏变为顶部横向滚动式标签 */
+            .sidebar {
+                width: 100%; border-right: none; border-bottom: 1px solid var(--border-color);
+                padding: 0.75rem; gap: 0.75rem; overflow-y: visible; position: sticky; top: 0; z-index: 5;
+            }
+            .tag-list { flex-direction: row; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+            .tag-item { white-space: nowrap; padding: 0.4rem 0.7rem; }
+            .tag-count { margin-left: 4px; }
+            
+            .content-area { overflow-y: visible; padding: 0.75rem; }
+            .grid-container { grid-template-columns: 1fr; gap: 0.75rem; }
+            
+            .modal-content { padding: 1rem; max-height: 95vh; }
+            .editor-container-wrapper { height: 200px; }
+            .view-modal-body { height: 45vh; }
+            
+            /* ⚡ 核心修复：移动端通过样式名隐藏行号，而不是在 js 中强制覆盖导致失流 */
+            .modal-line-gutter { display: none !important; }
+            .header h1 span { display: none; }
+        }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1><i class="fa-solid fa-brain"></i> Prompts Hub </h1>
+    <h1><i class="fa-solid fa-brain"></i> Prompts Hub</h1>
     <div class="header-actions">
-        <div class="status-badge" id="globalStatus">✅ 本地数据已就绪</div>
-        <button class="btn" id="themeToggleBtn"><i class="fa-solid fa-circle-half-stroke"></i> 主题</button>
-        <button class="btn" id="gitSyncBtn"><i class="fa-solid fa-cloud-arrow-up"></i> 云端同步</button>
+        <div class="status-badge" id="globalStatus">本地就绪</div>
+        <button class="btn" id="themeToggleBtn"><i class="fa-solid fa-circle-half-stroke"></i></button>
+        <button class="btn" id="gitSyncBtn"><i class="fa-solid fa-cloud"></i></button>
     </div>
 </div>
 
@@ -359,15 +316,15 @@
             <input type="text" id="searchInput" placeholder="搜索名称或内容...">
         </div>
         <div>
-            <div class="section-title">自定义分类标签</div>
+            <div class="section-title">分类标签</div>
             <div class="tag-list" id="tagListContainer"></div>
         </div>
     </div>
 
     <div class="content-area">
         <div class="toolbar">
-            <h2 style="font-size: 1.1rem; font-weight: 500;" id="viewTitle">全部提示词</h2>
-            <button class="btn btn-primary" id="addPromptBtn"><i class="fa-solid fa-plus"></i> 新增 Prompt</button>
+            <h2 style="font-size: 1rem; font-weight: 500;" id="viewTitle">全部提示词</h2>
+            <button class="btn btn-primary" id="addPromptBtn"><i class="fa-solid fa-plus"></i> 新增</button>
         </div>
         <div class="grid-container" id="cardsGrid"></div>
     </div>
@@ -375,78 +332,84 @@
 
 <div class="modal" id="promptModal">
     <div class="modal-content">
-        <h3 id="modalTitle" style="font-size: 1.2rem;">新增 Prompt</h3>
+        <h3 id="modalTitle" style="font-size: 1.1rem;">新增 Prompt</h3>
         <input type="hidden" id="editIndex">
         <div class="form-group">
             <label>📌 提示词名称</label>
-            <input type="text" id="pTitle" placeholder="例如: 法律文书精简专家">
+            <input type="text" id="pTitle" placeholder="输入卡片标题">
         </div>
         <div class="form-group">
-            <label>🏷️ 标签 (多个用逗号或空格隔开)</label>
-            <input type="text" id="pTags" placeholder="例如: 法律, 润色">
+            <label>🏷️ 标签 (空格/逗号隔开)</label>
+            <input type="text" id="pTags" placeholder="标签">
         </div>
         <div class="form-group">
             <div class="editor-header-tabs">
-                <label style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">📝 Prompt 核心内容</label>
+                <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">📝 Prompt 内容</label>
                 <div class="tab-btn-group">
-                    <button class="tab-btn active" id="tabEditBtn" onclick="switchModalMode('edit')"><i class="fa-solid fa-code"></i> 编辑源码</button>
-                    <button class="tab-btn" id="tabPreviewBtn" onclick="switchModalMode('preview')"><i class="fa-solid fa-eye"></i> 效果预览</button>
+                    <button class="tab-btn active" id="tabEditBtn" onclick="switchModalMode('edit')">源码</button>
+                    <button class="tab-btn" id="tabPreviewBtn" onclick="switchModalMode('preview')">预览</button>
                 </div>
             </div>
             <div class="editor-container-wrapper">
                 <div class="modal-line-gutter" id="modalLineGutter">1</div>
-                <textarea class="modal-textarea" id="pContent" spellcheck="false" placeholder="在此默认输入 Markdown 格式内容..."></textarea>
+                <textarea class="modal-textarea" id="pContent" spellcheck="false" placeholder="支持标准 Markdown 格式输入，回车可直接换行..."></textarea>
                 <div class="modal-preview-markdown markdown-render" id="modalPreviewBox"></div>
             </div>
         </div>
         <div class="modal-footer">
             <button class="btn" id="closeModalBtn">取消</button>
-            <button class="btn btn-primary" id="savePromptBtn" style="padding: 0.5rem 1.2rem;">保存</button>
+            <button class="btn btn-primary" id="savePromptBtn">保存</button>
         </div>
     </div>
 </div>
 
 <div class="modal" id="viewPromptModal">
-    <div class="modal-content" style="max-width: 750px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 id="viewModalTitle" style="font-size: 1.2rem; color: var(--accent-color);">查看 Prompt 详情</h3>
-            <div id="viewModalTags" style="display: flex; gap: 5px;"></div>
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+            <h3 id="viewModalTitle" style="font-size: 1.1rem; color: var(--accent-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">查看</h3>
+            <div id="viewModalTags" style="display: flex; gap: 4px;"></div>
         </div>
         <div class="view-modal-body markdown-render" id="viewModalBody"></div>
         <div class="modal-footer">
-            <button class="btn btn-primary" id="viewModalCopyBtn"><i class="fa-regular fa-copy"></i> 复制全部内容</button>
-            <button class="btn" id="closeViewModalBtn">关闭窗口</button>
+            <button class="btn btn-primary" id="viewModalCopyBtn"><i class="fa-regular fa-copy"></i> 复制</button>
+            <button class="btn" id="closeViewModalBtn">关闭</button>
         </div>
     </div>
 </div>
 
 <div class="modal" id="gitModal">
-    <div class="modal-content" style="max-width: 600px;">
-        <h3>⚙️ GitHub 同步云端配置</h3>
+    <div class="modal-content" style="max-width: 500px;">
+        <h3>⚙️ 云端同步配置</h3>
         <div class="form-group">
             <label>🔑 GitHub Token</label>
             <input type="password" id="gitToken" placeholder="ghp_xxxx">
         </div>
         <div class="form-group">
-            <label>👤 仓库所有者</label>
+            <label>👤 Owner</label>
             <input type="text" id="gitOwner" value="A1ando">
         </div>
         <div class="form-group">
-            <label>📁 仓库名称</label>
+            <label>📁 Repository</label>
             <input type="text" id="gitRepo" value="design">
         </div>
         <div class="form-group">
-            <label>📂 云端存储路径</label>
+            <label>📂 File Path</label>
             <input type="text" id="gitPath" value="data/my_prompts.json">
         </div>
         <div class="modal-footer">
             <button class="btn" id="closeGitModalBtn">关闭</button>
-            <button class="btn btn-primary" id="execUploadBtn">立即安全同步</button>
+            <button class="btn btn-primary" id="execUploadBtn">安全同步</button>
         </div>
     </div>
 </div>
 
 <script>
+    // ⚙️ 核心全局解析机制强化：允许回车即换行 + 支持标准 GFM 语法规则
+    marked.setOptions({
+        breaks: true,
+        gfm: true
+    });
+
     const defaultPrompts = [
         { title: "HTML前端重构专家", tags: ["代码", "UI设计"], content: "### 角色定义\n你是一个精通前端重构的专家。\n\n### 任务核心\n1. 审查以下代码并优化其 HTML 语义化。\n2. 规范 CSS 变量。\n3. 修复轻量的主题渗透错误。" },
         { title: "法律条款 granular 细化器", tags: ["法律", "数据清洗"], content: "# 法务助手指令\n请作为高级法务助手，针对以下条文进行细化清洗：\n- **历史时间段**：1949-1978 年间\n- **核心要求**：保持与现代法条一致的聚合粒度与细致程度。" },
@@ -455,7 +418,7 @@
 
     let promptsData = JSON.parse(localStorage.getItem('my_prompts_pool')) || defaultPrompts;
     let selectedTag = 'ALL';
-    let currentViewingIndex = null; // 当前正在全屏查看的索引
+    let currentViewingIndex = null;
 
     const cardsGrid = document.getElementById('cardsGrid');
     const tagListContainer = document.getElementById('tagListContainer');
@@ -473,12 +436,12 @@
     const modalPreviewBox = document.getElementById('modalPreviewBox');
 
     function updateStatus(msg, isErr = false) {
-        globalStatus.innerText = (isErr ? '❌ ' : '✅ ') + msg;
+        globalStatus.innerText = msg;
         globalStatus.style.color = isErr ? '#f85149' : (document.body.classList.contains('light') ? '#1a7f37' : '#7ee787');
     }
 
-    // 弹窗内部编辑器行号实时渲染
     function updateModalLineNumbers() {
+        if (window.innerWidth <= 768) return; 
         const lines = pContentArea.value.split('\n');
         const lineCount = Math.max(1, lines.length);
         let arr = [];
@@ -489,15 +452,15 @@
     pContentArea.addEventListener('scroll', () => { modalLineGutter.scrollTop = pContentArea.scrollTop; });
     pContentArea.addEventListener('input', updateModalLineNumbers);
 
-    // 🚀 编辑弹窗内部：编辑代码与效果预览切换控制
     function switchModalMode(mode) {
         const tabEdit = document.getElementById('tabEditBtn');
         const tabPreview = document.getElementById('tabPreviewBtn');
+        const isMobile = window.innerWidth <= 768;
         
         if (mode === 'edit') {
             tabEdit.classList.add('active');
             tabPreview.classList.remove('active');
-            modalLineGutter.style.display = 'block';
+            if(!isMobile) { modalLineGutter.style.display = 'block'; }
             pContentArea.style.display = 'block';
             modalPreviewBox.style.display = 'none';
         } else {
@@ -506,12 +469,10 @@
             modalLineGutter.style.display = 'none';
             pContentArea.style.display = 'none';
             modalPreviewBox.style.display = 'block';
-            // 将当前编辑框内的 MD 源码实时编译进预览区
             modalPreviewBox.innerHTML = marked.parse(pContentArea.value || '*暂无内容*');
         }
     }
 
-    // 看板渲染引擎
     function render() {
         localStorage.setItem('my_prompts_pool', JSON.stringify(promptsData));
         const keyword = searchInput.value.trim().toLowerCase();
@@ -523,7 +484,7 @@
             return matchTag && matchKeyword;
         });
 
-        viewTitle.innerText = selectedTag === 'ALL' ? `全部提示词 (${filtered.length})` : `分类: ${selectedTag} (${filtered.length})`;
+        viewTitle.innerText = selectedTag === 'ALL' ? `全部 (${filtered.length})` : `${selectedTag} (${filtered.length})`;
 
         filtered.forEach((p) => {
             const originalIndex = promptsData.indexOf(p);
@@ -534,7 +495,7 @@
                 <div class="card-header">
                     <div class="card-title">${escapeHtml(p.title)}</div>
                     <div class="card-meta-actions">
-                        <button class="action-icon-btn" onclick="openViewModal(${originalIndex})" title="大窗查看全貌"><i class="fa-regular fa-eye"></i> </button>
+                        <button class="action-icon-btn" onclick="openViewModal(${originalIndex})" title="查看"><i class="fa-regular fa-eye"></i></button>
                         <button class="action-icon-btn" onclick="openEditModal(${originalIndex})" title="编辑"><i class="fa-regular fa-pen-to-square"></i></button>
                         <button class="action-icon-btn del" onclick="deletePrompt(${originalIndex})" title="删除"><i class="fa-regular fa-trash-can"></i></button>
                     </div>
@@ -545,7 +506,7 @@
                         ${p.tags.map(t => `<span class="badge"># ${escapeHtml(t)}</span>`).join('')}
                     </div>
                     <button class="giant-copy-btn" onclick="copyPrompt(${originalIndex}, this)">
-                        <i class="fa-regular fa-copy"></i> 一键复制
+                        <i class="fa-regular fa-copy"></i> 复制
                     </button>
                 </div>
             `;
@@ -561,7 +522,7 @@
 
         tagListContainer.innerHTML = `
             <div class="tag-item ${selectedTag === 'ALL' ? 'active' : ''}" onclick="selectTag('ALL')">
-                <span>📂 显示全部</span>
+                <span>📂 全部</span>
                 <span class="tag-count">${promptsData.length}</span>
             </div>
         `;
@@ -578,19 +539,17 @@
     function selectTag(tag) { selectedTag = tag; render(); }
     searchInput.addEventListener('input', render);
 
-    // 复制功能
     function copyPrompt(index, btn) {
         const content = promptsData[index].content;
         navigator.clipboard.writeText(content).then(() => {
             const originalInnerHTML = btn.innerHTML;
             btn.style.background = document.body.classList.contains('light') ? '#2c974b' : '#238636';
-            btn.innerHTML = `<i class="fa-solid fa-check"></i> 已复制`;
-            updateStatus(`已成功复制: "${promptsData[index].title}"`);
+            btn.innerHTML = `<i class="fa-solid fa-check"></i> 成功`;
+            updateStatus('提示词复制成功');
             setTimeout(() => { btn.style.background = ''; btn.innerHTML = originalInnerHTML; }, 1200);
         }).catch(() => { updateStatus('复制失败', true); });
     }
 
-    // 🚀 打开“全屏查看”大弹窗功能（极佳的 Markdown 展示）
     function openViewModal(index) {
         currentViewingIndex = index;
         const p = promptsData[index];
@@ -599,25 +558,22 @@
         const tagsContainer = document.getElementById('viewModalTags');
         tagsContainer.innerHTML = p.tags.map(t => `<span class="badge"># ${escapeHtml(t)}</span>`).join('');
         
-        // 渲染成精美的 Markdown
-        document.getElementById('viewModalBody').innerHTML = marked.parse(p.content || '*无提示词核心内容*');
+        document.getElementById('viewModalBody').innerHTML = marked.parse(p.content || '*无内容*');
         viewPromptModal.style.display = 'flex';
     }
 
-    // “大窗查看”弹窗底部的快捷复制
     document.getElementById('viewModalCopyBtn').addEventListener('click', function() {
         if (currentViewingIndex !== null) {
             const btn = this;
             const originalHtml = btn.innerHTML;
             navigator.clipboard.writeText(promptsData[currentViewingIndex].content).then(() => {
                 btn.style.background = document.body.classList.contains('light') ? '#2c974b' : '#238636';
-                btn.innerHTML = `<i class="fa-solid fa-check"></i> 复制成功！`;
+                btn.innerHTML = `<i class="fa-solid fa-check"></i> 已复制`;
                 setTimeout(() => { btn.style.background = ''; btn.innerHTML = originalHtml; }, 1200);
             });
         }
     });
 
-    // 主题控制
     function initTheme() {
         if (localStorage.getItem('prompt_theme') === 'light') { document.body.classList.add('light'); } 
         else { document.body.classList.remove('light'); }
@@ -626,45 +582,44 @@
         if (document.body.classList.contains('light')) {
             document.body.classList.remove('light');
             localStorage.setItem('prompt_theme', 'dark');
-            updateStatus('🌙 已切换至深色主题');
+            updateStatus('深色模式');
         } else {
             document.body.classList.add('light');
             localStorage.setItem('prompt_theme', 'light');
-            updateStatus('☀️ 已切换至浅色主题');
+            updateStatus('浅色模式');
         }
         render();
     });
 
-    // 增删改控制
     document.getElementById('addPromptBtn').addEventListener('click', () => {
-        document.getElementById('modalTitle').innerText = '新增 Prompt 卡片';
+        document.getElementById('modalTitle').innerText = '新增 Prompt';
         document.getElementById('editIndex').value = '';
         document.getElementById('pTitle').value = '';
         document.getElementById('pTags').value = '';
         pContentArea.value = '';
-        switchModalMode('edit'); // 默认进编辑源码状态
+        switchModalMode('edit');
         promptModal.style.display = 'flex';
         updateModalLineNumbers();
         pContentArea.scrollTop = 0;
     });
 
     function openEditModal(index) {
-        document.getElementById('modalTitle').innerText = '编辑 Prompt 属性';
+        document.getElementById('modalTitle').innerText = '编辑 Prompt';
         document.getElementById('editIndex').value = index;
         document.getElementById('pTitle').value = promptsData[index].title;
         document.getElementById('pTags').value = promptsData[index].tags.join(', ');
         pContentArea.value = promptsData[index].content;
-        switchModalMode('edit'); // 默认回显源码
+        switchModalMode('edit');
         promptModal.style.display = 'flex';
         updateModalLineNumbers();
         setTimeout(() => { modalLineGutter.scrollTop = pContentArea.scrollTop; }, 50);
     }
 
     function deletePrompt(index) {
-        if(confirm('确认彻底删除该提示词？')) {
+        if(confirm('确认删除该提示词？')) {
             promptsData.splice(index, 1);
             render();
-            updateStatus('提示词已移出本地数据库');
+            updateStatus('本地数据已更新');
         }
     }
 
@@ -675,15 +630,14 @@
         const content = pContentArea.value.trim();
 
         if (!title || !content) { alert('请填写完整内容！'); return; }
+        // ⚡ 强化标签清洗，去除多余空白空值
         const tags = rawTags.split(/[\s,，]+/).map(t => t.trim()).filter(t => t.length > 0);
         const targetData = { title, tags, content };
 
         if (indexStr === '') {
             promptsData.unshift(targetData);
-            updateStatus('成功创建新提示词');
         } else {
             promptsData[parseInt(indexStr)] = targetData;
-            updateStatus('提示词修改已保存');
         }
         promptModal.style.display = 'none';
         render();
@@ -694,7 +648,6 @@
     document.getElementById('gitSyncBtn').addEventListener('click', () => gitModal.style.display = 'flex');
     document.getElementById('closeGitModalBtn').addEventListener('click', () => gitModal.style.display = 'none');
 
-    // GitHub 同步
     function loadGitConfig() {
         const saved = localStorage.getItem('git_prompt_config');
         if (saved) {
@@ -714,12 +667,12 @@
         const repo = document.getElementById('gitRepo').value.trim();
         const path = document.getElementById('gitPath').value.trim();
 
-        if (!token || !path) { alert('Token 和 路径不能为空！'); return; }
+        if (!token || !path) { alert('配置完整后方可同步！'); return; }
         localStorage.setItem('git_prompt_config', JSON.stringify({ token, owner, repo, path }));
         
         const uploadBtn = document.getElementById('execUploadBtn');
         uploadBtn.disabled = true;
-        uploadBtn.innerText = '⏳ 正在发布至 GitHub...';
+        uploadBtn.innerText = '同步中...';
 
         try {
             const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
@@ -729,19 +682,19 @@
 
             const jsonString = JSON.stringify(promptsData, null, 4);
             const base64Content = btoa(String.fromCharCode(...new TextEncoder().encode(jsonString)));
-            const payload = { message: `🤖 Sync Prompts: 更新提示词看板库 (${promptsData.length}条)`, content: base64Content };
+            const payload = { message: `🤖 Sync: 移动端看板同步 (${promptsData.length}条)`, content: base64Content };
             if (sha) payload.sha = sha;
 
             const resPut = await fetch(url, { method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!resPut.ok) throw new Error(`HTTP 状态码: ${resPut.status}`);
+            if (!resPut.ok) throw new Error(`HTTP: ${resPut.status}`);
             
-            updateStatus('云端同步成功！数据已完美归档。');
+            updateStatus('同步完毕！');
             gitModal.style.display = 'none';
         } catch (err) {
-            updateStatus(`上传失败: ${err.message}`, true);
+            updateStatus('同步失败', true);
         } finally {
             uploadBtn.disabled = false;
-            uploadBtn.innerText = '立即安全同步';
+            uploadBtn.innerText = '安全同步';
         }
     }
 
