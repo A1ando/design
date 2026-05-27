@@ -202,9 +202,11 @@
 
     let currentPreviewUrl = null; // 记录当前预览的URL
 
-    // 递归获取所有 .html 文件，排除指定文件
-    async function getAllHtmlFiles(path = '') {
-        const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(path)}`;
+    // 替换原有的递归 getAllHtmlFiles 逻辑，改用 GitHub Tree API（仅消耗 1 次 API 额度）
+    async function getAllHtmlFiles() {
+        // 使用 /git/trees/main?recursive=1 获取整个分支的完整树状结构
+        // 如果你的默认分支不是 main（比如是 master），请将下面 url 中的 main 改为 master
+        const url = `https://api.github.com/repos/${OWNER}/${REPO}/git/trees/main?recursive=1`;
         const response = await fetch(url, {
             headers: { 'Accept': 'application/vnd.github.v3+json' }
         });
@@ -212,20 +214,25 @@
             const err = await response.text();
             throw new Error(`API 请求失败 (${response.status}): ${err.slice(0, 100)}`);
         }
-        const items = await response.json();
+        const data = await response.json();
         let results = [];
-        for (const item of items) {
-            if (item.type === 'file' && item.name.endsWith('.html')) {
-                if (EXCLUDED.includes(item.name)) continue;
-                const pagesUrl = `https://${OWNER}.github.io/${REPO}/${item.path}`;
-                results.push({
-                    path: item.path,
-                    name: item.name,
-                    url: pagesUrl
-                });
-            } else if (item.type === 'dir') {
-                const subFiles = await getAllHtmlFiles(item.path);
-                results.push(...subFiles);
+        
+        // 这里的 data.tree 是全量扁平数组
+        if (data.tree && Array.isArray(data.tree)) {
+            for (const item of data.tree) {
+                // 筛选出类型为 blob (文件) 且以 .html 结尾的数据
+                if (item.type === 'blob' && item.path.endsWith('.html')) {
+                    // 获取文件名
+                    const name = item.path.split('/').pop();
+                    if (EXCLUDED.includes(name)) continue;
+                    
+                    const pagesUrl = `https://${OWNER}.github.io/${REPO}/${item.path}`;
+                    results.push({
+                        path: item.path,
+                        name: name,
+                        url: pagesUrl
+                    });
+                }
             }
         }
         return results;
