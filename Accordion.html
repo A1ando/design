@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>趣链科技 - 我们的优势手风琴效果</title>
+    <style>
+        /* 基础样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+            background-color: #ffffff;
+            color: #333;
+            padding: 80px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 标题部分 */
+        .section-title {
+            font-size: 28px;
+            font-weight: 500;
+            color: #1a1a1a;
+            margin-bottom: 60px;
+            letter-spacing: 2px;
+        }
+
+        /* 主容器 */
+        .advantages-container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* 两排之间的间距 */
+        }
+
+        /* 每一排的布局 */
+        .card-row {
+            display: flex;
+            width: 100%;
+            gap: 20px; /* 卡片之间的横向间距 */
+        }
+
+        /* 卡片基础样式 */
+        .advantage-card {
+            height: 280px; /* 固定高度，与原网一致 */
+            border-radius: 4px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            
+            /* 关键：设置背景和宽度的平滑过渡 */
+            transition: flex 0.6s cubic-bezier(0.25, 1, 0.5, 1), background 0.4s ease;
+            
+            /* 模拟原网站的轻微科技蓝色调蒙版 */
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* 为每张卡片配置符合截图内容的模拟科技背景图 */
+        .card-1 { background-image: linear-gradient(rgba(215, 230, 245, 0.85), rgba(215, 230, 245, 0.85)), url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80'); }
+        .card-2 { background-image: linear-gradient(rgba(215, 230, 245, 0.85), rgba(215, 230, 245, 0.85)), url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80'); }
+        .card-3 { background-image: linear-gradient(rgba(215, 230, 245, 0.85), rgba(215, 230, 245, 0.85)), url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80'); }
+        .card-4 { background-image: linear-gradient(rgba(215, 230, 245, 0.85), rgba(215, 230, 245, 0.85)), url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80'); }
+
+        /* 初始比例控制 (第一排 3:7，第二排 7:3) */
+        .row-1 .card-1 { flex: 3; }
+        .row-1 .card-2 { flex: 7; }
+        .row-2 .card-3 { flex: 7; }
+        .row-2 .card-4 { flex: 3; }
+
+        /* 内容基本样式与动画过渡 */
+        .card-number {
+            font-size: 56px;
+            font-weight: bold;
+            color: rgba(0, 0, 0, 0.05); /* 初始状态数字非常淡，呈半透明 */
+            line-height: 1;
+            margin-bottom: 10px;
+            transition: color 0.4s ease;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #222;
+            margin-bottom: 15px;
+            white-space: nowrap; /* 防止缩窄时标题换行难看 */
+            transition: color 0.4s ease;
+        }
+
+        .card-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            max-width: 480px;
+            transition: color 0.4s ease;
+        }
+
+        /* ==================== 核心手风琴伸缩动效 ==================== */
+
+        /* 当鼠标悬停在【第一排】时 */
+        .row-1:hover .advantage-card {
+            /* 默认让没被悬停的卡片缩小到 3 */
+            flex: 3; 
+        }
+        .row-1 .advantage-card:hover {
+            /* 被鼠标悬停的卡片瞬间放大到 7 */
+            flex: 7; 
+            
+            /* 改变背景蒙版：变暗变蓝，还原截图2效果 */
+            background-image: linear-gradient(rgba(10, 35, 66, 0.85), rgba(10, 35, 66, 0.85)), url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80');
+        }
+
+        /* 当【第一排卡片2】悬停时（更换对应的深色背景） */
+        .row-1 .card-2:hover {
+            background-image: linear-gradient(rgba(10, 35, 66, 0.85), rgba(10, 35, 66, 0.85)), url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80');
+        }
+
+        /* 当鼠标悬停在【第二排】时 */
+        .row-2:hover .advantage-card {
+            flex: 3;
+        }
+        .row-2 .advantage-card:hover {
+            flex: 7;
+        }
+        .row-2 .card-3:hover {
+            background-image: linear-gradient(rgba(10, 35, 66, 0.85), rgba(10, 35, 66, 0.85)), url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80');
+        }
+        .row-2 .card-4:hover {
+            background-image: linear-gradient(rgba(10, 35, 66, 0.85), rgba(10, 35, 66, 0.85)), url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80');
+        }
+
+        /* 被悬停卡片内部的文字反白与数字高亮 */
+        .advantage-card:hover .card-number {
+            color: rgba(255, 255, 255, 0.15); /* 数字稍微变亮 */
+        }
+        .advantage-card:hover .card-title {
+            color: #ffffff; /* 标题变白 */
+        }
+        .advantage-card:hover .card-desc {
+            color: rgba(255, 255, 255, 0.8); /* 描述变白 */
+        }
+
+    </style>
+</head>
+<body>
+
+    <h2 class="section-title">手风琴（Accordion）伸缩布局效果</h2>
+    <div> <p style="text-align: left"><b>核心交互逻辑：</b><br></p>
+初始状态（图1）：
+
+第一排的卡片 1 和卡片 2 并不是等宽的。卡片 1 比较窄（占比约 30%），卡片 2 比较宽（占比约 70%）。<br>
+
+第二排的卡片 3 和卡片 4 同理，卡片 3 占 70%，卡片 4 占 30%（呈现交错对齐的美感）。<br>
+
+<b>悬停状态（图2 - 鼠标移到卡片 1 上）：<br></b>
+
+卡片 1 受到鼠标悬停，宽度迅速动态拉伸，从 30% 变成 70%。
+
+与此同时，同排的卡片 2 被向右挤压挤窄，宽度从 70% 缩减到 30%（文字也随之换行）。
+
+
+整体总宽度（100%）保持不变，卡片 1 的图片背景变暗，文字反白。<br>
+<br>
+这种效果如果用 Flex 布局的 flex 属性（或者 width 属性）配合 transition 来实现是最完美的
+</div>
+    
+    <div class="advantages-container">
+        
+        <div class="card-row row-1">
+            <div class="advantage-card card-1">
+                <div class="card-number">01</div>
+                <h3 class="card-title">完备的商业化指导</h3>
+                <p class="card-desc">充足的资金储备与客户资源,为项目方制定战略方案,助力项目商业化落地。</p>
+            </div>
+            <div class="advantage-card card-2">
+                <div class="card-number">02</div>
+                <h3 class="card-title">专业的技术和市场支持</h3>
+                <p class="card-desc">专业的区块链技术和市场推广支持,帮助项目方扩大市场份额、提升品牌知名度。</p>
+            </div>
+        </div>
+
+        <div class="card-row row-2">
+            <div class="advantage-card card-3">
+                <div class="card-number">03</div>
+                <h3 class="card-title">丰富的海内外客户资源</h3>
+                <p class="card-desc">连接海内外优秀的项目品牌,依托丰富的行业资源为项目方提供商业 拓展的机会。</p>
+            </div>
+            <div class="advantage-card card-4">
+                <div class="card-number">04</div>
+                <h3 class="card-title">国内法规合规指导</h3>
+                <p class="card-desc">为初创团队提供合规和法律支持,确保项目安全平稳的可持续发展。</p>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
