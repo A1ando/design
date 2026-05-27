@@ -7,7 +7,6 @@
     <style>
         * {
             box-sizing: border-box;
-            user-select: none; /* 避免拖拽时选中文字 */
         }
 
         /* 主题变量（深色默认） */
@@ -28,6 +27,8 @@
             --btn-danger: #6e2e2e;
             --preview-bg: white;
             --preview-text: black;
+            --line-number-bg: #161b22;
+            --line-number-text: #8b949e;
         }
 
         body.light {
@@ -47,6 +48,8 @@
             --btn-danger: #cf222e;
             --preview-bg: white;
             --preview-text: black;
+            --line-number-bg: #f6f8fa;
+            --line-number-text: #57606a;
         }
 
         body {
@@ -124,7 +127,7 @@
             padding: 0.3rem 0.6rem;
         }
 
-        /* 主工作区 - 可拖拽布局 */
+        /* 主工作区 - 拖拽布局 */
         .main-panel {
             display: flex;
             flex: 1;
@@ -132,18 +135,19 @@
             position: relative;
         }
 
-        /* 编辑器容器 */
+        /* 编辑器容器（默认占比 40%） */
         .editor-container {
-            width: 50%;
+            width: 40%;
             display: flex;
             flex-direction: column;
             background: var(--bg-editor);
             min-width: 200px;
             overflow: hidden;
+            position: relative;
         }
-        /* 预览容器 */
+        /* 预览容器（默认占比 60%） */
         .preview-container {
-            width: 50%;
+            width: 60%;
             display: flex;
             flex-direction: column;
             background: var(--preview-bg);
@@ -172,6 +176,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            user-select: none;
         }
         .clear-btn {
             background: var(--btn-danger);
@@ -182,27 +187,77 @@
             color: white;
             cursor: pointer;
         }
+        
+        /* 带有行号的编辑器核心样式 */
         .code-container {
             flex: 1;
             padding: 12px;
             background: var(--bg-editor);
+            display: flex;
+            position: relative;
+            overflow: hidden;
         }
-        textarea {
+        
+        /* 拖拽文件进入时的遮罩提示层 */
+        .drag-overlay {
+            display: none;
+            position: absolute;
+            top: 12px; left: 12px; right: 12px; bottom: 12px;
+            background: rgba(31, 111, 235, 0.15);
+            border: 2px dashed #1f6feb;
+            border-radius: 12px;
+            z-index: 5;
+            justify-content: center;
+            align-items: center;
+            color: #58a6ff;
+            font-weight: bold;
+            font-size: 1.1rem;
+            pointer-events: none;
+        }
+        .code-container.drag-over .drag-overlay {
+            display: flex;
+        }
+
+        .editor-wrapper {
+            display: flex;
             width: 100%;
             height: 100%;
-            background: var(--bg-input);
-            color: var(--text-primary);
             border: 1px solid var(--border-color);
             border-radius: 12px;
+            overflow: hidden;
+            background: var(--bg-input);
+        }
+
+        /* 行号列 */
+        .line-numbers {
+            width: 40px;
+            background: var(--line-number-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 1rem 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            text-align: right;
+            padding-right: 8px;
+            color: var(--line-number-text);
+            overflow: hidden;
+            user-select: none;
+        }
+
+        textarea {
+            flex: 1;
+            height: 100%;
+            background: transparent;
+            color: var(--text-primary);
+            border: none;
             padding: 1rem;
             font-family: 'Fira Code', monospace;
             font-size: 13px;
             line-height: 1.5;
             resize: none;
             outline: none;
-        }
-        textarea:focus {
-            border-color: #58a6ff;
+            overflow-y: auto;
+            white-space: pre;
         }
 
         .iframe-wrapper {
@@ -227,6 +282,7 @@
             padding: 0.5rem 1rem;
             background: var(--bg-sidebar);
             border-bottom: 1px solid var(--border-color);
+            user-select: none;
         }
         .open-new-btn {
             background: none;
@@ -298,10 +354,6 @@
             border: none;
             cursor: pointer;
         }
-        .modal-actions button.load {
-            background: var(--btn-secondary);
-            color: white;
-        }
         .modal-actions button.save {
             background: var(--btn-primary);
             color: white;
@@ -316,8 +368,8 @@
 
 <div class="header">
     <div class="title">
-        <h1>📄 HTML 沙盒 · 即时预览 + GitHub 版本控制</h1>
-        <p>粘贴代码 | 实时渲染 | 保存到仓库（带描述）</p>
+        <h1> HTML 沙盒 </h1>
+        <p>粘贴或拖拽文件 | 实时渲染 | 保存到仓库</p>
     </div>
     <div class="right-area">
         <div class="status-msg" id="statusMsg">✅ 就绪</div>
@@ -332,8 +384,12 @@
             <span>✏️ HTML 代码编辑器</span>
             <button class="clear-btn" id="clearBtn">🗑️ 清空</button>
         </div>
-        <div class="code-container">
-            <textarea id="htmlCode" spellcheck="false" placeholder=""></textarea>
+        <div class="code-container" id="dropZone">
+            <div class="drag-overlay">📥 松开鼠标导入文件内容</div>
+            <div class="editor-wrapper">
+                <div class="line-numbers" id="lineNumbers">1</div>
+                <textarea id="htmlCode" spellcheck="false" placeholder=""></textarea>
+            </div>
         </div>
     </div>
     <div class="resizer" id="resizer"></div>
@@ -381,6 +437,7 @@
 <script>
     // DOM 元素
     const htmlCodeArea = document.getElementById('htmlCode');
+    const lineNumbersEle = document.getElementById('lineNumbers');
     const previewFrame = document.getElementById('previewFrame');
     const statusDiv = document.getElementById('statusMsg');
     const settingsBtn = document.getElementById('settingsBtn');
@@ -390,6 +447,11 @@
     const saveAndUploadBtn = document.getElementById('saveAndUploadBtn');
     const openNewTabBtn = document.getElementById('openNewTabBtn');
     const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const dropZone = document.getElementById('dropZone');
+    
+    const editorContainer = document.getElementById('editorContainer');
+    const previewContainer = document.getElementById('previewContainer');
+    const resizer = document.getElementById('resizer');
     
     // 弹窗内的输入框
     const tokenInput = document.getElementById('githubToken');
@@ -398,40 +460,11 @@
     const filePathInput = document.getElementById('filePath');
     const commitMsgTextarea = document.getElementById('commitMessage');
 
-    // 存储当前配置
-    let currentConfig = {
-        token: '',
-        owner: 'A1ando',
-        repo: 'design',
-        filePath: '',
-        commitMessage: ''
-    };
+    let currentConfig = { token: '', owner: 'A1ando', repo: 'design', filePath: '', commitMessage: '' };
 
-    // ---------- 主题切换 ----------
-    function initTheme() {
-        const savedTheme = localStorage.getItem('preview_theme');
-        if (savedTheme === 'light') {
-            document.body.classList.add('light');
-        } else {
-            document.body.classList.remove('light');
-        }
-    }
-    function toggleTheme() {
-        if (document.body.classList.contains('light')) {
-            document.body.classList.remove('light');
-            localStorage.setItem('preview_theme', 'dark');
-        } else {
-            document.body.classList.add('light');
-            localStorage.setItem('preview_theme', 'light');
-        }
-    }
-    themeToggleBtn.addEventListener('click', toggleTheme);
-
-    // ---------- 拖拽调整比例 ----------
-    const editorContainer = document.getElementById('editorContainer');
-    const previewContainer = document.getElementById('previewContainer');
-    const resizer = document.getElementById('resizer');
+    // ---------- 1. 默认屏占比与动态拖拽布局 ----------
     let startX, startEditorWidth, startPreviewWidth;
+    
     function onMouseMove(e) {
         const containerRect = document.getElementById('mainPanel').getBoundingClientRect();
         const newEditorWidth = e.clientX - containerRect.left - (resizer.offsetWidth / 2);
@@ -440,31 +473,26 @@
             previewContainer.style.width = (containerRect.width - newEditorWidth - resizer.offsetWidth) + 'px';
         }
     }
+    
     function onMouseUp() {
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
-        // 保存比例
         const mainRect = document.getElementById('mainPanel').getBoundingClientRect();
-        const editorWidth = editorContainer.offsetWidth;
-        const ratio = editorWidth / mainRect.width;
-        localStorage.setItem('editor_ratio', ratio);
+        localStorage.setItem('editor_ratio', editorContainer.offsetWidth / mainRect.width);
     }
-    function initResizer() {
-        const savedRatio = localStorage.getItem('editor_ratio');
-        if (savedRatio) {
-            const mainRect = document.getElementById('mainPanel').getBoundingClientRect();
-            const newEditorWidth = mainRect.width * parseFloat(savedRatio);
-            if (newEditorWidth > 150 && newEditorWidth < mainRect.width - 150) {
-                editorContainer.style.width = newEditorWidth + 'px';
-                previewContainer.style.width = (mainRect.width - newEditorWidth - resizer.offsetWidth) + 'px';
-            }
-        }
+    
+    function initLayout() {
+        const mainRect = document.getElementById('mainPanel').getBoundingClientRect();
+        const savedRatio = localStorage.getItem('editor_ratio') || 0.4;
+        const newEditorWidth = mainRect.width * parseFloat(savedRatio);
+        
+        editorContainer.style.width = newEditorWidth + 'px';
+        previewContainer.style.width = (mainRect.width - newEditorWidth - resizer.offsetWidth) + 'px';
+
         resizer.addEventListener('mousedown', (e) => {
             startX = e.clientX;
-            startEditorWidth = editorContainer.offsetWidth;
-            startPreviewWidth = previewContainer.offsetWidth;
             document.body.style.cursor = 'ew-resize';
             document.body.style.userSelect = 'none';
             document.addEventListener('mousemove', onMouseMove);
@@ -473,13 +501,85 @@
         });
     }
 
-    // ---------- 辅助函数 ----------
+    // ---------- 2. 编辑器行号生成及同步滚动 ----------
+    function updateLineNumbers() {
+        const lines = htmlCodeArea.value.split('\n');
+        const lineCount = Math.max(1, lines.length);
+        let arr = [];
+        for (let i = 1; i <= lineCount; i++) {
+            arr.push(i);
+        }
+        lineNumbersEle.innerHTML = arr.join('<br>');
+    }
+
+    htmlCodeArea.addEventListener('scroll', () => {
+        lineNumbersEle.scrollTop = htmlCodeArea.scrollTop;
+    });
+
+    // ---------- 3. 文件拖拽读取系统 ----------
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+            const file = files[0];
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            const allowedExtensions = ['html', 'txt', 'json', 'md'];
+
+            if (allowedExtensions.includes(fileExtension)) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    htmlCodeArea.value = event.target.result;
+                    updateLineNumbers();
+                    updatePreview();
+                    showStatus(`📂 已成功导入本地文件: ${file.name}`);
+                };
+                reader.readAsText(file);
+            } else {
+                showStatus('❌ 仅支持拖拽扩展名为 .html, .txt, .json, .md 的文本文件', true);
+            }
+        }
+    });
+
+    // ---------- 4. 优化：取消确认直接清空 ----------
+    function clearEditor() {
+        htmlCodeArea.value = '';
+        updateLineNumbers();
+        updatePreview();
+        showStatus('🧹 内容已清空');
+    }
+
+    // ---------- 5. 修正后的统一状态输出通知逻辑 ----------
+    // 全局当前唯一的有效状态文本（不带HTML标签纯文本比较，防止BUG产生）
+    let activeStatusText = ''; 
+
     function showStatus(msg, isError = false) {
+        // 提取可能带有的HTML标签，留作清除比对时的参照
+        const div = document.createElement('div');
+        div.innerHTML = msg;
+        activeStatusText = div.textContent || div.innerText;
+
         statusDiv.innerHTML = isError ? `❌ ${msg}` : `✅ ${msg}`;
         statusDiv.style.color = isError ? '#f85149' : '#7ee787';
+
+        // 4秒后如果当前没有更新的状态覆盖，则恢复到默认“就绪”
         setTimeout(() => {
-            if (statusDiv.innerHTML === `✅ ${msg}` || statusDiv.innerHTML === `❌ ${msg}`) {
-                statusDiv.style.color = '#b1bac4';
+            if (statusDiv.textContent.includes(activeStatusText)) {
+                const isLight = document.body.classList.contains('light');
+                statusDiv.style.color = isLight ? '#1a7f37' : '#7ee787';
                 statusDiv.innerHTML = '✅ 就绪';
             }
         }, 4000);
@@ -488,223 +588,118 @@
     function normalizeFilePath(path) {
         let trimmed = path.trim();
         if (!trimmed) return '';
-        if (!trimmed.toLowerCase().endsWith('.html')) {
-            return trimmed + '.html';
-        }
-        return trimmed;
+        return trimmed.toLowerCase().endsWith('.html') ? trimmed : trimmed + '.html';
     }
 
     function utf8ToBase64(str) {
-        const encoder = new TextEncoder();
-        const bytes = encoder.encode(str);
-        let binary = '';
-        for (let i = 0; i < bytes.length; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
-        return btoa(binary);
+        return btoa(String.fromCharCode(...new TextEncoder().encode(str)));
     }
 
     async function getExistingFileSha(owner, repo, path, token) {
         const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
-        if (response.status === 200) {
-            const data = await response.json();
-            return data.sha;
-        } else if (response.status === 404) {
-            return null;
-        } else {
-            throw new Error(`获取文件信息失败 (${response.status})`);
-        }
+        const response = await fetch(url, { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } });
+        if (response.status === 200) return (await response.json()).sha;
+        if (response.status === 404) return null;
+        throw new Error(`获取文件异常 (${response.status})`);
     }
 
     async function saveToGitHub(owner, repo, path, content, commitMessage, token) {
         const sha = await getExistingFileSha(owner, repo, path, token);
-        const encodedContent = utf8ToBase64(content);
         const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
-        const payload = {
-            message: commitMessage,
-            content: encodedContent
-        };
+        const payload = { message: commitMessage, content: utf8ToBase64(content) };
         if (sha) payload.sha = sha;
+        
         const response = await fetch(url, {
             method: 'PUT',
-            headers: {
-                'Authorization': `token ${token}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/vnd.github.v3+json'
-            },
+            headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
             body: JSON.stringify(payload)
         });
-        if (!response.ok) {
-            const errData = await response.text();
-            throw new Error(`保存失败 ${response.status}: ${errData.slice(0, 150)}`);
-        }
+        if (!response.ok) throw new Error(`上传失败 ${response.status}: ${await response.text()}`);
         return await response.json();
     }
 
     function updatePreview() {
         const code = htmlCodeArea.value;
-        const iframe = previewFrame;
         try {
-            const doc = iframe.contentDocument || iframe.contentWindow.document;
-            doc.open();
-            doc.write(code);
-            doc.close();
+            const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+            doc.open(); doc.write(code); doc.close();
         } catch (err) {
-            iframe.srcdoc = code;
+            previewFrame.srcdoc = code;
         }
-    }
-
-    function clearEditor() {
-        if (confirm('确定要清空所有代码吗？')) {
-            htmlCodeArea.value = '';
-            updatePreview();
-            showStatus('代码已清空');
-        }
-    }
-
-    function saveConfigToLocal() {
-        localStorage.setItem('parser_config', JSON.stringify(currentConfig));
     }
 
     function loadConfigFromLocal() {
         const saved = localStorage.getItem('parser_config');
         if (saved) {
             try {
-                const cfg = JSON.parse(saved);
-                currentConfig = cfg;
-                tokenInput.value = cfg.token || '';
-                ownerInput.value = cfg.owner || 'A1ando';
-                repoNameInput.value = cfg.repo || 'design';
-                filePathInput.value = cfg.filePath || '';
-                commitMsgTextarea.value = cfg.commitMessage || '';
-            } catch(e) {}
-        } else {
-            ownerInput.value = 'A1ando';
-            repoNameInput.value = 'design';
-            filePathInput.value = '';
-            commitMsgTextarea.value = '';
-            currentConfig.owner = 'A1ando';
-            currentConfig.repo = 'design';
-            currentConfig.filePath = '';
-            currentConfig.commitMessage = '';
+                currentConfig = JSON.parse(saved);
+                tokenInput.value = currentConfig.token || '';
+                ownerInput.value = currentConfig.owner || 'A1ando';
+                repoNameInput.value = currentConfig.repo || 'design';
+                filePathInput.value = currentConfig.filePath || '';
+                commitMsgTextarea.value = currentConfig.commitMessage || '';
+            } catch(e){}
         }
-    }
-
-    function saveSettingsOnly() {
-        currentConfig.token = tokenInput.value.trim();
-        currentConfig.owner = ownerInput.value.trim();
-        currentConfig.repo = repoNameInput.value.trim();
-        currentConfig.filePath = filePathInput.value.trim();
-        currentConfig.commitMessage = commitMsgTextarea.value.trim();
-        saveConfigToLocal();
-    }
-
-    function isConfigValid() {
-        if (!currentConfig.token || !currentConfig.owner || !currentConfig.repo) {
-            showStatus('请填写 Token、仓库所有者及仓库名称', true);
-            return false;
-        }
-        if (!currentConfig.filePath) {
-            showStatus('请填写文件路径', true);
-            return false;
-        }
-        return true;
     }
 
     async function handleSaveAndUpload() {
-        saveSettingsOnly();
-        if (!isConfigValid()) return;
+        currentConfig = { token: tokenInput.value.trim(), owner: ownerInput.value.trim(), repo: repoNameInput.value.trim(), filePath: filePathInput.value.trim(), commitMessage: commitMsgTextarea.value.trim() };
+        localStorage.setItem('parser_config', JSON.stringify(currentConfig));
         
-        let filePathToSave = normalizeFilePath(currentConfig.filePath);
-        const htmlContent = htmlCodeArea.value;
-        if (!htmlContent.trim()) {
-            if (!confirm('代码为空，确定保存吗？')) return;
-        }
-        const commitMsg = currentConfig.commitMessage || '更新 HTML 内容';
+        if (!currentConfig.token || !currentConfig.filePath) { showStatus('密码/Token 及文件路径不能为空', true); return; }
         
+        let path = normalizeFilePath(currentConfig.filePath);
         saveAndUploadBtn.disabled = true;
-        const originalText = saveAndUploadBtn.innerText;
         saveAndUploadBtn.innerText = '⏳ 上传中...';
+        
+        // 同步修改右上角的全局状态为 “正在上传”
+        showStatus(`正在上传文件至仓库 ${currentConfig.owner}/${currentConfig.repo}...`);
+
         try {
-            const result = await saveToGitHub(
-                currentConfig.owner,
-                currentConfig.repo,
-                filePathToSave,
-                htmlContent,
-                commitMsg,
-                currentConfig.token
-            );
-            const commitUrl = result.commit.html_url || `https://github.com/${currentConfig.owner}/${currentConfig.repo}/commit/${result.commit.sha}`;
-            showStatus(`保存成功！版本: "${commitMsg}" → <a href="${commitUrl}" target="_blank" style="color:#58a6ff;">查看提交</a>`, false);
+            const result = await saveToGitHub(currentConfig.owner, currentConfig.repo, path, htmlCodeArea.value, currentConfig.commitMessage || '更新 HTML 内容', currentConfig.token);
+            // 成功：将带有提交链接的高亮通知立刻打到右上角 “就绪” 状态栏上，并在 4 秒后自动恢复为 “✅ 就绪”
+            showStatus(`上传成功！<a href="${result.commit.html_url}" target="_blank" style="color:#58a6ff;text-decoration:underline;">查看提交</a>`);
             modal.style.display = 'none';
         } catch (err) {
-            showStatus(`保存失败: ${err.message}`, true);
+            showStatus(err.message, true);
         } finally {
-            saveAndUploadBtn.disabled = false;
-            saveAndUploadBtn.innerText = originalText;
+            saveAndUploadBtn.disabled = false; 
+            saveAndUploadBtn.innerText = '保存并上传';
         }
     }
 
-    function openModal() {
-        tokenInput.value = currentConfig.token;
-        ownerInput.value = currentConfig.owner;
-        repoNameInput.value = currentConfig.repo;
-        filePathInput.value = currentConfig.filePath;
-        commitMsgTextarea.value = currentConfig.commitMessage;
-        modal.style.display = 'flex';
-    }
-    function closeModal() {
-        modal.style.display = 'none';
-    }
-
-    // 修复后的新标签页打开逻辑
     function openInNewTab() {
         const code = htmlCodeArea.value;
         if (code.trim()) {
-            // 使用 Blob 动态生成临时的网页 URL，避免 about:blank 无法打开的问题
             const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
-            const blobUrl = URL.createObjectURL(blob);
-            window.open(blobUrl, '_blank');
+            window.open(URL.createObjectURL(blob), '_blank');
         } else {
-            showStatus('没有可打开的预览页面，请先编辑代码', true);
+            showStatus('没有可导出的内容', true);
         }
     }
 
-    // 初始化内容
-    htmlCodeArea.value = '';
-    updatePreview();
-
+    // ---------- 事件监听及初始化 ----------
     let previewTimeout;
     htmlCodeArea.addEventListener('input', () => {
+        updateLineNumbers();
         clearTimeout(previewTimeout);
         previewTimeout = setTimeout(updatePreview, 30);
     });
 
-    // 事件绑定
-    settingsBtn.addEventListener('click', openModal);
-    cancelModalBtn.addEventListener('click', closeModal);
+    settingsBtn.addEventListener('click', () => modal.style.display = 'flex');
+    cancelModalBtn.addEventListener('click', () => modal.style.display = 'none');
     saveAndUploadBtn.addEventListener('click', handleSaveAndUpload);
     clearBtn.addEventListener('click', clearEditor);
     openNewTabBtn.addEventListener('click', openInNewTab);
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-    });
+    window.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
 
-    // 初始化配置
+    // 执行加载
+    htmlCodeArea.value = '';
+    updateLineNumbers();
+    updatePreview();
     loadConfigFromLocal();
     initTheme();
-    initResizer();
-    if (currentConfig.token && currentConfig.owner && currentConfig.repo && currentConfig.filePath) {
-        showStatus('配置已加载，可在设置中保存或加载文件');
-    } else {
-        showStatus('请点击「上传」完成 GitHub 配置');
-    }
+    initLayout();
 </script>
 </body>
 </html>
