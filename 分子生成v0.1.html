@@ -1,0 +1,2152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MolDesigner - Scaffold Constrained Small Molecule Generation</title>
+    <style>
+        :root {
+            --blue-50: #eff6ff;
+            --blue-100: #dbeafe;
+            --blue-200: #bfdbfe;
+            --blue-300: #93c5fd;
+            --blue-400: #60a5fa;
+            --blue-500: #3b82f6;
+            --blue-600: #2563eb;
+            --blue-700: #1d4ed8;
+            --blue-800: #1e40af;
+            --blue-900: #1e3a8a;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --white: #ffffff;
+            --radius: 16px;
+            --radius-sm: 8px;
+            --radius-xs: 6px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.2s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #f1f5f9;
+            color: var(--gray-800);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Top Navigation */
+        .topbar {
+            height: 56px;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-sm);
+        }
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand-icon {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+            border-radius: var(--radius-xs);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: -0.5px;
+            flex-shrink: 0;
+        }
+        .brand-text {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--gray-900);
+            letter-spacing: -0.3px;
+        }
+        .brand-sub {
+            font-size: 11px;
+            color: var(--gray-500);
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .topbar-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--gray-200);
+            background: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-600);
+            transition: var(--transition);
+            position: relative;
+            font-size: 16px;
+        }
+        .topbar-btn:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-300);
+            color: var(--gray-900);
+        }
+        .badge-dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+            border: 1.5px solid white;
+        }
+        .avatar-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--blue-400), var(--blue-600));
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        .avatar-btn:hover {
+            box-shadow: var(--shadow-md);
+            transform: scale(1.03);
+        }
+
+        /* Main Layout */
+        .app-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 200px;
+            background: var(--white);
+            border-right: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            padding: 12px 8px;
+            gap: 2px;
+            box-shadow: var(--shadow-sm);
+            z-index: 50;
+        }
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--gray-600);
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            border: 1.5px solid transparent;
+            position: relative;
+            user-select: none;
+        }
+        .sidebar-item:hover {
+            background: var(--gray-50);
+            color: var(--gray-900);
+        }
+        .sidebar-item.active {
+            background: var(--blue-50);
+            color: var(--blue-700);
+            border-color: var(--blue-200);
+            font-weight: 600;
+        }
+        .sidebar-item .icon {
+            font-size: 18px;
+            width: 22px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .sidebar-divider {
+            height: 1px;
+            background: var(--gray-200);
+            margin: 8px 12px;
+            border-radius: 1px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+        .main-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .main-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .main-content::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 3px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--white);
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+        .card:hover {
+            box-shadow: var(--shadow);
+        }
+        .card-header {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--gray-900);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-flat {
+            border: none;
+            box-shadow: none;
+            background: transparent;
+        }
+
+        /* Module Card */
+        .module-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            border: 2px solid transparent;
+            padding: 20px 24px;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            max-width: 500px;
+        }
+        .module-card:hover {
+            border-color: var(--blue-300);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+            background: var(--blue-50);
+        }
+        .module-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--blue-100), var(--blue-200));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            color: var(--blue-700);
+        }
+        .module-info h3 {
+            font-size: 15px;
+            color: var(--gray-900);
+            font-weight: 600;
+        }
+        .module-info p {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 2px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-300);
+            background: var(--white);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: var(--transition);
+            color: var(--gray-700);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            user-select: none;
+        }
+        .btn:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+        .btn-primary {
+            background: var(--blue-600);
+            color: white;
+            border-color: var(--blue-600);
+        }
+        .btn-primary:hover {
+            background: var(--blue-700);
+            border-color: var(--blue-700);
+            color: white;
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: var(--radius-xs);
+        }
+        .btn-ghost {
+            background: transparent;
+            border-color: transparent;
+            color: var(--gray-600);
+        }
+        .btn-ghost:hover {
+            background: var(--gray-100);
+            border-color: transparent;
+        }
+        .btn-outline-blue {
+            border-color: var(--blue-300);
+            color: var(--blue-700);
+            background: var(--white);
+        }
+        .btn-outline-blue:hover {
+            background: var(--blue-50);
+            border-color: var(--blue-500);
+        }
+        .btn-outline-blue.active-preset {
+            background: var(--blue-100);
+            border-color: var(--blue-500);
+            color: var(--blue-800);
+            font-weight: 600;
+        }
+
+        /* Inputs */
+        .input {
+            padding: 9px 12px;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--gray-300);
+            font-size: 13px;
+            width: 100%;
+            transition: var(--transition);
+            background: var(--white);
+            color: var(--gray-800);
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+        }
+        .input:focus {
+            outline: none;
+            border-color: var(--blue-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-group .input {
+            padding-right: 42px;
+        }
+        .input-icon-btn {
+            position: absolute;
+            right: 6px;
+            width: 30px;
+            height: 30px;
+            border-radius: var(--radius-xs);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-500);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+        .input-icon-btn:hover {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+        .help-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--gray-200);
+            color: var(--gray-600);
+            font-size: 11px;
+            cursor: help;
+            font-weight: 700;
+            transition: var(--transition);
+        }
+        .help-icon:hover {
+            background: var(--blue-200);
+            color: var(--blue-700);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--gray-200);
+            margin-bottom: 16px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-500);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: var(--transition);
+            user-select: none;
+            white-space: nowrap;
+        }
+        .tab:hover {
+            color: var(--gray-700);
+        }
+        .tab.active {
+            color: var(--blue-700);
+            border-bottom-color: var(--blue-600);
+            font-weight: 600;
+        }
+
+        /* Wizard Steps */
+        .wizard-steps {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .wizard-step {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--gray-400);
+            font-weight: 500;
+        }
+        .wizard-step .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            border: 2px solid var(--gray-300);
+            background: var(--white);
+            transition: var(--transition);
+        }
+        .wizard-step.active .step-num {
+            background: var(--blue-600);
+            border-color: var(--blue-600);
+            color: white;
+        }
+        .wizard-step.completed .step-num {
+            background: #22c55e;
+            border-color: #22c55e;
+            color: white;
+        }
+        .wizard-step.active {
+            color: var(--blue-700);
+            font-weight: 600;
+        }
+        .wizard-step.completed {
+            color: #22c55e;
+        }
+        .wizard-connector {
+            width: 24px;
+            height: 2px;
+            background: var(--gray-300);
+            border-radius: 1px;
+        }
+        .wizard-connector.done {
+            background: #22c55e;
+        }
+
+        /* Slider */
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--gray-200);
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--blue-600);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: var(--shadow);
+        }
+        .slider-value {
+            width: 50px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--gray-800);
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            display: inline-block;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--gray-300);
+            border-radius: 24px;
+            transition: var(--transition);
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        .toggle-switch input:checked+.toggle-slider {
+            background: var(--blue-600);
+        }
+        .toggle-switch input:checked+.toggle-slider::before {
+            transform: translateX(20px);
+        }
+
+        /* Result Cards Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .mol-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            border: 1.5px solid var(--gray-200);
+            padding: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+        }
+        .mol-card:hover {
+            border-color: var(--blue-400);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        .mol-card.selected {
+            border-color: var(--blue-600);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            background: var(--blue-50);
+        }
+        .mol-card .mol-structure {
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        .mol-card .mol-structure svg {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .mol-card .mol-name {
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--gray-800);
+            margin-bottom: 4px;
+        }
+        .mol-card .mol-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+        }
+        .mol-tag {
+            font-size: 10px;
+            padding: 3px 7px;
+            border-radius: 10px;
+            font-weight: 500;
+            background: var(--blue-50);
+            color: var(--blue-700);
+            white-space: nowrap;
+        }
+        .mol-tag.good {
+            background: #dcfce7;
+            color: #15803d;
+        }
+        .mol-tag.warn {
+            background: #fef3c7;
+            color: #a16207;
+        }
+        .mol-check {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid var(--gray-300);
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: transparent;
+            transition: var(--transition);
+        }
+        .mol-card.selected .mol-check {
+            background: var(--blue-600);
+            border-color: var(--blue-600);
+            color: white;
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 10px 12px;
+            background: var(--gray-50);
+            color: var(--gray-600);
+            font-weight: 600;
+            border-bottom: 2px solid var(--gray-200);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .data-table th:hover {
+            color: var(--blue-700);
+        }
+        .data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--gray-100);
+            color: var(--gray-700);
+        }
+        .data-table tr {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .data-table tr:hover td {
+            background: var(--blue-50);
+        }
+        .data-table tr.selected td {
+            background: var(--blue-100);
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .modal {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-xl);
+            max-width: 700px;
+            width: 95%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px;
+            animation: slideUp 0.25s ease;
+        }
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: var(--gray-100);
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        .modal-close:hover {
+            background: var(--gray-200);
+        }
+
+        /* Chemical Space Canvas */
+        .chemspace-container {
+            position: relative;
+            background: #fafbfc;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        .chemspace-container canvas {
+            display: block;
+            width: 100%;
+        }
+
+        /* Radar Chart */
+        .radar-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Pill filter */
+        .pill-filter {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .pill {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1.5px solid var(--gray-300);
+            background: var(--white);
+            transition: var(--transition);
+            user-select: none;
+            white-space: nowrap;
+        }
+        .pill:hover {
+            border-color: var(--blue-400);
+            background: var(--blue-50);
+        }
+        .pill.active {
+            background: var(--blue-600);
+            color: white;
+            border-color: var(--blue-600);
+        }
+
+        /* Tooltip */
+        .tooltip-trigger {
+            position: relative;
+        }
+        .tooltip-content {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gray-900);
+            color: white;
+            padding: 8px 12px;
+            border-radius: var(--radius-xs);
+            font-size: 11px;
+            white-space: normal;
+            width: 260px;
+            z-index: 300;
+            pointer-events: none;
+            text-align: left;
+            line-height: 1.5;
+            box-shadow: var(--shadow-lg);
+        }
+        .tooltip-trigger:hover .tooltip-content {
+            display: block;
+        }
+        .tooltip-content::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: var(--gray-900);
+        }
+
+        /* View toggle */
+        .view-toggle {
+            display: flex;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            border: 1.5px solid var(--gray-300);
+        }
+        .view-toggle-btn {
+            padding: 7px 14px;
+            cursor: pointer;
+            border: none;
+            background: var(--white);
+            font-size: 12px;
+            font-weight: 500;
+            transition: var(--transition);
+            color: var(--gray-600);
+        }
+        .view-toggle-btn.active {
+            background: var(--blue-600);
+            color: white;
+        }
+        .view-toggle-btn:not(.active):hover {
+            background: var(--gray-50);
+        }
+
+        /* Skeleton loading */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: var(--radius-xs);
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Section highlight */
+        .section-badge {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .section-badge.blue {
+            background: var(--blue-100);
+            color: var(--blue-700);
+        }
+        .section-badge.green {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        /* Responsive helper */
+        .flex-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .flex-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .gap-16 {
+            gap: 16px;
+        }
+        .gap-20 {
+            gap: 20px;
+        }
+        .mt-8 {
+            margin-top: 8px;
+        }
+        .mt-16 {
+            margin-top: 16px;
+        }
+        .mb-8 {
+            margin-bottom: 8px;
+        }
+        .mb-16 {
+            margin-bottom: 16px;
+        }
+        .text-sm {
+            font-size: 12px;
+        }
+        .text-xs {
+            font-size: 11px;
+        }
+        .text-muted {
+            color: var(--gray-500);
+        }
+        .font-mono {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 12px;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .w-full {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== TOP BAR ==================== -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="brand-icon">MD</div>
+            <div>
+                <div class="brand-text">MolDesigner</div>
+                <div class="brand-sub">AI-Powered Molecular Design Platform</div>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <button class="topbar-btn tooltip-trigger" title="通知">
+                🔔
+                <span class="badge-dot"></span>
+                <span class="tooltip-content">3条新通知：<br>• 作业 #J2024-089 已完成<br>• 分子对接结果已更新<br>• 系统维护通知</span>
+            </button>
+            <button class="avatar-btn" title="账号管理">U</button>
+        </div>
+    </div>
+
+    <!-- ==================== APP BODY ==================== -->
+    <div class="app-body">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-item active" data-nav="modules">
+                <span class="icon">🧩</span> 模块
+            </div>
+            <div class="sidebar-item" data-nav="workflows">
+                <span class="icon">⚡</span> 流程
+            </div>
+            <div class="sidebar-item" data-nav="data">
+                <span class="icon">📊</span> 数据
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-item" data-nav="jobs">
+                <span class="icon">📋</span> 作业
+                <span style="margin-left:auto;background:var(--blue-100);color:var(--blue-700);font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;">3</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content" id="mainContent">
+            <!-- Default: Modules Page -->
+            <div id="page-modules">
+                <h2 style="font-size:20px;font-weight:700;color:var(--gray-900);">模块中心</h2>
+                <p style="color:var(--gray-500);font-size:13px;margin-bottom:8px;">选择一个分子设计模块开始工作</p>
+                <div class="module-card" onclick="enterScaffoldModule()" style="margin-top:8px;">
+                    <div class="module-icon">🧬</div>
+                    <div class="module-info">
+                        <h3>Scaffold Constrained Small Molecule Generation</h3>
+                        <p>基于骨架约束的小分子生成 — 在固定分子骨架的基础上进行R基替换、骨架重构或全新生成</p>
+                    </div>
+                    <span style="margin-left:auto;color:var(--gray-400);font-size:20px;">→</span>
+                </div>
+                <div style="margin-top:16px;padding:14px 18px;background:var(--gray-50);border-radius:var(--radius-sm);border:1px dashed var(--gray-300);color:var(--gray-500);font-size:12px;">
+                    💡 更多模块即将上线：<span style="color:var(--gray-600);">De Novo Generation</span> · <span style="color:var(--gray-600);">Lead Optimization</span> · <span style="color:var(--gray-600);">ADMET Prediction</span>
+                </div>
+            </div>
+
+            <!-- Scaffold Module Page (hidden by default) -->
+            <div id="page-scaffold-module" style="display:none;flex-direction:column;gap:16px;">
+                <!-- Back button & Title -->
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <button class="btn btn-ghost btn-sm" onclick="goBackToModules()">← 返回模块</button>
+                    <span class="section-badge blue">Scaffold Constrained</span>
+                    <h2 style="font-size:18px;font-weight:700;color:var(--gray-900);">骨架约束小分子生成</h2>
+                </div>
+                <p style="color:var(--gray-500);font-size:12px;margin-top:-8px;">在固定分子骨架上进行R基替换与优化，支持多目标属性约束</p>
+
+                <!-- Tab Navigation -->
+                <div class="tabs" id="scaffoldTabs">
+                    <div class="tab active" data-tab="tab-project">📁 项目</div>
+                    <div class="tab" data-tab="tab-config">⚙️ 分子生成配置</div>
+                    <div class="tab" data-tab="tab-results">🧪 结果展示</div>
+                    <div class="tab" data-tab="tab-analysis">📈 分析与优化</div>
+                </div>
+
+                <!-- Tab: 项目 -->
+                <div class="tab-content" id="tab-project">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                        <!-- Left: Project Creation -->
+                        <div class="card">
+                            <div class="card-header">📝 创建新项目</div>
+                            <!-- Sub-tabs for input method -->
+                            <div class="tabs" style="margin-bottom:12px;" id="inputMethodTabs">
+                                <div class="tab active" data-subtab="smiles-input">SMILES 输入</div>
+                                <div class="tab" data-subtab="sdf-input" style="color:var(--gray-400);cursor:not-allowed;">SDF File <span style="font-size:10px;">(即将上线)</span></div>
+                            </div>
+                            <div id="smiles-input">
+                                <div class="flex-col gap-16">
+                                    <div>
+                                        <label style="font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px;">
+                                            SMILES <span style="color:#ef4444;">*</span>
+                                            <span class="tooltip-trigger">
+                                                <span class="help-icon">?</span>
+                                                <span class="tooltip-content">输入带<b>*</b>的小分子SMILES，<b>*</b>代表生成部分，其他部分固定不变，支持输入多个<b>*</b>。<br>例如：<b>*c1cnc2ccccc2c1</b><br>格式：SMILES</span>
+                                            </span>
+                                        </label>
+                                        <div class="input-group mt-8">
+                                            <input type="text" class="input" id="smilesInput"
+                                            placeholder="c1cnc2ccccc2c1"
+                                            value="*c1cnc2ccccc2c1"
+                                            style="font-family:'SF Mono','Fira Code',Consolas,monospace;">
+                                            <button class="input-icon-btn" title="打开结构式编辑器" onclick="openStructureEditor()">
+                                                ✏️
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label style="font-weight:600;font-size:13px;">任务名称 <span style="color:#ef4444;">*</span></label>
+                                        <input type="text" class="input mt-8" id="taskName" placeholder="例如：喹啉骨架R基优化_v2" value="喹啉骨架R基优化_2024Q1" style="font-family:inherit;">
+                                    </div>
+                                    <div>
+                                        <label style="font-weight:600;font-size:13px;">任务描述 <span style="color:var(--gray-400);font-size:11px;">(选填)</span></label>
+                                        <textarea class="input mt-8" id="taskDesc" placeholder="描述本次生成的目标和约束条件..." rows="3" style="font-family:inherit;resize:vertical;">针对喹啉骨架进行R基团优化，目标提升CDK2抑制活性并保持良好的类药性</textarea>
+                                    </div>
+                                    <div style="display:flex;gap:10px;">
+                                        <button class="btn btn-primary" onclick="submitProject()">🚀 提交项目</button>
+                                        <button class="btn" onclick="resetProjectForm()">🔄 重置</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="sdf-input" style="display:none;">
+                                <p style="color:var(--gray-400);text-align:center;padding:30px;">SDF文件上传功能即将上线，敬请期待</p>
+                            </div>
+                        </div>
+                        <!-- Right: Recent Jobs -->
+                        <div class="card">
+                            <div class="card-header">📋 近期作业列表</div>
+                            <div style="max-height:350px;overflow-y:auto;">
+                                <table class="data-table">
+                                    <thead><tr><th>任务名称</th><th>状态</th><th>创建时间</th><th></th></tr></thead>
+                                    <tbody>
+                                        <tr onclick="viewJobResult('J2024-089')" style="cursor:pointer;">
+                                            <td style="font-weight:500;">喹啉骨架R基优化_v1</td>
+                                            <td><span style="background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:10px;font-size:11px;">✅ 完成</span></td>
+                                            <td>2024-06-28</td>
+                                            <td><button class="btn btn-sm btn-outline-blue">查看</button></td>
+                                        </tr>
+                                        <tr onclick="viewJobResult('J2024-076')" style="cursor:pointer;">
+                                            <td style="font-weight:500;">吲哚骨架多样性生成</td>
+                                            <td><span style="background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:10px;font-size:11px;">✅ 完成</span></td>
+                                            <td>2024-06-20</td>
+                                            <td><button class="btn btn-sm btn-outline-blue">查看</button></td>
+                                        </tr>
+                                        <tr onclick="viewJobResult('J2024-065')" style="cursor:pointer;">
+                                            <td style="font-weight:500;">嘧啶骨架靶向优化</td>
+                                            <td><span style="background:#fef3c7;color:#a16207;padding:3px 8px;border-radius:10px;font-size:11px;">⏳ 运行中</span></td>
+                                            <td>2024-06-15</td>
+                                            <td><button class="btn btn-sm btn-outline-blue">查看</button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: 分子生成配置 -->
+                <div class="tab-content" id="tab-config" style="display:none;">
+                    <!-- Mode Selector -->
+                    <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;">
+                        <span style="font-weight:600;font-size:13px;">配置模式：</span>
+                        <button class="btn btn-sm btn-outline-blue active-preset" id="modeWizard" onclick="switchConfigMode('wizard')">🧙 引导式配置</button>
+                        <button class="btn btn-sm btn-outline-blue" id="modeExpert" onclick="switchConfigMode('expert')">🔧 专家模式</button>
+                        <button class="btn btn-sm btn-outline-blue" id="modePreset" onclick="switchConfigMode('preset')">📋 预设方案</button>
+                    </div>
+
+                    <!-- Wizard Mode -->
+                    <div id="config-wizard">
+                        <div class="wizard-steps">
+                            <div class="wizard-step active" id="ws1"><span class="step-num">1</span> 生成引擎</div>
+                            <div class="wizard-connector" id="wc1"></div>
+                            <div class="wizard-step" id="ws2"><span class="step-num">2</span> 目标属性</div>
+                            <div class="wizard-connector" id="wc2"></div>
+                            <div class="wizard-step" id="ws3"><span class="step-num">3</span> 约束条件</div>
+                            <div class="wizard-connector" id="wc3"></div>
+                            <div class="wizard-step" id="ws4"><span class="step-num">4</span> 生成数量</div>
+                        </div>
+                        <div class="card" id="wizardContent">
+                            <!-- Step 1: Engine -->
+                            <div id="wiz-step1">
+                                <h3 style="margin-bottom:12px;">选择生成引擎</h3>
+                                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                                    <div class="card" style="flex:1;min-width:160px;cursor:pointer;border:2px solid var(--blue-500);background:var(--blue-50);" onclick="selectEngine(this,'rgroup')" data-engine="rgroup">
+                                        <strong>🔬 R基替换</strong>
+                                        <p style="font-size:11px;color:var(--gray-500);margin-top:4px;">在固定骨架上替换R基团，保持核心结构不变</p>
+                                        <span style="font-size:10px;background:var(--blue-200);color:var(--blue-800);padding:2px 6px;border-radius:6px;">默认</span>
+                                    </div>
+                                    <div class="card" style="flex:1;min-width:160px;cursor:pointer;border:2px solid transparent;" onclick="selectEngine(this,'scaffold-hop')" data-engine="scaffold-hop">
+                                        <strong>🔄 骨架重构</strong>
+                                        <p style="font-size:11px;color:var(--gray-500);margin-top:4px;">在保持关键相互作用的同时重构分子骨架</p>
+                                    </div>
+                                    <div class="card" style="flex:1;min-width:160px;cursor:pointer;border:2px solid transparent;" onclick="selectEngine(this,'denovo')" data-engine="denovo">
+                                        <strong>✨ 全新生成</strong>
+                                        <p style="font-size:11px;color:var(--gray-500);margin-top:4px;">基于种子分子进行全新结构生成</p>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary mt-16" onclick="wizardNext(1)">下一步 →</button>
+                            </div>
+                            <!-- Step 2: Properties -->
+                            <div id="wiz-step2" style="display:none;">
+                                <h3 style="margin-bottom:12px;">设置目标属性</h3>
+                                <div class="flex-col gap-16">
+                                    <div>
+                                        <label style="font-weight:500;font-size:13px;">对接分数 (Docking Score) — 目标：≤ <span style="color:var(--blue-700);">-9.5</span> kcal/mol</label>
+                                        <div class="slider-group mt-8">
+                                            <span style="font-size:11px;">-12</span>
+                                            <input type="range" class="slider" min="-12" max="-6" step="0.1" value="-9.5" id="sliderDocking" oninput="updateSliderValue('dockingVal',this.value)">
+                                            <span class="slider-value" id="dockingVal">-9.5</span>
+                                            <span style="font-size:11px;">-6</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label style="font-weight:500;font-size:13px;">类药性评分 (QED) — 目标：≥ <span style="color:var(--blue-700);">0.75</span></label>
+                                        <div class="slider-group mt-8">
+                                            <span style="font-size:11px;">0</span>
+                                            <input type="range" class="slider" min="0" max="1" step="0.01" value="0.75" id="sliderQED" oninput="updateSliderValue('qedVal',this.value)">
+                                            <span class="slider-value" id="qedVal">0.75</span>
+                                            <span style="font-size:11px;">1</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label style="font-weight:500;font-size:13px;">合成可及性 (SA Score) — 目标：≤ <span style="color:var(--blue-700);">3.0</span></label>
+                                        <div class="slider-group mt-8">
+                                            <span style="font-size:11px;">1</span>
+                                            <input type="range" class="slider" min="1" max="6" step="0.1" value="3.0" id="sliderSA" oninput="updateSliderValue('saVal',this.value)">
+                                            <span class="slider-value" id="saVal">3.0</span>
+                                            <span style="font-size:11px;">6</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;gap:8px;margin-top:16px;">
+                                    <button class="btn" onclick="wizardPrev(2)">← 上一步</button>
+                                    <button class="btn btn-primary" onclick="wizardNext(2)">下一步 →</button>
+                                </div>
+                            </div>
+                            <!-- Step 3: Constraints -->
+                            <div id="wiz-step3" style="display:none;">
+                                <h3 style="margin-bottom:12px;">约束条件筛选</h3>
+                                <div class="flex-col gap-12">
+                                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                                        <span style="font-size:13px;">🧪 类药性过滤 (Lipinski Rule of 5)</span>
+                                        <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                    </div>
+                                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                                        <span style="font-size:13px;">🔧 合成可及性过滤</span>
+                                        <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                    </div>
+                                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                                        <span style="font-size:13px;">🛡️ ADMET综合预测过滤</span>
+                                        <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+                                    </div>
+                                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                                        <span style="font-size:13px;">💊 血脑屏障穿透性评估</span>
+                                        <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+                                    </div>
+                                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                                        <span style="font-size:13px;">⚠️ PAINS/毒性警报过滤</span>
+                                        <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                    </div>
+                                </div>
+                                <div style="display:flex;gap:8px;margin-top:16px;">
+                                    <button class="btn" onclick="wizardPrev(3)">← 上一步</button>
+                                    <button class="btn btn-primary" onclick="wizardNext(3)">下一步 →</button>
+                                </div>
+                            </div>
+                            <!-- Step 4: Count -->
+                            <div id="wiz-step4" style="display:none;">
+                                <h3 style="margin-bottom:12px;">生成数量设置</h3>
+                                <div>
+                                    <label style="font-weight:500;font-size:13px;">生成分子数量</label>
+                                    <input type="number" class="input mt-8" value="100" min="10" max="10000" step="10" style="width:200px;">
+                                    <p style="font-size:11px;color:var(--gray-500);margin-top:4px;">建议范围：50-500，数量越大计算时间越长</p>
+                                </div>
+                                <div style="display:flex;gap:8px;margin-top:16px;">
+                                    <button class="btn" onclick="wizardPrev(4)">← 上一步</button>
+                                    <button class="btn btn-primary" onclick="finishWizard()">✅ 完成配置并开始生成</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expert Mode -->
+                    <div id="config-expert" style="display:none;">
+                        <div class="card">
+                            <div class="card-header">🔧 专家模式 — 全部参数</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                                <div>
+                                    <label style="font-weight:500;font-size:13px;">生成引擎</label>
+                                    <select class="input mt-4" style="font-family:inherit;">
+                                        <option>R基替换</option><option>骨架重构</option><option>全新生成</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-weight:500;font-size:13px;">生成数量</label>
+                                    <input type="number" class="input mt-4" value="100" style="font-family:inherit;">
+                                </div>
+                                <div>
+                                    <label style="font-weight:500;font-size:13px;">对接分数阈值</label>
+                                    <input type="number" class="input mt-4" value="-9.5" step="0.1" style="font-family:inherit;">
+                                </div>
+                                <div>
+                                    <label style="font-weight:500;font-size:13px;">QED阈值</label>
+                                    <input type="number" class="input mt-4" value="0.75" step="0.01" style="font-family:inherit;">
+                                </div>
+                                <div>
+                                    <label style="font-weight:500;font-size:13px;">SA Score阈值</label>
+                                    <input type="number" class="input mt-4" value="3.0" step="0.1" style="font-family:inherit;">
+                                </div>
+                                <div>
+                                    <label style="font-weight:500;font-size:13px;">多样性权重 (0-1)</label>
+                                    <input type="number" class="input mt-4" value="0.6" step="0.05" style="font-family:inherit;">
+                                </div>
+                            </div>
+                            <button class="btn btn-primary mt-16" onclick="runGeneration()">🚀 开始生成</button>
+                        </div>
+                    </div>
+
+                    <!-- Preset Mode -->
+                    <div id="config-preset" style="display:none;">
+                        <div class="card">
+                            <div class="card-header">📋 预设方案 — 一键应用</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                                <div class="card" style="cursor:pointer;border:2px solid transparent;text-align:center;" onclick="applyPreset(this,'balanced')" data-preset="balanced">
+                                    <strong>⚖️ 平衡优化</strong>
+                                    <p style="font-size:11px;color:var(--gray-500);margin-top:4px;">平衡活性、类药性与合成可及性</p>
+                                    <span style="font-size:10px;background:var(--blue-100);color:var(--blue-700);padding:2px 6px;border-radius:6px;">推荐</span>
+                                </div>
+                                <div class="card" style="cursor:pointer;border:2px solid transparent;text-align:center;" onclick="applyPreset(this,'activity')" data-preset="activity">
+                                    <strong>🎯 活性优先</strong>
+                                    <p style="font-size:11px;color:var(--gray-500);margin-top:4px;">优先优化对接分数，放宽类药性约束</p>
+                                </div>
+                                <div class="card" style="cursor:pointer;border:2px solid transparent;text-align:center;" onclick="applyPreset(this,'diverse')" data-preset="diverse">
+                                    <strong>🌈 多样性探索</strong>
+                                    <p style="font-size:11px;color:var(--gray-500);margin-top:4px;">最大化化学空间覆盖，探索新颖结构</p>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary mt-16" onclick="runGeneration()">🚀 使用选中方案生成</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: 结果展示 -->
+                <div class="tab-content" id="tab-results" style="display:none;">
+                    <!-- Toolbar -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+                        <div class="flex-row">
+                            <div class="view-toggle">
+                                <button class="view-toggle-btn active" onclick="switchView('card')" id="viewCardBtn">🃏 卡片视图</button>
+                                <button class="view-toggle-btn" onclick="switchView('table')" id="viewTableBtn">📋 表格视图</button>
+                            </div>
+                            <select class="input" style="width:auto;font-family:inherit;font-size:12px;" onchange="sortResults(this.value)">
+                                <option value="docking">按对接分数排序</option>
+                                <option value="qed">按QED排序</option>
+                                <option value="sa">按SA Score排序</option>
+                                <option value="mw">按分子量排序</option>
+                            </select>
+                            <div class="pill-filter">
+                                <span class="pill active" onclick="filterResults('all',this)">全部</span>
+                                <span class="pill" onclick="filterResults('good',this)">高评分</span>
+                                <span class="pill" onclick="filterResults('novel',this)">新颖结构</span>
+                            </div>
+                        </div>
+                        <div class="flex-row">
+                            <button class="btn btn-sm" onclick="batchDocking()">📊 批量对接</button>
+                            <button class="btn btn-sm" onclick="batchPredict()">🔮 批量属性预测</button>
+                            <button class="btn btn-sm btn-primary" onclick="downloadResults()">⬇️ 下载结果</button>
+                        </div>
+                    </div>
+                    <!-- Selected count -->
+                    <div id="selectedCount" style="font-size:12px;color:var(--gray-500);margin-bottom:8px;display:none;">
+                        已选择 <strong id="selNum">0</strong> 个分子
+                    </div>
+                    <!-- Card View -->
+                    <div class="results-grid" id="resultsCardView">
+                        <!-- Generated by JS -->
+                    </div>
+                    <!-- Table View -->
+                    <div id="resultsTableView" style="display:none;overflow-x:auto;">
+                        <table class="data-table" id="resultsTable">
+                            <thead><tr>
+                                    <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                                    <th>分子ID</th><th>SMILES</th><th>对接分数</th><th>QED</th><th>SA Score</th><th>分子量</th>
+                            </tr></thead>
+                            <tbody id="resultsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab: 分析与优化 -->
+                <div class="tab-content" id="tab-analysis" style="display:none;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                        <!-- Chemical Space -->
+                        <div class="card">
+                            <div class="card-header">🌌 化学空间可视化 (PCA降维)</div>
+                            <div class="chemspace-container" style="height:320px;">
+                                <canvas id="chemSpaceCanvas" width="500" height="320"></canvas>
+                            </div>
+                            <p style="font-size:10px;color:var(--gray-400);margin-top:4px;">点击数据点查看对应分子详情 | 蓝色：参考分子 | 绿色：生成分子</p>
+                        </div>
+                        <!-- Radar Chart -->
+                        <div class="card">
+                            <div class="card-header">🎯 分子属性雷达图</div>
+                            <div class="radar-container" style="height:320px;">
+                                <canvas id="radarCanvas" width="320" height="320"></canvas>
+                            </div>
+                            <p style="font-size:10px;color:var(--gray-400);text-align:center;">当前选中分子：<strong id="radarMolName">MOL-042</strong></p>
+                        </div>
+                    </div>
+                    <!-- Selected molecule detail -->
+                    <div class="card mt-16" id="analysisDetail">
+                        <div class="card-header">🔍 分子详情 — <span id="detailMolId">MOL-042</span></div>
+                        <div style="display:flex;gap:20px;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:200px;">
+                                <div class="mol-structure" style="height:140px;display:flex;align-items:center;justify-content:center;" id="detailMolStructure">
+                                    <svg viewBox="0 0 160 120" width="160" height="120"><circle cx="80" cy="60" r="18" fill="none" stroke="#2563eb" stroke-width="2.5"/><circle cx="60" cy="40" r="18" fill="none" stroke="#2563eb" stroke-width="2.5"/><circle cx="100" cy="40" r="18" fill="none" stroke="#2563eb" stroke-width="2.5"/><circle cx="80" cy="80" r="10" fill="none" stroke="#ef4444" stroke-width="2"/><text x="80" y="84" text-anchor="middle" font-size="10" fill="#ef4444" font-weight="700">N</text></svg>
+                                </div>
+                            </div>
+                            <div style="flex:2;min-width:280px;">
+                                <table style="width:100%;font-size:12px;border-collapse:collapse;">
+                                    <tr><td style="padding:4px 8px;color:var(--gray-500);">SMILES</td><td style="padding:4px 8px;font-family:monospace;font-size:11px;">Cc1cnc2cc(F)ccc2c1C(=O)NCC*</td></tr>
+                                    <tr><td style="padding:4px 8px;color:var(--gray-500);">对接分数</td><td style="padding:4px 8px;color:#15803d;font-weight:600;">-10.8 kcal/mol</td></tr>
+                                    <tr><td style="padding:4px 8px;color:var(--gray-500);">QED</td><td style="padding:4px 8px;">0.82</td></tr>
+                                    <tr><td style="padding:4px 8px;color:var(--gray-500);">SA Score</td><td style="padding:4px 8px;">2.7</td></tr>
+                                    <tr><td style="padding:4px 8px;color:var(--gray-500);">分子量</td><td style="padding:4px 8px;">348.4 g/mol</td></tr>
+                                    <tr><td style="padding:4px 8px;color:var(--gray-500);">LogP</td><td style="padding:4px 8px;">3.2</td></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+    <!-- Structure Editor Modal -->
+    <div class="modal-overlay" id="structureEditorModal" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>✏️ 结构式编辑器</h3>
+                <button class="modal-close" onclick="closeStructureEditor()">✕</button>
+            </div>
+            <div style="background:var(--gray-50);border-radius:var(--radius-sm);padding:30px;text-align:center;border:1px dashed var(--gray-300);">
+                <svg viewBox="0 0 200 140" width="200" height="140">
+                    <circle cx="100" cy="70" r="22" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+                    <circle cx="78" cy="48" r="22" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+                    <circle cx="122" cy="48" r="22" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+                    <circle cx="100" cy="92" r="14" fill="none" stroke="#ef4444" stroke-width="2"/>
+                    <text x="100" y="96" text-anchor="middle" font-size="13" fill="#ef4444" font-weight="700">N</text>
+                    <text x="68" y="38" text-anchor="middle" font-size="10" fill="#f59e0b" font-weight="600">*</text>
+                </svg>
+                <p style="font-size:12px;color:var(--gray-500);margin-top:8px;">模拟结构式编辑器 — 可拖拽绘制分子结构</p>
+                <p style="font-size:10px;color:var(--gray-400);">当前SMILES: <span id="editorSmilesDisplay" class="font-mono">*c1cnc2ccccc2c1</span></p>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+                <button class="btn" onclick="closeStructureEditor()">取消</button>
+                <button class="btn btn-primary" onclick="applyStructureFromEditor()">✅ 应用结构</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Molecule Detail Modal -->
+    <div class="modal-overlay" id="molDetailModal" style="display:none;">
+        <div class="modal" style="max-width:600px;">
+            <div class="modal-header">
+                <h3>🧬 分子详情</h3>
+                <button class="modal-close" onclick="closeMolDetail()">✕</button>
+            </div>
+            <div id="molDetailContent"></div>
+        </div>
+    </div>
+
+    <!-- Download Modal -->
+    <div class="modal-overlay" id="downloadModal" style="display:none;">
+        <div class="modal" style="max-width:450px;">
+            <div class="modal-header">
+                <h3>⬇️ 下载结果</h3>
+                <button class="modal-close" onclick="closeDownload()">✕</button>
+            </div>
+            <div class="flex-col gap-12">
+                <label style="font-weight:500;font-size:13px;">选择下载目录</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" class="input" value="/Users/researcher/Downloads/mol_results" style="font-family:inherit;" id="downloadPath">
+                    <button class="btn btn-sm" onclick="alert('模拟：浏览文件夹')">📁 浏览</button>
+                </div>
+                <label style="font-weight:500;font-size:13px;">文件格式</label>
+                <select class="input" style="font-family:inherit;">
+                    <option>CSV (.csv) — 默认</option><option>SDF (.sdf)</option><option>SMILES (.smi)</option><option>JSON (.json)</option>
+                </select>
+                <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+                    <button class="btn" onclick="closeDownload()">取消</button>
+                    <button class="btn btn-primary" onclick="confirmDownload()">✅ 确认下载</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" style="position:fixed;top:20px;right:20px;z-index:500;display:none;background:var(--gray-900);color:white;padding:12px 18px;border-radius:var(--radius-sm);font-size:13px;box-shadow:var(--shadow-lg);max-width:380px;animation:slideUp 0.3s ease;"></div>
+
+    <script>
+        // ==================== GLOBAL STATE ====================
+        let currentPage = 'modules';
+        let currentTab = 'tab-project';
+        let configMode = 'wizard';
+        let wizardStep = 1;
+        let selectedEngine = 'rgroup';
+        let selectedPreset = 'balanced';
+        let currentView = 'card';
+        let selectedMolecules = new Set();
+        let currentSort = 'docking';
+        let currentFilter = 'all';
+        let highlightedMolId = 'MOL-042';
+
+        // ==================== MOCK DATA ====================
+        const mockResults = [
+            { id: 'MOL-001', smiles: 'Cc1cnc2cc(F)ccc2c1C(=O)NCC*', docking: -10.8, qed: 0.82, sa: 2.7, mw: 348.4,
+                logP: 3.2, novel: true },
+            { id: 'MOL-002', smiles: 'O=C(Nc1ccccc1)c2cnc3cc(Cl)ccc23', docking: -10.2, qed: 0.78, sa: 2.5, mw: 332.8,
+                logP: 3.5, novel: false },
+            { id: 'MOL-003', smiles: 'COc1ccc2c(c1)ncc(C(=O)NCC*)c2C', docking: -9.8, qed: 0.85, sa: 2.9, mw: 362.4,
+                logP: 2.8, novel: true },
+            { id: 'MOL-004', smiles: 'Cc1cnc2cc(Br)ccc2c1C(=O)NCc3ccccc3', docking: -9.5, qed: 0.71, sa: 3.1, mw: 410.3,
+                logP: 4.0, novel: false },
+            { id: 'MOL-005', smiles: 'O=C(NCC*)c1cnc2cc(C(F)(F)F)ccc12', docking: -10.5, qed: 0.76, sa: 2.8, mw: 370.3,
+                logP: 3.7, novel: true },
+            { id: 'MOL-006', smiles: 'Cc1cnc2cc(O)ccc2c1C(=O)NCCN(C)C', docking: -9.2, qed: 0.80, sa: 2.4, mw: 340.4,
+                logP: 2.5, novel: false },
+            { id: 'MOL-007', smiles: 'COc1ccc2ncc(C(=O)NCC*)c(C)c2c1', docking: -10.1, qed: 0.83, sa: 2.6, mw: 362.4,
+                logP: 2.9, novel: true },
+            { id: 'MOL-008', smiles: 'O=C(Nc1nccs1)c2cnc3ccccc23', docking: -9.7, qed: 0.74, sa: 3.0, mw: 325.4, logP: 3.1,
+                novel: false },
+            { id: 'MOL-009', smiles: 'Cc1cnc2cc(OC(F)F)ccc2c1C(=O)NCC*', docking: -10.4, qed: 0.79, sa: 2.9, mw: 386.3,
+                logP: 3.4, novel: true },
+            { id: 'MOL-010', smiles: 'O=C(NCC1CC1)c2cnc3ccccc23', docking: -9.0, qed: 0.77, sa: 2.3, mw: 296.4, logP: 2.7,
+                novel: false },
+            { id: 'MOL-011', smiles: 'Cc1cnc2cc(C#N)ccc2c1C(=O)NCC*', docking: -10.6, qed: 0.81, sa: 2.8, mw: 357.4,
+                logP: 3.0, novel: true },
+            { id: 'MOL-012', smiles: 'COc1cc2ncc(C(=O)NCC*)c(C)c2cc1OC', docking: -9.3, qed: 0.84, sa: 3.2, mw: 392.4,
+                logP: 2.6, novel: true },
+            { id: 'MOL-013', smiles: 'O=C(NCC*)c1cnc2cc(NS(=O)(=O)C)ccc12', docking: -10.0, qed: 0.72, sa: 3.3, mw: 398.4,
+                logP: 2.4, novel: false },
+            { id: 'MOL-014', smiles: 'Cc1cnc2cc(F)ccc2c1C(=O)NCCc3ccccc3', docking: -9.6, qed: 0.75, sa: 3.0, mw: 382.4,
+                logP: 3.8, novel: false },
+            { id: 'MOL-015', smiles: 'O=C(NCC*)c1cnc2cc(OCCN(C)C)ccc12', docking: -10.3, qed: 0.78, sa: 3.1, mw: 398.5,
+                logP: 2.2, novel: true },
+            { id: 'MOL-016', smiles: 'Cc1cnc2ccccc2c1C(=O)NCC*', docking: -9.1, qed: 0.86, sa: 2.2, mw: 314.4, logP: 3.3,
+                novel: false },
+            { id: 'MOL-042', smiles: 'Cc1cnc2cc(F)ccc2c1C(=O)NCC*', docking: -10.8, qed: 0.82, sa: 2.7, mw: 348.4, logP: 3.2,
+                novel: true },
+        ];
+
+        // ==================== NAVIGATION ====================
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove(
+                    'active'));
+                this.classList.add('active');
+                const nav = this.getAttribute('data-nav');
+                if (nav === 'modules') {
+                    showPage('modules');
+                } else {
+                    showToast('功能 "' + this.textContent.trim() + '" 正在开发中');
+                }
+            });
+        });
+
+        function showPage(page) {
+            currentPage = page;
+            document.getElementById('page-modules').style.display = page === 'modules' ? 'block' : 'none';
+            document.getElementById('page-scaffold-module').style.display = page === 'scaffold' ? 'flex' : 'none';
+            document.getElementById('mainContent').scrollTop = 0;
+        }
+
+        function enterScaffoldModule() {
+            showPage('scaffold');
+            switchTab('tab-project');
+            document.getElementById('sidebar').querySelectorAll('.sidebar-item').forEach(i => i.classList.remove(
+                'active'));
+            document.querySelector('[data-nav="modules"]').classList.add('active');
+        }
+
+        function goBackToModules() {
+            showPage('modules');
+        }
+
+        // ==================== TABS ====================
+        document.getElementById('scaffoldTabs').addEventListener('click', function(e) {
+            if (e.target.classList.contains('tab')) {
+                const tabId = e.target.getAttribute('data-tab');
+                if (tabId) switchTab(tabId);
+            }
+        });
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('#scaffoldTabs .tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`#scaffoldTabs [data-tab="${tabId}"]`)?.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            const contentEl = document.getElementById(tabId);
+            if (contentEl) contentEl.style.display = 'block';
+            if (tabId === 'tab-results') renderResults();
+            if (tabId === 'tab-analysis') renderAnalysis();
+            document.getElementById('mainContent').scrollTop = 0;
+        }
+
+        // ==================== INPUT METHOD SUB-TABS ====================
+        document.getElementById('inputMethodTabs').addEventListener('click', function(e) {
+            if (e.target.classList.contains('tab') && !e.target.style.cursor.includes('not-allowed')) {
+                document.querySelectorAll('#inputMethodTabs .tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                const subtab = e.target.getAttribute('data-subtab');
+                document.getElementById('smiles-input').style.display = subtab === 'smiles-input' ? 'block' :
+                    'none';
+                document.getElementById('sdf-input').style.display = subtab === 'sdf-input' ? 'block' : 'none';
+            }
+        });
+
+        // ==================== PROJECT ====================
+        function submitProject() {
+            const smiles = document.getElementById('smilesInput').value.trim();
+            const taskName = document.getElementById('taskName').value.trim();
+            if (!smiles) { showToast('⚠️ 请输入SMILES'); return; }
+            if (!taskName) { showToast('⚠️ 请输入任务名称'); return; }
+            showToast('✅ 项目 "' + taskName + '" 创建成功！正在跳转到配置页面...');
+            setTimeout(() => switchTab('tab-config'), 1200);
+        }
+
+        function resetProjectForm() {
+            document.getElementById('smilesInput').value = '*c1cnc2ccccc2c1';
+            document.getElementById('taskName').value = '喹啉骨架R基优化_2024Q1';
+            document.getElementById('taskDesc').value = '针对喹啉骨架进行R基团优化，目标提升CDK2抑制活性并保持良好的类药性';
+            showToast('🔄 表单已重置');
+        }
+
+        function viewJobResult(jobId) {
+            showToast('📋 正在加载作业 ' + jobId + ' 的结果...');
+            setTimeout(() => switchTab('tab-results'), 800);
+        }
+
+        // ==================== STRUCTURE EDITOR ====================
+        function openStructureEditor() {
+            document.getElementById('structureEditorModal').style.display = 'flex';
+            document.getElementById('editorSmilesDisplay').textContent = document.getElementById('smilesInput').value;
+        }
+
+        function closeStructureEditor() {
+            document.getElementById('structureEditorModal').style.display = 'none';
+        }
+
+        function applyStructureFromEditor() {
+            const smi = document.getElementById('editorSmilesDisplay').textContent;
+            document.getElementById('smilesInput').value = smi;
+            closeStructureEditor();
+            showToast('✅ 结构已应用: ' + smi);
+        }
+
+        // ==================== CONFIG MODES ====================
+        function switchConfigMode(mode) {
+            configMode = mode;
+            document.getElementById('modeWizard').classList.toggle('active-preset', mode === 'wizard');
+            document.getElementById('modeExpert').classList.toggle('active-preset', mode === 'expert');
+            document.getElementById('modePreset').classList.toggle('active-preset', mode === 'preset');
+            document.getElementById('config-wizard').style.display = mode === 'wizard' ? 'block' : 'none';
+            document.getElementById('config-expert').style.display = mode === 'expert' ? 'block' : 'none';
+            document.getElementById('config-preset').style.display = mode === 'preset' ? 'block' : 'none';
+        }
+
+        function selectEngine(el, engine) {
+            selectedEngine = engine;
+            document.querySelectorAll('#wiz-step1 .card').forEach(c => {
+                c.style.border = '2px solid transparent';
+                c.style.background = 'var(--white)';
+            });
+            el.style.border = '2px solid var(--blue-500)';
+            el.style.background = 'var(--blue-50)';
+        }
+
+        function wizardNext(step) {
+            if (step === 1) { document.getElementById('wiz-step1').style.display = 'none';
+                document.getElementById('wiz-step2').style.display = 'block'; }
+            if (step === 2) { document.getElementById('wiz-step2').style.display = 'none';
+                document.getElementById('wiz-step3').style.display = 'block'; }
+            if (step === 3) { document.getElementById('wiz-step3').style.display = 'none';
+                document.getElementById('wiz-step4').style.display = 'block'; }
+            wizardStep = step + 1;
+            updateWizardUI();
+        }
+
+        function wizardPrev(step) {
+            if (step === 2) { document.getElementById('wiz-step2').style.display = 'none';
+                document.getElementById('wiz-step1').style.display = 'block'; }
+            if (step === 3) { document.getElementById('wiz-step3').style.display = 'none';
+                document.getElementById('wiz-step2').style.display = 'block'; }
+            if (step === 4) { document.getElementById('wiz-step4').style.display = 'none';
+                document.getElementById('wiz-step3').style.display = 'block'; }
+            wizardStep = step - 1;
+            updateWizardUI();
+        }
+
+        function updateWizardUI() {
+            for (let i = 1; i <= 4; i++) {
+                const ws = document.getElementById('ws' + i);
+                ws.classList.remove('active', 'completed');
+                if (i < wizardStep) ws.classList.add('completed');
+                if (i === wizardStep) ws.classList.add('active');
+                if (i < 4) {
+                    const wc = document.getElementById('wc' + i);
+                    wc.classList.toggle('done', i < wizardStep);
+                }
+            }
+        }
+
+        function finishWizard() {
+            showToast('✅ 配置完成！正在启动分子生成...');
+            setTimeout(() => {
+                showToast('🎉 分子生成完成！共生成 ' + mockResults.length + ' 个候选分子');
+                switchTab('tab-results');
+            }, 1500);
+        }
+
+        function applyPreset(el, preset) {
+            selectedPreset = preset;
+            document.querySelectorAll('#config-preset .card').forEach(c => {
+                c.style.border = '2px solid transparent';
+                c.style.background = 'var(--white)';
+            });
+            el.style.border = '2px solid var(--blue-500)';
+            el.style.background = 'var(--blue-50)';
+            showToast('📋 已选择预设方案: ' + (preset === 'balanced' ? '平衡优化' : preset === 'activity' ? '活性优先' :
+                '多样性探索'));
+        }
+
+        function runGeneration() {
+            showToast('🚀 正在启动分子生成引擎...');
+            setTimeout(() => {
+                showToast('🎉 生成完成！共 ' + mockResults.length + ' 个候选分子');
+                switchTab('tab-results');
+            }, 1800);
+        }
+
+        function updateSliderValue(id, val) {
+            document.getElementById(id).textContent = parseFloat(val).toFixed(2);
+        }
+
+        // ==================== RESULTS ====================
+        function renderResults() {
+            const grid = document.getElementById('resultsCardView');
+            const tbody = document.getElementById('resultsTableBody');
+            let filtered = [...mockResults];
+            if (currentFilter === 'good') filtered = filtered.filter(m => m.docking <= -10 && m.qed >= 0.75);
+            if (currentFilter === 'novel') filtered = filtered.filter(m => m.novel);
+            filtered.sort((a, b) => {
+                if (currentSort === 'docking') return a.docking - b.docking;
+                if (currentSort === 'qed') return b.qed - a.qed;
+                if (currentSort === 'sa') return a.sa - b.sa;
+                if (currentSort === 'mw') return a.mw - b.mw;
+                return 0;
+            });
+
+            // Card view
+            grid.innerHTML = filtered.map(m => `
+            <div class="mol-card ${selectedMolecules.has(m.id)?'selected':''}" onclick="toggleMolSelect('${m.id}', this)" ondblclick="openMolDetail('${m.id}')">
+              <div class="mol-check">✓</div>
+              <div class="mol-structure">${generateMolSVG(m.id)}</div>
+              <div class="mol-name">${m.id}</div>
+              <div class="mol-tags">
+                <span class="mol-tag ${m.docking <= -10 ? 'good' : ''}">对接: ${m.docking}</span>
+                <span class="mol-tag ${m.qed >= 0.8 ? 'good' : ''}">QED: ${m.qed}</span>
+                <span class="mol-tag ${m.sa <= 3 ? 'good' : 'warn'}">SA: ${m.sa}</span>
+              </div>
+            </div>
+          `).join('');
+
+            // Table view
+            tbody.innerHTML = filtered.map(m => `
+            <tr class="${selectedMolecules.has(m.id)?'selected':''}" onclick="toggleMolSelect('${m.id}')" ondblclick="openMolDetail('${m.id}')">
+              <td><input type="checkbox" ${selectedMolecules.has(m.id)?'checked':''} onclick="event.stopPropagation();toggleMolSelect('${m.id}')"></td>
+              <td style="font-weight:500;">${m.id}</td>
+              <td class="font-mono" style="font-size:10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.smiles}</td>
+              <td style="color:${m.docking<=-10?'#15803d':'var(--gray-700)'};font-weight:600;">${m.docking}</td>
+              <td>${m.qed}</td><td>${m.sa}</td><td>${m.mw}</td>
+            </tr>
+          `).join('');
+            updateSelectedCount();
+        }
+
+        function generateMolSVG(id) {
+            const hash = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+            const colors = ['#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2'];
+            const color1 = colors[hash % colors.length];
+            const color2 = colors[(hash + 2) % colors.length];
+            return `<svg viewBox="0 0 120 80" width="120" height="80">
+            <circle cx="60" cy="40" r="16" fill="none" stroke="${color1}" stroke-width="2.2"/>
+            <circle cx="42" cy="25" r="16" fill="none" stroke="${color1}" stroke-width="2.2"/>
+            <circle cx="78" cy="25" r="16" fill="none" stroke="${color1}" stroke-width="2.2"/>
+            <circle cx="60" cy="55" r="9" fill="none" stroke="${color2}" stroke-width="2"/>
+            <text x="60" y="59" text-anchor="middle" font-size="9" fill="${color2}" font-weight="700">R</text>
+          </svg>`;
+        }
+
+        function toggleMolSelect(id, el) {
+            if (selectedMolecules.has(id)) selectedMolecules.delete(id);
+            else selectedMolecules.add(id);
+            if (el && el.closest('.mol-card')) el.closest('.mol-card').classList.toggle('selected');
+            if (el && el.closest('tr')) el.closest('tr').classList.toggle('selected');
+            updateSelectedCount();
+            renderResults();
+        }
+
+        function toggleSelectAll() {
+            const all = mockResults.map(m => m.id);
+            if (selectedMolecules.size === all.length) selectedMolecules.clear();
+            else all.forEach(id => selectedMolecules.add(id));
+            renderResults();
+        }
+
+        function updateSelectedCount() {
+            const div = document.getElementById('selectedCount');
+            if (selectedMolecules.size > 0) {
+                div.style.display = 'block';
+                document.getElementById('selNum').textContent = selectedMolecules.size;
+            } else {
+                div.style.display = 'none';
+            }
+        }
+
+        function switchView(view) {
+            currentView = view;
+            document.getElementById('viewCardBtn').classList.toggle('active', view === 'card');
+            document.getElementById('viewTableBtn').classList.toggle('active', view === 'table');
+            document.getElementById('resultsCardView').style.display = view === 'card' ? 'grid' : 'none';
+            document.getElementById('resultsTableView').style.display = view === 'table' ? 'block' : 'none';
+            if (view === 'table') renderResults();
+        }
+
+        function sortResults(criteria) {
+            currentSort = criteria;
+            renderResults();
+        }
+
+        function filterResults(filter, el) {
+            currentFilter = filter;
+            document.querySelectorAll('.pill-filter .pill').forEach(p => p.classList.remove('active'));
+            if (el) el.classList.add('active');
+            renderResults();
+        }
+
+        function batchDocking() {
+            if (selectedMolecules.size === 0) { showToast('⚠️ 请先选择分子'); return; }
+            showToast('📊 正在对 ' + selectedMolecules.size + ' 个分子进行批量对接...');
+            setTimeout(() => showToast('✅ 批量对接完成'), 2000);
+        }
+
+        function batchPredict() {
+            if (selectedMolecules.size === 0) { showToast('⚠️ 请先选择分子'); return; }
+            showToast('🔮 正在对 ' + selectedMolecules.size + ' 个分子进行批量属性预测...');
+            setTimeout(() => showToast('✅ 批量预测完成'), 2000);
+        }
+
+        function downloadResults() {
+            document.getElementById('downloadModal').style.display = 'flex';
+        }
+
+        function closeDownload() {
+            document.getElementById('downloadModal').style.display = 'none';
+        }
+
+        function confirmDownload() {
+            const path = document.getElementById('downloadPath').value;
+            closeDownload();
+            showToast('⬇️ 结果已下载到: ' + path + ' (CSV格式, ' + mockResults.length + '条记录)');
+        }
+
+        // ==================== MOLECULE DETAIL ====================
+        function openMolDetail(id) {
+            const mol = mockResults.find(m => m.id === id) || mockResults[0];
+            highlightedMolId = id;
+            document.getElementById('molDetailContent').innerHTML = `
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:160px;text-align:center;">
+                ${generateMolSVG(id)}
+                <p style="font-weight:600;margin-top:8px;">${mol.id}</p>
+              </div>
+              <div style="flex:2;min-width:240px;">
+                <table style="width:100%;font-size:12px;border-collapse:collapse;">
+                  <tr><td style="padding:5px 8px;color:var(--gray-500);">SMILES</td><td class="font-mono" style="padding:5px 8px;font-size:10px;">${mol.smiles}</td></tr>
+                  <tr><td style="padding:5px 8px;color:var(--gray-500);">对接分数</td><td style="padding:5px 8px;color:#15803d;font-weight:600;">${mol.docking} kcal/mol</td></tr>
+                  <tr><td style="padding:5px 8px;color:var(--gray-500);">QED</td><td style="padding:5px 8px;">${mol.qed}</td></tr>
+                  <tr><td style="padding:5px 8px;color:var(--gray-500);">SA Score</td><td style="padding:5px 8px;">${mol.sa}</td></tr>
+                  <tr><td style="padding:5px 8px;color:var(--gray-500);">分子量</td><td style="padding:5px 8px;">${mol.mw} g/mol</td></tr>
+                  <tr><td style="padding:5px 8px;color:var(--gray-500);">LogP</td><td style="padding:5px 8px;">${mol.logP}</td></tr>
+                </table>
+              </div>
+            </div>
+            <div style="margin-top:12px;text-align:center;">
+              <button class="btn btn-sm btn-outline-blue" onclick="alert('模拟：3D交互视图 - 可旋转缩放查看键长键角')">🔍 查看3D交互视图</button>
+            </div>
+          `;
+            document.getElementById('molDetailModal').style.display = 'flex';
+            if (currentTab === 'tab-analysis') updateAnalysisDetail(mol);
+        }
+
+        function closeMolDetail() {
+            document.getElementById('molDetailModal').style.display = 'none';
+        }
+
+        // ==================== ANALYSIS ====================
+        function renderAnalysis() {
+            drawChemSpace();
+            drawRadar();
+            const mol = mockResults.find(m => m.id === highlightedMolId) || mockResults[15]; // MOL-042
+            updateAnalysisDetail(mol);
+        }
+
+        function drawChemSpace() {
+            const canvas = document.getElementById('chemSpaceCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
+            // Background
+            ctx.fillStyle = '#fafbfc';
+            ctx.fillRect(0, 0, W, H);
+            // Grid
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 0.5;
+            for (let x = 40; x < W; x += 40) { ctx.beginPath();
+                ctx.moveTo(x, 20);
+                ctx.lineTo(x, H - 20);
+                ctx.stroke(); }
+            for (let y = 20; y < H; y += 40) { ctx.beginPath();
+                ctx.moveTo(40, y);
+                ctx.lineTo(W - 20, y);
+                ctx.stroke(); }
+            // Reference molecules (blue)
+            const refPoints = [
+                [120, 100],
+                [180, 160],
+                [200, 90],
+                [150, 200],
+                [250, 140],
+                [100, 180],
+                [280, 110],
+                [160, 130]
+            ];
+            refPoints.forEach(([px, py]) => {
+                ctx.beginPath();
+                ctx.arc(px, py, 7, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(37,99,235,0.6)';
+                ctx.fill();
+                ctx.strokeStyle = '#1d4ed8';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            });
+            // Generated molecules (green)
+            const genPoints = [];
+            for (let i = 0; i < mockResults.length; i++) {
+                const seed = mockResults[i].id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+                const px = 60 + (seed * 7 % (W - 120));
+                const py = 35 + (seed * 11 % (H - 70));
+                genPoints.push({ x: px, y: py, id: mockResults[i].id, mol: mockResults[i] });
+                ctx.beginPath();
+                ctx.arc(px, py, 6, 0, Math.PI * 2);
+                ctx.fillStyle = mockResults[i].id === highlightedMolId ? 'rgba(239,68,68,0.8)' :
+                    'rgba(34,197,94,0.55)';
+                ctx.fill();
+                ctx.strokeStyle = mockResults[i].id === highlightedMolId ? '#dc2626' : '#15803d';
+                ctx.lineWidth = mockResults[i].id === highlightedMolId ? 2.5 : 1;
+                ctx.stroke();
+                if (mockResults[i].id === highlightedMolId) {
+                    ctx.beginPath();
+                    ctx.arc(px, py, 10, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([3, 3]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+            // Labels
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '10px -apple-system, sans-serif';
+            ctx.fillText('PC1 →', W - 60, H - 8);
+            ctx.fillText('PC2 →', 8, 28);
+            // Legend
+            ctx.fillStyle = 'rgba(37,99,235,0.7)';
+            ctx.fillRect(W - 130, 30, 12, 12);
+            ctx.fillStyle = '#374151';
+            ctx.fillText('参考分子', W - 114, 40);
+            ctx.fillStyle = 'rgba(34,197,94,0.6)';
+            ctx.fillRect(W - 130, 50, 12, 12);
+            ctx.fillText('生成分子', W - 114, 60);
+            // Click handler
+            canvas.onclick = function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const sx = (e.clientX - rect.left) * (W / rect.width);
+                const sy = (e.clientY - rect.top) * (H / rect.height);
+                let closest = null;
+                let minDist = 30;
+                genPoints.forEach(gp => {
+                    const d = Math.sqrt((gp.x - sx) ** 2 + (gp.y - sy) ** 2);
+                    if (d < minDist) { minDist = d;
+                        closest = gp; }
+                });
+                if (closest) {
+                    highlightedMolId = closest.id;
+                    updateAnalysisDetail(closest.mol);
+                    drawChemSpace();
+                    drawRadar();
+                    showToast('📍 已选择分子: ' + closest.id);
+                }
+            };
+        }
+
+        function drawRadar() {
+            const canvas = document.getElementById('radarCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+            const cx = W / 2;
+            const cy = H / 2;
+            const R = 110;
+            ctx.clearRect(0, 0, W, H);
+            const labels = ['对接分数', 'QED', 'SA Score', '分子量\n(归一化)', 'LogP\n(归一化)'];
+            const mol = mockResults.find(m => m.id === highlightedMolId) || mockResults[15];
+            const values = [
+                Math.min(1, Math.abs(mol.docking) / 12),
+                mol.qed,
+                1 - (mol.sa - 1) / 5,
+                1 - mol.mw / 500,
+                1 - mol.logP / 5,
+            ];
+            const angles = labels.map((_, i) => -Math.PI / 2 + (2 * Math.PI * i) / labels.length);
+            // Grid
+            for (let r = 0.25; r <= 1; r += 0.25) {
+                ctx.beginPath();
+                angles.forEach((a, i) => {
+                    const x = cx + R * r * Math.cos(a);
+                    const y = cy + R * r * Math.sin(a);
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                });
+                ctx.closePath();
+                ctx.strokeStyle = '#e5e7eb';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+            // Axes
+            angles.forEach(a => {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + R * Math.cos(a), cy + R * Math.sin(a));
+                ctx.strokeStyle = '#d1d5db';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+            // Data polygon
+            ctx.beginPath();
+            angles.forEach((a, i) => {
+                const x = cx + R * values[i] * Math.cos(a);
+                const y = cy + R * values[i] * Math.sin(a);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(37,99,235,0.2)';
+            ctx.fill();
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            // Data points
+            angles.forEach((a, i) => {
+                const x = cx + R * values[i] * Math.cos(a);
+                const y = cy + R * values[i] * Math.sin(a);
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#2563eb';
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+            // Labels
+            ctx.fillStyle = '#374151';
+            ctx.font = '10px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            angles.forEach((a, i) => {
+                const lx = cx + (R + 28) * Math.cos(a);
+                const ly = cy + (R + 28) * Math.sin(a);
+                const lines = labels[i].split('\n');
+                lines.forEach((line, li) => {
+                    ctx.fillText(line, lx, ly + li * 12);
+                });
+            });
+            document.getElementById('radarMolName').textContent = highlightedMolId;
+        }
+
+        function updateAnalysisDetail(mol) {
+            document.getElementById('detailMolId').textContent = mol.id;
+            document.getElementById('radarMolName').textContent = mol.id;
+            document.getElementById('detailMolStructure').innerHTML = generateMolSVG(mol.id);
+            const detailDiv = document.getElementById('analysisDetail');
+            if (detailDiv) {
+                const tableEl = detailDiv.querySelector('table');
+                if (tableEl) {
+                    const rows = tableEl.querySelectorAll('tr');
+                    if (rows[1]) rows[1].querySelectorAll('td')[1].textContent = mol.smiles;
+                    if (rows[2]) rows[2].querySelectorAll('td')[1].textContent = mol.docking + ' kcal/mol';
+                    if (rows[3]) rows[3].querySelectorAll('td')[1].textContent = mol.qed;
+                    if (rows[4]) rows[4].querySelectorAll('td')[1].textContent = mol.sa;
+                    if (rows[5]) rows[5].querySelectorAll('td')[1].textContent = mol.mw + ' g/mol';
+                    if (rows[6]) rows[6].querySelectorAll('td')[1].textContent = mol.logP;
+                }
+            }
+        }
+
+        // ==================== MODAL CLOSE ON OVERLAY CLICK ====================
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    overlay.style.display = 'none';
+                }
+            });
+        });
+
+        // ==================== TOAST ====================
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            toast.style.animation = 'none';
+            toast.offsetHeight;
+            toast.style.animation = 'slideUp 0.3s ease';
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => { toast.style.display = 'none'; }, 2800);
+        }
+
+        // ==================== INIT ====================
+        function init() {
+            showPage('modules');
+            renderResults();
+            // Draw initial analysis if visible
+            setTimeout(() => {
+                if (currentTab === 'tab-analysis') renderAnalysis();
+            }, 300);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay').forEach(o => o.style.display = 'none');
+            }
+            if (e.ctrlKey && e.key === '1') { e.preventDefault();
+                switchTab('tab-project'); }
+            if (e.ctrlKey && e.key === '2') { e.preventDefault();
+                switchTab('tab-config'); }
+            if (e.ctrlKey && e.key === '3') { e.preventDefault();
+                switchTab('tab-results'); }
+            if (e.ctrlKey && e.key === '4') { e.preventDefault();
+                switchTab('tab-analysis'); }
+        });
+
+        init();
+        console.log('🧬 MolDesigner — Scaffold Constrained Small Molecule Generation Demo');
+        console.log('💡 Tips: 使用 Ctrl+1~4 切换Tab | 双击分子卡片查看详情 | 点击化学空间数据点选择分子');
+        console.log('📋 模拟数据已加载 ' + mockResults.length + ' 个候选分子');
+    </script>
+</body>
+</html>
