@@ -1,0 +1,2093 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MolDesigner - 小分子药物设计平台</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-secondary: #f1f5f9;
+            --border: #e2e8f0;
+            --border-light: #f1f5f9;
+            --text: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --primary: #2563eb;
+            --primary-light: #dbeafe;
+            --primary-dark: #1d4ed8;
+            --primary-50: #eff6ff;
+            --primary-100: #dbeafe;
+            --primary-200: #bfdbfe;
+            --primary-500: #3b82f6;
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            --success: #16a34a;
+            --success-bg: #dcfce7;
+            --warning: #d97706;
+            --warning-bg: #fef3c7;
+            --error: #dc2626;
+            --error-bg: #fef2f2;
+            --info: #2563eb;
+            --info-bg: #dbeafe;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 8px;
+            --radius-full: 9999px;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+            --sidebar-width: 240px;
+            --sidebar-collapsed-width: 64px;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: width var(--transition);
+            position: relative;
+            z-index: 30;
+            flex-shrink: 0;
+            user-select: none;
+        }
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
+        }
+        .sidebar.collapsed .nav-label,
+        .sidebar.collapsed .brand-text,
+        .sidebar.collapsed .sidebar-bottom-label,
+        .sidebar.collapsed .nav-badge {
+            display: none;
+        }
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 10px;
+        }
+        .sidebar.collapsed .sidebar-brand {
+            justify-content: center;
+            padding: 16px 8px;
+        }
+        .sidebar.collapsed .sidebar-bottom-item {
+            justify-content: center;
+            padding: 8px;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--primary);
+            letter-spacing: -0.02em;
+            transition: all var(--transition);
+        }
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-xs);
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1rem;
+            flex-shrink: 0;
+            transition: all var(--transition);
+        }
+        .sidebar.collapsed .brand-icon {
+            width: 28px;
+            height: 28px;
+            font-size: 0.85rem;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 10px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            overflow-y: auto;
+        }
+        .nav-section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            padding: 8px 10px 4px;
+            font-weight: 600;
+        }
+        .sidebar.collapsed .nav-section-label {
+            display: none;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            position: relative;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+        .nav-item:hover {
+            background: var(--surface-secondary);
+            color: var(--text);
+        }
+        .nav-item.active {
+            background: var(--primary-50);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 8px;
+            bottom: 8px;
+            width: 3px;
+            background: var(--primary);
+            border-radius: 0 4px 4px 0;
+        }
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            opacity: 0.7;
+        }
+        .nav-item.active svg {
+            opacity: 1;
+        }
+        .nav-badge {
+            margin-left: auto;
+            font-size: 0.7rem;
+            background: var(--primary-100);
+            color: var(--primary);
+            padding: 2px 7px;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+        }
+
+        .sidebar-bottom {
+            border-top: 1px solid var(--border);
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .sidebar-bottom-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .sidebar-bottom-item:hover {
+            background: var(--surface-secondary);
+            color: var(--text-secondary);
+        }
+        .sidebar-bottom-item svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            opacity: 0.6;
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+            transition: all var(--transition);
+            color: var(--text-muted);
+            box-shadow: var(--shadow-sm);
+        }
+        .sidebar-toggle:hover {
+            background: var(--surface-secondary);
+            color: var(--text);
+            box-shadow: var(--shadow);
+        }
+        .sidebar-toggle svg {
+            width: 13px;
+            height: 13px;
+            transition: transform var(--transition);
+        }
+        .sidebar.collapsed .sidebar-toggle svg {
+            transform: rotate(180deg);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+            min-width: 0;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+            z-index: 20;
+        }
+        .top-bar h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+        .top-bar .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .breadcrumb span {
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .breadcrumb span:hover {
+            color: var(--primary);
+        }
+        .breadcrumb .sep {
+            color: var(--border);
+        }
+        .breadcrumb .current {
+            color: var(--text);
+            font-weight: 600;
+            cursor: default;
+        }
+        .breadcrumb .current:hover {
+            color: var(--text);
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            padding: 20px 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+        }
+        .card:hover {
+            box-shadow: var(--shadow);
+        }
+        .card-no-border {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+            border: none;
+        }
+        .card-no-border:hover {
+            box-shadow: var(--shadow-md);
+        }
+        .card-header {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Module Card */
+        .module-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            box-shadow: var(--shadow-sm);
+            max-width: 500px;
+        }
+        .module-card:hover {
+            border-color: var(--primary-300);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+        .module-card .module-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-sm);
+            background: var(--primary-50);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--primary);
+        }
+        .module-card .module-icon svg {
+            width: 22px;
+            height: 22px;
+        }
+        .module-card .module-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+        .module-card .module-info p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* T-Layout */
+        .t-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex: 1;
+        }
+        .t-layout-top {
+            background: var(--primary-50);
+            border: 1px solid var(--primary-200);
+            border-radius: var(--radius);
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9rem;
+            color: var(--primary-dark);
+            box-shadow: var(--shadow-sm);
+        }
+        .t-layout-top .info-icon {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+        .t-layout-bottom {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+        .t-left {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .t-right {
+            width: 420px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 0;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 0;
+        }
+        .tab-btn {
+            padding: 10px 18px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 500;
+            border: none;
+            background: none;
+            color: var(--text-muted);
+            transition: all 0.15s;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            white-space: nowrap;
+            border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+        }
+        .tab-btn:hover {
+            color: var(--text);
+            background: var(--surface-secondary);
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            font-weight: 600;
+        }
+        .tab-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* Form */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 14px;
+        }
+        .form-label {
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .form-label .required {
+            color: var(--error);
+            font-weight: 700;
+        }
+        .form-label .help-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--border);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            cursor: help;
+            color: var(--text-muted);
+            font-weight: 700;
+            position: relative;
+            transition: all 0.15s;
+            font-style: italic;
+        }
+        .form-label .help-icon:hover {
+            background: var(--primary-100);
+            color: var(--primary);
+        }
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            font-size: 0.88rem;
+            font-family: var(--font-mono);
+            transition: all 0.15s;
+            background: var(--surface);
+            color: var(--text);
+            outline: none;
+        }
+        .form-input:focus {
+            border-color: var(--primary-400);
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+        .form-input::placeholder {
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+        }
+        .input-with-icons {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-with-icons .form-input {
+            padding-right: 80px;
+        }
+        .input-icons-right {
+            position: absolute;
+            right: 6px;
+            display: flex;
+            gap: 2px;
+            align-items: center;
+        }
+        .input-icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-xs);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: all 0.15s;
+            font-size: 0.85rem;
+        }
+        .input-icon-btn:hover {
+            background: var(--surface-secondary);
+            color: var(--text);
+        }
+        .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            font-size: 0.88rem;
+            resize: vertical;
+            min-height: 70px;
+            font-family: inherit;
+            transition: all 0.15s;
+            background: var(--surface);
+            outline: none;
+        }
+        .form-textarea:focus {
+            border-color: var(--primary-400);
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: var(--radius-xs);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            letter-spacing: -0.01em;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            box-shadow: var(--shadow-md);
+        }
+        .btn-outline {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-outline:hover {
+            background: var(--surface-secondary);
+            border-color: var(--text-muted);
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.78rem;
+            border-radius: var(--radius-xs);
+        }
+        .btn-xs {
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            border-radius: 6px;
+        }
+        .btn-ghost {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: var(--radius-xs);
+            font-size: 0.82rem;
+            transition: all 0.15s;
+        }
+        .btn-ghost:hover {
+            background: var(--surface-secondary);
+            color: var(--text);
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-running {
+            background: var(--info-bg);
+            color: var(--info);
+        }
+        .status-completed {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+        .status-failed {
+            background: var(--error-bg);
+            color: var(--error);
+        }
+        .status-pending {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.6s infinite;
+        }
+        .status-running .status-dot {
+            background: var(--info);
+        }
+        .status-completed .status-dot {
+            background: var(--success);
+            animation: none;
+        }
+        .status-pending .status-dot {
+            background: var(--warning);
+            animation: pulse 2s infinite;
+        }
+        .status-failed .status-dot {
+            background: var(--error);
+            animation: none;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Job List */
+        .job-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .job-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+            background: var(--surface);
+        }
+        .job-item:hover {
+            background: var(--surface-secondary);
+            border-color: var(--border);
+        }
+        .job-item.selected {
+            background: var(--primary-50);
+            border-color: var(--primary-200);
+        }
+        .job-item .job-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .job-item .job-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .job-item .job-meta {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 10px 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+        }
+        .data-table th:hover {
+            color: var(--primary);
+        }
+        .data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .data-table tbody tr {
+            transition: all 0.1s;
+            cursor: pointer;
+        }
+        .data-table tbody tr:hover {
+            background: var(--primary-50);
+        }
+        .data-table tbody tr.selected-row {
+            background: var(--primary-100);
+            outline: 1px solid var(--primary-300);
+            outline-offset: -1px;
+        }
+        .data-table .checkbox-cell {
+            width: 36px;
+            text-align: center;
+        }
+
+        /* Result Card */
+        .result-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+        }
+        .result-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-300);
+        }
+        .result-card .mol-structure {
+            height: 100px;
+            background: var(--surface-secondary);
+            border-radius: var(--radius-xs);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            overflow: hidden;
+        }
+        .result-card .mol-structure svg {
+            width: 100%;
+            height: 100%;
+        }
+        .result-card .result-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .result-tag {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            background: var(--primary-50);
+            color: var(--primary);
+        }
+        .result-tag.good {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+        .result-tag.warn {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        /* Tooltip */
+        .tooltip-popup {
+            position: absolute;
+            background: #1e293b;
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: var(--radius-xs);
+            font-size: 0.78rem;
+            z-index: 100;
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: var(--shadow-lg);
+            max-width: 360px;
+            white-space: normal;
+            line-height: 1.5;
+        }
+        .tooltip-popup::after {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 20px;
+            border: 6px solid transparent;
+            border-bottom-color: #1e2938;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s;
+        }
+        .modal {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            max-width: 800px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            z-index: 201;
+            animation: slideUp 0.25s;
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1e293b;
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            z-index: 300;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toast.success {
+            border-left: 3px solid var(--success);
+        }
+        .toast.info {
+            border-left: 3px solid var(--info);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Highlight */
+        .highlight-box {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: var(--radius-xs);
+            padding: 12px 16px;
+            font-size: 0.82rem;
+            color: #92400e;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        /* Collapsible */
+        .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            user-select: none;
+            padding: 8px 0;
+        }
+        .collapsible-header svg {
+            transition: transform 0.2s;
+        }
+        .collapsible-header.open svg {
+            transform: rotate(90deg);
+        }
+        .collapsible-body {
+            overflow: hidden;
+            transition: max-height 0.3s;
+        }
+
+        /* Fullscreen */
+        .fullscreen-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 250;
+            display: flex;
+            flex-direction: column;
+        }
+        .fullscreen-header {
+            padding: 12px 20px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Space vis */
+        .chem-space-container {
+            width: 100%;
+            height: 300px;
+            background: var(--surface-secondary);
+            border-radius: var(--radius);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .chem-space-dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+        .chem-space-dot:hover {
+            transform: scale(1.6);
+            z-index: 5;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+        }
+        .chem-space-dot.selected-dot {
+            border: 3px solid #000;
+            z-index: 6;
+            transform: scale(1.5);
+        }
+
+        /* Radar */
+        .radar-container {
+            width: 100%;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .filter-select {
+            padding: 7px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            font-size: 0.82rem;
+            background: var(--surface);
+            cursor: pointer;
+            outline: none;
+        }
+        .filter-select:focus {
+            border-color: var(--primary-400);
+        }
+        .search-input {
+            padding: 7px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            font-size: 0.82rem;
+            outline: none;
+            flex: 1;
+            min-width: 160px;
+        }
+        .search-input:focus {
+            border-color: var(--primary-400);
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+
+        @media (max-width: 900px) {
+            .t-layout-bottom {
+                flex-direction: column;
+            }
+            .t-right {
+                width: 100%;
+            }
+            .result-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
+            </div>
+            <span class="brand-text">MolDesigner</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">功能</div>
+            <div class="nav-item active" data-nav="modules" onclick="navigateTo('modules')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                <span class="nav-label">模块</span>
+            </div>
+            <div class="nav-item" data-nav="workflows" onclick="navigateTo('workflows')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></svg>
+                <span class="nav-label">流程</span>
+            </div>
+            <div class="nav-item" data-nav="data" onclick="navigateTo('data')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 11v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6"/></svg>
+                <span class="nav-label">数据</span>
+            </div>
+            <div class="nav-item" data-nav="jobs" onclick="navigateTo('jobs')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 2v4M16 2v4M2 10h20"/></svg>
+                <span class="nav-label">作业</span>
+                <span class="nav-badge" id="job-count-badge">5</span>
+            </div>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="sidebar-bottom-item" onclick="showToast('使用说明书：暂无文档', 'info')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span class="sidebar-bottom-label">使用说明书</span>
+            </div>
+            <div class="sidebar-bottom-item" onclick="showToast('通知：暂无新通知', 'info')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                <span class="sidebar-bottom-label">通知</span>
+            </div>
+            <div class="sidebar-bottom-item" onclick="showToast('账号管理：管理员', 'info')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 00-16 0"/></svg>
+                <span class="sidebar-bottom-label">账号管理</span>
+            </div>
+        </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="收起/展开边栏">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+        <!-- Dynamically populated -->
+    </main>
+
+    <!-- Tooltip container -->
+    <div class="tooltip-popup" id="global-tooltip" style="display:none;"></div>
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+
+    <!-- Modal container -->
+    <div id="modal-container"></div>
+
+    <!-- Fullscreen container -->
+    <div id="fullscreen-container"></div>
+
+    <script>
+        // ==================== STATE ====================
+        const state = {
+            currentView: 'modules', // 'modules' | 'function' | 'job-detail' | 'result-detail' | 'workflows' | 'data' | 'jobs'
+            sidebarCollapsed: false,
+            activeTab: 'r-group',
+            selectedJobId: null,
+            selectedResultJobId: null,
+            viewMode: 'card', // 'card' | 'table'
+            selectedMoleculeIds: new Set(),
+            chemSpaceSelectedIndex: null,
+            filters: { status: 'all', search: '' },
+            sortField: 'id',
+            sortDir: 'asc',
+            expandedMetadata: false,
+        };
+
+        // ==================== MOCK DATA ====================
+        const mockProjects = [
+            { id: 'P001', name: 'EGFR抑制剂优化', status: 'completed', createdAt: '2026-06-28 14:30',
+                moleculeCount: 120 },
+            { id: 'P002', name: 'CDK4靶点分子生成', status: 'running', createdAt: '2026-06-30 09:15',
+            moleculeCount: 85 },
+            { id: 'P003', name: 'PARP1骨架替换', status: 'completed', createdAt: '2026-06-25 11:00',
+                moleculeCount: 200 },
+            { id: 'P004', name: 'BTK抑制剂筛选', status: 'failed', createdAt: '2026-06-22 16:45', moleculeCount: 0 },
+            { id: 'P005', name: 'JAK2变构抑制剂', status: 'completed', createdAt: '2026-06-20 08:30',
+            moleculeCount: 156 },
+        ];
+
+        const mockJobs = [
+            { id: 'JOB-20260701-001', projectName: 'EGFR抑制剂优化-R基替换', status: 'completed', createdAt: '2026-07-01 10:22',
+                completedAt: '2026-07-01 10:35', duration: '13min', moleculeCount: 120, smiles: '*c1cnc2ccccc2c1',
+                dockingScore: -9.8, qed: 0.72, logP: 2.1, mw: 385 },
+            { id: 'JOB-20260701-002', projectName: 'CDK4靶点分子生成', status: 'running', createdAt: '2026-07-01 11:05',
+                completedAt: '-', duration: '进行中...', moleculeCount: 45, smiles: '*c1nccc2c1cccc2',
+                dockingScore: null, qed: null, logP: null, mw: null },
+            { id: 'JOB-20260630-003', projectName: 'PARP1骨架替换-v2', status: 'completed', createdAt: '2026-06-30 15:40',
+                completedAt: '2026-06-30 16:02', duration: '22min', moleculeCount: 200, smiles: '*C(=O)Nc1cccc2c1',
+                dockingScore: -10.2, qed: 0.68, logP: 1.8, mw: 412 },
+            { id: 'JOB-20260630-004', projectName: 'BTK抑制剂筛选-R基替换', status: 'failed', createdAt: '2026-06-30 13:10',
+                completedAt: '2026-06-30 13:15', duration: '5min', moleculeCount: 0, smiles: '*c1ccc(Br)cc1',
+                dockingScore: null, qed: null, logP: null, mw: null },
+            { id: 'JOB-20260629-005', projectName: 'JAK2变构抑制剂', status: 'completed', createdAt: '2026-06-29 09:00',
+                completedAt: '2026-06-29 09:28', duration: '28min', moleculeCount: 156, smiles: '*C(=O)c1cccnc1',
+                dockingScore: -8.9, qed: 0.75, logP: 2.4, mw: 398 },
+            { id: 'JOB-20260628-006', projectName: 'EGFR-T790M突变体', status: 'completed', createdAt: '2026-06-28 16:20',
+                completedAt: '2026-06-28 16:50', duration: '30min', moleculeCount: 180, smiles: '*c1cnc(N)nc1',
+                dockingScore: -11.0, qed: 0.81, logP: 1.5, mw: 420 },
+            { id: 'JOB-20260627-007', projectName: 'ALK抑制剂优化', status: 'completed', createdAt: '2026-06-27 10:00',
+                completedAt: '2026-06-27 10:18', duration: '18min', moleculeCount: 95, smiles: '*c1csc(N)n1',
+                dockingScore: -9.3, qed: 0.69, logP: 2.7, mw: 375 },
+        ];
+
+        // Generate mock molecules for result detail
+        function generateMockMolecules(count, baseSmiles) {
+            const mols = [];
+            const fragments = ['c1ccccc1', 'c1cnccn1', 'c1ccncc1', 'c1cncnc1', 'c1ccoc1', 'c1ccsc1', 'C(=O)N', 'C(=O)O',
+                'N(C)C', 'OC', 'F', 'Cl', 'Br', 'C#N', 'C(F)(F)F'
+            ];
+            for (let i = 0; i < count; i++) {
+                const frag = fragments[Math.floor(Math.random() * fragments.length)];
+                const smi = baseSmiles.replace('*', frag);
+                mols.push({
+                    id: `MOL-${String(i + 1).padStart(4, '0')}`,
+                    smiles: smi,
+                    dockingScore: -(Math.random() * 5 + 6).toFixed(1),
+                    qed: (Math.random() * 0.5 + 0.4).toFixed(2),
+                    logP: (Math.random() * 4 + 0.5).toFixed(1),
+                    mw: Math.floor(Math.random() * 200 + 280),
+                    hbd: Math.floor(Math.random() * 4),
+                    hba: Math.floor(Math.random() * 6),
+                    tpsa: Math.floor(Math.random() * 80 + 30),
+                    rotBonds: Math.floor(Math.random() * 6 + 1),
+                    ringCount: Math.floor(Math.random() * 3 + 1),
+                });
+            }
+            return mols;
+        }
+
+        // ==================== RENDER ====================
+        function render() {
+            const mc = document.getElementById('main-content');
+            switch (state.currentView) {
+                case 'modules':
+                    mc.innerHTML = renderModulesView();
+                    break;
+                case 'function':
+                    mc.innerHTML = renderFunctionView();
+                    break;
+                case 'job-detail':
+                    mc.innerHTML = renderJobDetailView();
+                    break;
+                case 'result-detail':
+                    mc.innerHTML = renderResultDetailView();
+                    break;
+                case 'workflows':
+                    mc.innerHTML = renderWorkflowsView();
+                    break;
+                case 'data':
+                    mc.innerHTML = renderDataView();
+                    break;
+                case 'jobs':
+                    mc.innerHTML = renderJobsListView();
+                    break;
+                default:
+                    mc.innerHTML = renderModulesView();
+            }
+            updateNavActive();
+            updateJobBadge();
+            attachEventListeners();
+        }
+
+        function updateNavActive() {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const navMap = {
+                'modules': 'modules',
+                'function': 'modules',
+                'job-detail': 'jobs',
+                'result-detail': 'jobs',
+                'workflows': 'workflows',
+                'data': 'data',
+                'jobs': 'jobs'
+            };
+            const target = navMap[state.currentView] || 'modules';
+            const navItem = document.querySelector(`.nav-item[data-nav="${target}"]`);
+            if (navItem) navItem.classList.add('active');
+        }
+
+        function updateJobBadge() {
+            const badge = document.getElementById('job-count-badge');
+            if (badge) badge.textContent = mockJobs.length;
+        }
+
+        function navigateTo(view) {
+            state.currentView = view;
+            if (view === 'modules') {
+                state.selectedJobId = null;
+                state.selectedResultJobId = null;
+            }
+            if (view === 'jobs') {
+                state.selectedJobId = null;
+                state.selectedResultJobId = null;
+            }
+            render();
+            document.getElementById('main-content').scrollTop = 0;
+        }
+
+        function toggleSidebar() {
+            state.sidebarCollapsed = !state.sidebarCollapsed;
+            const sidebar = document.getElementById('sidebar');
+            if (state.sidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+            } else {
+                sidebar.classList.remove('collapsed');
+            }
+        }
+
+        // ==================== VIEW RENDERERS ====================
+        function renderModulesView() {
+            return `
+            <div class="top-bar">
+                <div>
+                    <h2>模块</h2>
+                    <span class="subtitle">选择功能模块开始药物分子设计</span>
+                </div>
+            </div>
+            <div class="content-area">
+                <div class="module-card" onclick="navigateTo('function')">
+                    <div class="module-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="9" r="3"/><circle cx="15" cy="15" r="3"/>
+                            <line x1="9" y1="12" x2="15" y2="9"/><line x1="12" y1="9" x2="9" y2="15"/>
+                            <rect x="2" y="2" width="20" height="20" rx="4"/>
+                        </svg>
+                    </div>
+                    <div class="module-info">
+                        <h3>Small Molecule Generation</h3>
+                        <p>分子生成，当前仅支持骨架约束的小分子生成。基于R基替换策略，在保持核心骨架不变的情况下生成多样化的候选分子。</p>
+                    </div>
+                </div>
+                <div style="margin-top:16px;color:var(--text-muted);font-size:0.82rem;">
+                    <em>更多模块即将上线：骨架重构、全新生成、分子优化...</em>
+                </div>
+            </div>`;
+        }
+
+        function renderFunctionView() {
+            const recentJobs = mockJobs.slice(0, 6);
+            return `
+            <div class="top-bar">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span class="breadcrumb">
+                        <span onclick="navigateTo('modules')">模块</span><span class="sep">›</span>
+                        <span class="current">Small Molecule Generation</span>
+                    </span>
+                </div>
+            </div>
+            <div class="content-area">
+                <div class="t-layout">
+                    <div class="t-layout-top">
+                        <div class="info-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        </div>
+                        <div>
+                            <strong>Small Molecule Generation</strong> — 骨架约束分子生成
+                            <span style="font-size:0.8rem;display:block;margin-top:2px;color:var(--primary-600);">当前支持R基替换策略。在SMILES中使用 <code>*</code> 标记可变位置，系统将在这些位置进行片段替换生成候选分子库。</span>
+                        </div>
+                    </div>
+                    <div class="t-layout-bottom">
+                        <div class="t-left">
+                            <div class="card" style="flex:1;">
+                                <div class="tabs" id="project-tabs">
+                                    <button class="tab-btn active" data-tab="r-group" onclick="switchTab('r-group')">R基替换</button>
+                                    <button class="tab-btn disabled" data-tab="scaffold" onclick="switchTab('scaffold')">骨架重构 <span style="font-size:0.7rem;color:var(--text-muted);">(即将上线)</span></button>
+                                    <button class="tab-btn disabled" data-tab="denovo" onclick="switchTab('denovo')">全新生成 <span style="font-size:0.7rem;color:var(--text-muted);">(即将上线)</span></button>
+                                </div>
+                                <div style="padding-top:16px;" id="tab-content-r-group">
+                                    <form id="project-form" onsubmit="handleSubmit(event)">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <span class="required">*</span> 分子结构 (SMILES)
+                                                <span class="help-icon" id="smiles-help-icon" onmouseenter="showTooltip(event, '输入带*的小分子SMILES，*代表生成部分，其他部分固定不变，支持输入多个*。例如：*c1cnc2ccccc2c1 格式：SMILES')" onmouseleave="hideTooltip()">?</span>
+                                            </label>
+                                            <div class="input-with-icons">
+                                                <input type="text" class="form-input" id="smiles-input" placeholder="c1cnc2ccccc2c1" value="*c1cnc2ccccc2c1" required>
+                                                <div class="input-icons-right">
+                                                    <button type="button" class="input-icon-btn" title="结构式编辑器" onclick="showToast('结构式编辑器（模拟）', 'info')">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8" cy="10" r="2"/><circle cx="16" cy="14" r="2"/><line x1="9" y1="12" x2="14" y2="13"/></svg>
+                                                    </button>
+                                                    <button type="button" class="input-icon-btn" title="上传文件" onclick="showToast('文件上传（模拟）', 'info')">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label"><span class="required">*</span> 项目名称</label>
+                                            <input type="text" class="form-input" id="project-name" placeholder="输入项目名称" required style="font-family:inherit;">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">项目描述 <span style="font-weight:400;color:var(--text-muted);">(选填)</span></label>
+                                            <textarea class="form-textarea" id="project-desc" placeholder="描述项目目标和参数设置..."></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">生成分子数量</label>
+                                            <input type="number" class="form-input" id="mol-count" value="100" min="10" max="1000" style="font-family:inherit;width:140px;">
+                                        </div>
+                                        <div class="btn-row">
+                                            <button type="submit" class="btn btn-primary">提交任务</button>
+                                            <button type="button" class="btn btn-outline" onclick="resetForm()">重置</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div style="padding-top:16px;display:none;" id="tab-content-scaffold">
+                                    <div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg><p>骨架重构功能即将上线</p></div>
+                                </div>
+                                <div style="padding-top:16px;display:none;" id="tab-content-denovo">
+                                    <div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg><p>全新生成功能即将上线</p></div>
+                                </div>
+                            </div>
+                            <!-- Project List -->
+                            <div class="card">
+                                <div class="card-header">📋 历史项目</div>
+                                <div style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;">
+                                    ${mockProjects.map(p => `
+                                        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:all 0.15s;"
+                                             onmouseover="this.style.background='var(--surface-secondary)'"
+                                             onmouseout="this.style.background='transparent'"
+                                             onclick="viewProjectJobs('${p.id}')">
+                                            <span class="status-badge status-${p.status === 'running' ? 'running' : p.status === 'completed' ? 'completed' : 'failed'}">
+                                                <span class="status-dot"></span>${p.status === 'running' ? '运行中' : p.status === 'completed' ? '已完成' : '失败'}
+                                            </span>
+                                            <span style="flex:1;font-weight:500;font-size:0.85rem;">${p.name}</span>
+                                            <span style="font-size:0.72rem;color:var(--text-muted);">${p.createdAt}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="t-right">
+                            <div class="card" style="flex:1;display:flex;flex-direction:column;">
+                                <div class="card-header">📊 近期作业列表</div>
+                                <div class="job-list" id="recent-job-list">
+                                    ${recentJobs.map(j => renderJobItem(j)).join('')}
+                                </div>
+                                <button class="btn btn-ghost btn-sm" style="margin-top:8px;align-self:flex-start;" onclick="navigateTo('jobs')">查看全部作业 →</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function renderJobItem(j) {
+            const statusText = j.status === 'running' ? '运行中' : j.status === 'completed' ? '已完成' : j.status ===
+                'failed' ? '失败' : '等待中';
+            const statusClass = j.status === 'running' ? 'running' : j.status === 'completed' ? 'completed' : j.status ===
+                'failed' ? 'failed' : 'pending';
+            return `
+            <div class="job-item ${state.selectedJobId === j.id ? 'selected' : ''}"
+                 data-job-id="${j.id}"
+                 onmouseenter="highlightJobItem(this)" onmouseleave="unhighlightJobItem(this)"
+                 onclick="openJobDetail('${j.id}')">
+                <span class="status-badge status-${statusClass}"><span class="status-dot"></span>${statusText}</span>
+                <div class="job-info">
+                    <div class="job-name">${j.projectName}</div>
+                    <div class="job-meta">
+                        <span>${j.id}</span><span>${j.createdAt}</span>
+                        ${j.status === 'completed' ? `<span>⏱ ${j.duration}</span>` : ''}
+                    </div>
+                </div>
+                <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();openJobDetail('${j.id}')" style="flex-shrink:0;">查看</button>
+            </div>`;
+        }
+
+        function renderJobsListView() {
+            const filtered = getFilteredJobs();
+            return `
+            <div class="top-bar">
+                <div>
+                    <h2>作业管理</h2>
+                    <span class="subtitle">所有运行结果的作业聚合地，方便管理和查看</span>
+                </div>
+            </div>
+            <div class="content-area">
+                <div class="card">
+                    <div class="filter-bar">
+                        <input type="text" class="search-input" id="job-search" placeholder="🔍 搜索作业名称或编号..." oninput="state.filters.search=this.value;render();">
+                        <select class="filter-select" id="status-filter" onchange="state.filters.status=this.value;render();">
+                            <option value="all">全部状态</option>
+                            <option value="completed">已完成</option>
+                            <option value="running">运行中</option>
+                            <option value="failed">失败</option>
+                            <option value="pending">等待中</option>
+                        </select>
+                        <button class="btn btn-outline btn-sm" onclick="batchSelectToggle()">批量选择</button>
+                        <span style="font-size:0.78rem;color:var(--text-muted);">共 ${filtered.length} 条</span>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th class="checkbox-cell"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
+                                <th onclick="sortJobs('id')">编号 ${state.sortField==='id' ? (state.sortDir==='asc'?'▲':'▼') : ''}</th>
+                                <th onclick="sortJobs('projectName')">名称 ${state.sortField==='projectName' ? (state.sortDir==='asc'?'▲':'▼') : ''}</th>
+                                <th onclick="sortJobs('createdAt')">创建时间 ${state.sortField==='createdAt' ? (state.sortDir==='asc'?'▲':'▼') : ''}</th>
+                                <th onclick="sortJobs('completedAt')">完成时间 ${state.sortField==='completedAt' ? (state.sortDir==='asc'?'▲':'▼') : ''}</th>
+                                <th onclick="sortJobs('duration')">耗时 ${state.sortField==='duration' ? (state.sortDir==='asc'?'▲':'▼') : ''}</th>
+                                <th onclick="sortJobs('status')">状态 ${state.sortField==='status' ? (state.sortDir==='asc'?'▲':'▼') : ''}</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filtered.map(j => {
+                                const st = j.status==='running'?'运行中':j.status==='completed'?'已完成':j.status==='failed'?'失败':'等待中';
+                                const sc = j.status==='running'?'running':j.status==='completed'?'completed':j.status==='failed'?'failed':'pending';
+                                return `
+                                <tr class="${state.selectedJobId===j.id?'selected-row':''}"
+                                    onmouseenter="this.style.background='var(--primary-50)'"
+                                    onmouseleave="this.style.background=state.selectedJobId==='${j.id}'?'var(--primary-100)':''"
+                                    onclick="openJobDetail('${j.id}')">
+                                    <td class="checkbox-cell"><input type="checkbox" onclick="event.stopPropagation();" onchange="toggleJobSelect('${j.id}', this)"></td>
+                                    <td><code style="font-size:0.78rem;">${j.id}</code></td>
+                                    <td style="font-weight:500;">${j.projectName}</td>
+                                    <td>${j.createdAt}</td>
+                                    <td>${j.completedAt}</td>
+                                    <td>${j.duration}</td>
+                                    <td><span class="status-badge status-${sc}"><span class="status-dot"></span>${st}</span></td>
+                                    <td><button class="btn btn-xs btn-outline" onclick="event.stopPropagation();openJobDetail('${j.id}')">详情</button></td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                    ${filtered.length===0 ? '<div class="empty-state"><p>没有匹配的作业记录</p></div>' : ''}
+                </div>
+            </div>`;
+        }
+
+        function renderJobDetailView() {
+            const job = mockJobs.find(j => j.id === state.selectedJobId);
+            if (!job) return '<div class="content-area"><div class="card"><p>作业未找到</p><button class="btn btn-outline" onclick="navigateTo(\'jobs\')">返回</button></div></div>';
+            const st = job.status === 'running' ? '运行中' : job.status === 'completed' ? '已完成' : job.status === 'failed' ?
+                '失败' : '等待中';
+            const sc = job.status === 'running' ? 'running' : job.status === 'completed' ? 'completed' : job.status ===
+                'failed' ? 'failed' : 'pending';
+            const mols = job.status === 'completed' ? generateMockMolecules(job.moleculeCount || 30, job.smiles) : [];
+            return `
+            <div class="top-bar">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <button class="btn btn-ghost btn-sm" onclick="navigateTo('jobs')">← 返回作业列表</button>
+                    <span style="font-weight:600;">作业详情: ${job.projectName}</span>
+                    <span class="status-badge status-${sc}"><span class="status-dot"></span>${st}</span>
+                </div>
+            </div>
+            <div class="content-area">
+                <div class="card">
+                    <div class="collapsible-header ${state.expandedMetadata?'open':''}" onclick="state.expandedMetadata=!state.expandedMetadata;render();">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
+                        任务结果元数据
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.84rem;">
+                        <div><strong>编号:</strong> ${job.id}</div>
+                        <div><strong>项目名称:</strong> ${job.projectName}</div>
+                        <div><strong>状态:</strong> <span class="status-badge status-${sc}"><span class="status-dot"></span>${st}</span></div>
+                        <div><strong>分子数量:</strong> ${job.moleculeCount}</div>
+                    </div>
+                    <div class="collapsible-body" style="max-height:${state.expandedMetadata?'200px':'0'};">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.84rem;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-light);">
+                            <div><strong>创建时间:</strong> ${job.createdAt}</div>
+                            <div><strong>完成时间:</strong> ${job.completedAt}</div>
+                            <div><strong>处理用时:</strong> ${job.duration}</div>
+                            <div><strong>SMILES模板:</strong> <code>${job.smiles}</code></div>
+                        </div>
+                    </div>
+                </div>
+                ${job.status === 'completed' ? `
+                <div class="card">
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+                        <div style="display:flex;gap:6px;">
+                            <button class="btn btn-sm ${state.viewMode==='card'?'btn-primary':'btn-outline'}" onclick="state.viewMode='card';render();">📇 卡片视图</button>
+                            <button class="btn btn-sm ${state.viewMode==='table'?'btn-primary':'btn-outline'}" onclick="state.viewMode='table';render();">📋 表格视图</button>
+                        </div>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            <select class="filter-select" onchange="sortMolecules(this.value)" style="font-size:0.78rem;">
+                                <option value="dockingScore">按对接分数排序</option>
+                                <option value="qed">按类药性(QED)排序</option>
+                                <option value="logP">按LogP排序</option>
+                                <option value="mw">按分子量排序</option>
+                            </select>
+                            <button class="btn btn-outline btn-sm" onclick="openFullscreen()" title="全屏查看">⛶ 全屏</button>
+                            <button class="btn btn-outline btn-sm" onclick="showToast('已保存到数据板块', 'success')">💾 另存</button>
+                            <button class="btn btn-outline btn-sm" onclick="showToast('下载CSV文件（模拟）', 'success')">⬇ 下载CSV</button>
+                        </div>
+                    </div>
+                    ${state.viewMode === 'card' ? `
+                    <div class="result-grid" id="result-grid">
+                        ${mols.slice(0,24).map((m,i) => `
+                        <div class="result-card" onclick="openMoleculeDetail('${m.id}', ${i})" id="mol-card-${i}">
+                            <div class="mol-structure">${renderMoleculeSVG(m.smiles)}</div>
+                            <div style="font-size:0.78rem;font-weight:600;margin-bottom:6px;">${m.id}</div>
+                            <div class="result-tags">
+                                <span class="result-tag ${parseFloat(m.dockingScore) < -9 ? 'good' : ''}">对接: ${m.dockingScore}</span>
+                                <span class="result-tag ${parseFloat(m.qed) > 0.7 ? 'good' : ''}">QED: ${m.qed}</span>
+                                <span class="result-tag">LogP: ${m.logP}</span>
+                                <span class="result-tag">MW: ${m.mw}</span>
+                            </div>
+                            <div style="margin-top:6px;font-size:0.7rem;color:var(--text-muted);word-break:break-all;">
+                                <code>${m.smiles}</code>
+                            </div>
+                        </div>`).join('')}
+                    </div>
+                    ${mols.length > 24 ? `<p style="text-align:center;color:var(--text-muted);margin-top:8px;">显示前24个分子，共${mols.length}个</p>` : ''}
+                    ` : `
+                    <div style="overflow-x:auto;">
+                        <table class="data-table">
+                            <thead><tr><th>编号</th><th>SMILES</th><th>对接分数</th><th>QED</th><th>LogP</th><th>分子量</th><th>HBD</th><th>HBA</th><th>TPSA</th></tr></thead>
+                            <tbody>${mols.slice(0,50).map(m=>`
+                                <tr onclick="openMoleculeDetail('${m.id}', ${mols.indexOf(m)})">
+                                    <td><code>${m.id}</code></td><td><code style="font-size:0.7rem;">${m.smiles}</code></td>
+                                    <td>${m.dockingScore}</td><td>${m.qed}</td><td>${m.logP}</td><td>${m.mw}</td>
+                                    <td>${m.hbd}</td><td>${m.hba}</td><td>${m.tpsa}</td>
+                                </tr>`).join('')}</tbody>
+                        </table>
+                        ${mols.length > 50 ? `<p style="text-align:center;color:var(--text-muted);margin-top:8px;">显示前50条，共${mols.length}条</p>` : ''}
+                    </div>`}
+                </div>
+                <!-- Chemical Space + Radar -->
+                <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                    <div class="card" style="flex:2;min-width:300px;">
+                        <div class="card-header">🌐 化学空间可视化</div>
+                        <div class="chem-space-container" id="chem-space-plot">
+                            ${generateChemSpaceDots(mols.slice(0,60))}
+                        </div>
+                        <p style="font-size:0.72rem;color:var(--text-muted;margin-top:6px;">点击圆点查看对应分子详情 | 蓝色=低对接分数(好) | 橙色=高对接分数</p>
+                    </div>
+                    <div class="card" style="flex:1;min-width:250px;">
+                        <div class="card-header">📊 雷达图</div>
+                        <div class="radar-container" id="radar-chart">
+                            ${renderRadarChart(state.chemSpaceSelectedIndex !== null ? mols[state.chemSpaceSelectedIndex] : mols[0])}
+                        </div>
+                        <p style="font-size:0.72rem;color:var(--text-muted);text-align:center;margin-top:6px;">
+                            ${state.chemSpaceSelectedIndex !== null ? `分子: ${mols[state.chemSpaceSelectedIndex].id}` : '点击化学空间圆点选择分子'}
+                        </p>
+                    </div>
+                </div>
+                ` : job.status === 'running' ? `
+                <div class="card" style="text-align:center;padding:40px;">
+                    <div style="font-size:3rem;animation:pulse 1.5s infinite;">⚙️</div>
+                    <p style="font-weight:600;margin-top:12px;">任务正在运行中...</p>
+                    <p style="color:var(--text-muted);font-size:0.85rem;">预计剩余时间: ~8分钟 | 已生成 ${job.moleculeCount} 个分子</p>
+                </div>` : `
+                <div class="card" style="text-align:center;padding:40px;">
+                    <div style="font-size:3rem;">❌</div>
+                    <p style="font-weight:600;margin-top:12px;color:var(--error);">任务执行失败</p>
+                    <p style="color:var(--text-muted);font-size:0.85rem;">请检查SMILES格式或联系管理员</p>
+                </div>`}
+            </div>`;
+        }
+
+        function renderResultDetailView() {
+            return renderJobDetailView();
+        }
+
+        function renderWorkflowsView() {
+            return `
+            <div class="top-bar"><div><h2>流程编排</h2><span class="subtitle">方便不同模块的编排组合</span></div></div>
+            <div class="content-area">
+                <div class="card" style="text-align:center;padding:60px;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1" opacity="0.4"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></svg>
+                    <p style="font-weight:600;margin-top:16px;color:var(--text-secondary);">流程编排功能即将上线</p>
+                    <p style="color:var(--text-muted);font-size:0.85rem;">您将能够拖拽模块构建自定义分子设计工作流</p>
+                </div>
+            </div>`;
+        }
+
+        function renderDataView() {
+            return `
+            <div class="top-bar"><div><h2>数据中心</h2><span class="subtitle">存放上传或作业结果数据，方便调用</span></div></div>
+            <div class="content-area">
+                <div class="card">
+                    <div class="card-header">📁 数据文件</div>
+                    <table class="data-table"><thead><tr><th>文件名</th><th>来源</th><th>大小</th><th>日期</th><th>操作</th></tr></thead>
+                    <tbody>
+                        <tr><td>EGFR_Rgroup_results.csv</td><td>JOB-20260701-001</td><td>2.4MB</td><td>2026-07-01</td><td><button class="btn btn-xs btn-outline">下载</button></td></tr>
+                        <tr><td>PARP1_scaffold_library.sdf</td><td>JOB-20260630-003</td><td>5.1MB</td><td>2026-06-30</td><td><button class="btn btn-xs btn-outline">下载</button></td></tr>
+                        <tr><td>JAK2_variants.csv</td><td>JOB-20260629-005</td><td>3.2MB</td><td>2026-06-29</td><td><button class="btn btn-xs btn-outline">下载</button></td></tr>
+                    </tbody></table>
+                </div>
+            </div>`;
+        }
+
+        // ==================== HELPERS ====================
+        function getFilteredJobs() {
+            let jobs = [...mockJobs];
+            if (state.filters.status !== 'all') {
+                jobs = jobs.filter(j => j.status === state.filters.status);
+            }
+            if (state.filters.search.trim()) {
+                const s = state.filters.search.toLowerCase();
+                jobs = jobs.filter(j => j.projectName.toLowerCase().includes(s) || j.id.toLowerCase().includes(s));
+            }
+            if (state.sortField) {
+                jobs.sort((a, b) => {
+                    let va = a[state.sortField] || '';
+                    let vb = b[state.sortField] || '';
+                    if (typeof va === 'number') return state.sortDir === 'asc' ? va - vb : vb - va;
+                    return state.sortDir === 'asc' ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(
+                        String(va));
+                });
+            }
+            return jobs;
+        }
+
+        function sortJobs(field) {
+            if (state.sortField === field) {
+                state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.sortField = field;
+                state.sortDir = 'asc';
+            }
+            render();
+        }
+
+        function sortMolecules(criteria) {
+            showToast(`按 ${criteria} 排序（模拟）`, 'info');
+        }
+
+        function openJobDetail(jobId) {
+            state.selectedJobId = jobId;
+            state.currentView = 'job-detail';
+            state.expandedMetadata = false;
+            state.chemSpaceSelectedIndex = null;
+            render();
+            document.getElementById('main-content').scrollTop = 0;
+        }
+
+        function openMoleculeDetail(molId, index) {
+            state.chemSpaceSelectedIndex = index;
+            showToast(`选中分子: ${molId}`, 'info');
+            // Highlight in chem space
+            setTimeout(() => {
+                const dots = document.querySelectorAll('.chem-space-dot');
+                dots.forEach(d => d.classList.remove('selected-dot'));
+                if (dots[index]) dots[index].classList.add('selected-dot');
+                // Update radar
+                const job = mockJobs.find(j => j.id === state.selectedJobId);
+                if (job) {
+                    const mols = generateMockMolecules(job.moleculeCount || 30, job.smiles);
+                    const radarContainer = document.getElementById('radar-chart');
+                    if (radarContainer && mols[index]) {
+                        radarContainer.innerHTML = renderRadarChart(mols[index]);
+                    }
+                }
+            }, 100);
+        }
+
+        function viewProjectJobs(projectId) {
+            const project = mockProjects.find(p => p.id === projectId);
+            if (project && mockJobs.length > 0) {
+                const relatedJob = mockJobs.find(j => j.projectName.includes(project.name.split('优化')[0]) || j
+                    .projectName.includes(project.name.split('筛选')[0]) || j.projectName.includes(project.name.split(
+                        '替换')[0]));
+                if (relatedJob) {
+                    openJobDetail(relatedJob.id);
+                } else {
+                    openJobDetail(mockJobs[0].id);
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            state.activeTab = tab;
+            document.querySelectorAll('#project-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+            const tabBtn = document.querySelector(`#project-tabs .tab-btn[data-tab="${tab}"]`);
+            if (tabBtn) tabBtn.classList.add('active');
+            document.getElementById('tab-content-r-group').style.display = tab === 'r-group' ? 'block' : 'none';
+            document.getElementById('tab-content-scaffold').style.display = tab === 'scaffold' ? 'block' : 'none';
+            document.getElementById('tab-content-denovo').style.display = tab === 'denovo' ? 'block' : 'none';
+        }
+
+        function handleSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('project-name')?.value || '未命名项目';
+            const smiles = document.getElementById('smiles-input')?.value || '*c1cnc2ccccc2c1';
+            const count = parseInt(document.getElementById('mol-count')?.value || '100');
+            const newJob = {
+                id: `JOB-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(mockJobs.length+1).padStart(3,'0')}`,
+                projectName: name,
+                status: 'running',
+                createdAt: new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-'),
+                completedAt: '-',
+                duration: '进行中...',
+                moleculeCount: 0,
+                smiles: smiles,
+                dockingScore: null,
+                qed: null,
+                logP: null,
+                mw: null,
+            };
+            mockJobs.unshift(newJob);
+            state.selectedJobId = newJob.id;
+            showToast('任务已提交，正在运行中...', 'info');
+            // Simulate completion after delay
+            setTimeout(() => {
+                newJob.status = 'completed';
+                newJob.completedAt = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
+                newJob.duration = Math.floor(Math.random() * 25 + 5) + 'min';
+                newJob.moleculeCount = count;
+                newJob.dockingScore = -(Math.random() * 5 + 6).toFixed(1);
+                newJob.qed = (Math.random() * 0.5 + 0.4).toFixed(2);
+                newJob.logP = (Math.random() * 4 + 0.5).toFixed(1);
+                newJob.mw = Math.floor(Math.random() * 200 + 300);
+                if (state.currentView === 'function' || state.currentView === 'job-detail' || state.currentView ===
+                    'jobs') {
+                    render();
+                }
+                updateJobBadge();
+                showToast(`任务 ${newJob.id} 已完成！`, 'success');
+            }, 8000 + Math.random() * 4000);
+            state.currentView = 'function';
+            render();
+            document.getElementById('main-content').scrollTop = 0;
+            updateJobBadge();
+        }
+
+        function resetForm() {
+            const form = document.getElementById('project-form');
+            if (form) form.reset();
+            const smilesInput = document.getElementById('smiles-input');
+            if (smilesInput) smilesInput.value = '*c1cnc2ccccc2c1';
+            showToast('表单已重置', 'info');
+        }
+
+        function highlightJobItem(el) {
+            if (state.selectedJobId && el.dataset.jobId === state.selectedJobId) return;
+            el.style.background = 'var(--surface-secondary)';
+            el.style.borderColor = 'var(--border)';
+        }
+
+        function unhighlightJobItem(el) {
+            if (state.selectedJobId && el.dataset.jobId === state.selectedJobId) return;
+            el.style.background = '';
+            el.style.borderColor = 'transparent';
+        }
+
+        function batchSelectToggle() {
+            showToast('批量选择模式切换（模拟）', 'info');
+        }
+
+        function toggleSelectAll(checkbox) {
+            showToast(checkbox.checked ? '已全选' : '已取消全选', 'info');
+        }
+
+        function toggleJobSelect(jobId, checkbox) {
+            if (checkbox.checked) state.selectedMoleculeIds.add(jobId);
+            else state.selectedMoleculeIds.delete(jobId);
+        }
+
+        function openFullscreen() {
+            const container = document.getElementById('fullscreen-container');
+            if (!container) return;
+            const job = mockJobs.find(j => j.id === state.selectedJobId);
+            if (!job) return;
+            const mols = generateMockMolecules(job.moleculeCount || 30, job.smiles);
+            container.innerHTML = `
+            <div class="fullscreen-overlay">
+                <div class="fullscreen-header">
+                    <span style="font-weight:700;">全屏查看 - ${job.projectName}</span>
+                    <button class="btn btn-outline btn-sm" onclick="closeFullscreen()">✕ 退出全屏</button>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:20px;">
+                    <div class="result-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));">
+                        ${mols.slice(0,40).map(m=>`
+                        <div class="result-card">
+                            <div class="mol-structure">${renderMoleculeSVG(m.smiles)}</div>
+                            <div style="font-size:0.78rem;font-weight:600;">${m.id}</div>
+                            <div class="result-tags">
+                                <span class="result-tag">对接:${m.dockingScore}</span>
+                                <span class="result-tag">QED:${m.qed}</span>
+                            </div>
+                        </div>`).join('')}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function closeFullscreen() {
+            const container = document.getElementById('fullscreen-container');
+            if (container) container.innerHTML = '';
+        }
+
+        function generateChemSpaceDots(mols) {
+            return mols.map((m, i) => {
+                const x = (parseFloat(m.logP) / 5) * 90 + 3;
+                const y = (parseFloat(m.qed)) * 85 + 5;
+                const score = parseFloat(m.dockingScore);
+                const color = score < -9 ? '#2563eb' : score < -7 ? '#f59e0b' : '#ef4444';
+                const isSelected = state.chemSpaceSelectedIndex === i;
+                return `<div class="chem-space-dot${isSelected?' selected-dot':''}"
+                    style="left:${x}%;top:${y}%;background:${color};"
+                    title="${m.id}: Docking=${m.dockingScore}, QED=${m.qed}"
+                    onclick="event.stopPropagation();state.chemSpaceSelectedIndex=${i};render();">
+                </div>`;
+            }).join('');
+        }
+
+        function renderRadarChart(mol) {
+            if (!mol) mol = { dockingScore: -8, qed: 0.7, logP: 2, mw: 380, hbd: 2, hba: 4, tpsa: 60 };
+            const labels = ['对接分数', 'QED', 'LogP', 'MW', 'HBD', 'HBA'];
+            const rawValues = [
+                Math.abs(parseFloat(mol.dockingScore || 8)) / 12,
+                parseFloat(mol.qed || 0.7),
+                parseFloat(mol.logP || 2) / 5,
+                (mol.mw || 380) / 500,
+                (mol.hbd || 2) / 5,
+                (mol.hba || 4) / 8,
+            ];
+            const values = rawValues.map(v => Math.min(1, Math.max(0, v)));
+            const cx = 140,
+                cy = 140,
+                r = 100;
+            const n = labels.length;
+            const points = values.map((v, i) => {
+                const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+                return { x: cx + r * v * Math.cos(angle), y: cy + r * v * Math.sin(angle) };
+            });
+            const gridPoints5 = labels.map((_, i) => {
+                const a = (Math.PI * 2 * i) / n - Math.PI / 2;
+                return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+            });
+            const gridPoints3 = labels.map((_, i) => {
+                const a = (Math.PI * 2 * i) / n - Math.PI / 2;
+                return { x: cx + r * 0.6 * Math.cos(a), y: cy + r * 0.6 * Math.sin(a) };
+            });
+            const polygonPoints = points.map(p => `${p.x},${p.y}`).join(' ');
+            const grid5 = gridPoints5.map(p => `${p.x},${p.y}`).join(' ');
+            const grid3 = gridPoints3.map(p => `${p.x},${p.y}`).join(' ');
+            return `
+            <svg viewBox="0 0 280 280" style="width:100%;">
+                <polygon points="${grid5}" fill="none" stroke="#e2e8f0" stroke-width="1"/>
+                <polygon points="${grid3}" fill="none" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4,3"/>
+                ${labels.map((l,i)=>{const a=(Math.PI*2*i)/n-Math.PI/2;const tx=cx+(r+22)*Math.cos(a);const ty=cy+(r+22)*Math.sin(a);return`<text x="${tx}" y="${ty}" text-anchor="middle" font-size="9" fill="#64748b">${l}</text>`;}).join('')}
+                <polygon points="${polygonPoints}" fill="rgba(37,99,235,0.25)" stroke="#2563eb" stroke-width="2"/>
+                ${points.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="4" fill="#2563eb"/>`).join('')}
+            </svg>`;
+        }
+
+        function renderMoleculeSVG(smiles) {
+            // Simple simulated 2D structure rendering
+            const hash = smiles.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+            const rings = (hash % 3) + 1;
+            const branches = (hash % 4) + 1;
+            let svgContent = '';
+            const colors = ['#2563eb', '#3b82f6', '#60a5fa', '#1d4ed8', '#64748b'];
+            // Draw simulated rings
+            for (let r = 0; r < rings; r++) {
+                const cx = 30 + r * 35;
+                const cy = 40 + (r % 2) * 20;
+                const rr = 14 + (hash % 8);
+                svgContent +=
+                    `<polygon points="${cx-rr},${cy} ${cx-rr*0.5},${cy-rr*0.866} ${cx+rr*0.5},${cy-rr*0.866} ${cx+rr},${cy} ${cx+rr*0.5},${cy+rr*0.866} ${cx-rr*0.5},${cy+rr*0.866}" fill="none" stroke="${colors[r%colors.length]}" stroke-width="2.5" opacity="0.8"/>`;
+            }
+            // Draw simulated bonds
+            for (let b = 0; b < branches; b++) {
+                const x1 = 25 + b * 30;
+                const y1 = 25 + (b % 3) * 25;
+                const x2 = x1 + 20;
+                const y2 = y1 - 15 + (b % 2) * 20;
+                svgContent +=
+                    `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${colors[b%colors.length]}" stroke-width="2" opacity="0.7"/>`;
+            }
+            // Labels
+            svgContent +=
+                `<text x="50" y="85" text-anchor="middle" font-size="7" fill="#94a3b8" font-family="monospace">${smiles.slice(0,18)}...</text>`;
+            return `<svg viewBox="0 0 100 100" style="width:100%;height:100%;">${svgContent}</svg>`;
+        }
+
+        // ==================== TOOLTIP ====================
+        function showTooltip(event, text) {
+            const tooltip = document.getElementById('global-tooltip');
+            tooltip.textContent = text;
+            tooltip.style.display = 'block';
+            const rect = event.target.getBoundingClientRect();
+            tooltip.style.left = rect.left + 'px';
+            tooltip.style.top = (rect.bottom + 8) + 'px';
+            tooltip.style.maxWidth = '360px';
+        }
+
+        function hideTooltip() {
+            document.getElementById('global-tooltip').style.display = 'none';
+        }
+
+        // ==================== TOAST ====================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        function attachEventListeners() {
+            // Global click to close tooltip
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.help-icon')) {
+                    hideTooltip();
+                }
+            });
+            // Close fullscreen on Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeFullscreen();
+                }
+            });
+        }
+
+        // ==================== INIT ====================
+        function init() {
+            render();
+            attachEventListeners();
+            // Set initial filter values in jobs view
+            setTimeout(() => {
+                const statusFilter = document.getElementById('status-filter');
+                if (statusFilter) statusFilter.value = state.filters.status;
+                const searchInput = document.getElementById('job-search');
+                if (searchInput) searchInput.value = state.filters.search;
+            }, 100);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
