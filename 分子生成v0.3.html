@@ -1,0 +1,2074 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MolDesigner - 小分子药物设计平台</title>
+    <style>
+        :root {
+            --blue-50: #eff6ff;
+            --blue-100: #dbeafe;
+            --blue-200: #bfdbfe;
+            --blue-300: #93c5fd;
+            --blue-400: #60a5fa;
+            --blue-500: #3b82f6;
+            --blue-600: #2563eb;
+            --blue-700: #1d4ed8;
+            --blue-800: #1e40af;
+            --blue-900: #1e3a8a;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --white: #ffffff;
+            --border-radius: 16px;
+            --border-radius-sm: 10px;
+            --border-radius-xs: 6px;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
+            --transition: all 0.2s ease;
+            --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--gray-50);
+            color: var(--gray-800);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            min-width: 240px;
+            height: 100vh;
+            background: var(--white);
+            border-right: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+            z-index: 100;
+            position: relative;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        }
+        .sidebar.collapsed {
+            width: 64px;
+            min-width: 64px;
+        }
+        .sidebar.collapsed .nav-label,
+        .sidebar.collapsed .brand-text,
+        .sidebar.collapsed .bottom-label {
+            display: none;
+        }
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 12px;
+            border-radius: var(--border-radius-sm);
+            margin: 2px 8px;
+        }
+        .sidebar.collapsed .brand {
+            justify-content: center;
+            padding: 16px 8px;
+        }
+        .sidebar.collapsed .bottom-item {
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 20px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--blue-600);
+            letter-spacing: -0.01em;
+        }
+        .brand-icon {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .nav-section {
+            flex: 1;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 14px;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            font-weight: 500;
+            white-space: nowrap;
+            position: relative;
+        }
+        .nav-item:hover {
+            background: var(--blue-50);
+            color: var(--blue-600);
+        }
+        .nav-item.active {
+            background: var(--blue-100);
+            color: var(--blue-700);
+            font-weight: 600;
+        }
+        .nav-item svg {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+        }
+        .nav-bottom {
+            padding: 8px;
+            border-top: 1px solid var(--gray-100);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .bottom-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            white-space: nowrap;
+        }
+        .bottom-item:hover {
+            background: var(--gray-50);
+            color: var(--gray-700);
+        }
+        .bottom-item svg {
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+        }
+        .collapse-btn {
+            position: absolute;
+            right: -14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            z-index: 10;
+            color: var(--gray-500);
+            box-shadow: var(--shadow-sm);
+        }
+        .collapse-btn:hover {
+            background: var(--blue-50);
+            border-color: var(--blue-300);
+            color: var(--blue-600);
+            box-shadow: var(--shadow-md);
+        }
+        .collapse-btn svg {
+            transition: transform 0.3s;
+        }
+        .sidebar.collapsed .collapse-btn svg {
+            transform: rotate(180deg);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: 100vh;
+            padding: 20px 24px;
+            scroll-behavior: smooth;
+        }
+        .main-content::-webkit-scrollbar {
+            width: 5px;
+        }
+        .main-content::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 10px;
+        }
+
+        /* Page Sections */
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--gray-200);
+            padding: 20px;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        .card-no-border {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            border: none;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .card-no-border:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        .module-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 20px 22px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .module-card:hover {
+            background: var(--blue-50);
+            border-color: var(--blue-300);
+            box-shadow: var(--shadow-lg);
+        }
+        .module-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--border-radius-sm);
+            background: linear-gradient(135deg, var(--blue-100), var(--blue-200));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.3rem;
+            color: var(--blue-700);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 9px 18px;
+            border-radius: var(--border-radius-xs);
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: var(--blue-600);
+            color: white;
+            border-color: var(--blue-600);
+        }
+        .btn-primary:hover {
+            background: var(--blue-700);
+            border-color: var(--blue-700);
+            box-shadow: var(--shadow-md);
+        }
+        .btn-outline {
+            background: var(--white);
+            color: var(--gray-700);
+            border-color: var(--gray-300);
+        }
+        .btn-outline:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--gray-600);
+            border-color: transparent;
+        }
+        .btn-ghost:hover {
+            background: var(--gray-100);
+        }
+        .btn-sm {
+            padding: 5px 11px;
+            font-size: 0.8rem;
+            border-radius: var(--border-radius-xs);
+        }
+        .btn-xs {
+            padding: 3px 8px;
+            font-size: 0.72rem;
+            border-radius: 4px;
+        }
+        .btn-icon {
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            border-radius: var(--border-radius-xs);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid var(--gray-300);
+            background: var(--white);
+            transition: var(--transition);
+            color: var(--gray-500);
+            flex-shrink: 0;
+        }
+        .btn-icon:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+            color: var(--gray-700);
+        }
+
+        /* Input */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .input-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .input-field {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius-xs);
+            font-size: 0.875rem;
+            transition: var(--transition);
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            background: var(--white);
+            color: var(--gray-800);
+            outline: none;
+        }
+        .input-field:focus {
+            border-color: var(--blue-400);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .input-with-icons {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-with-icons .input-field {
+            padding-right: 80px;
+        }
+        .input-icons-right {
+            position: absolute;
+            right: 6px;
+            display: flex;
+            gap: 3px;
+            align-items: center;
+        }
+        .help-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            background: var(--gray-200);
+            color: var(--gray-600);
+            font-size: 0.7rem;
+            cursor: help;
+            font-weight: 700;
+            transition: var(--transition);
+        }
+        .help-icon:hover {
+            background: var(--blue-200);
+            color: var(--blue-700);
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: var(--gray-800);
+            color: white;
+            padding: 8px 12px;
+            border-radius: var(--border-radius-xs);
+            font-size: 0.78rem;
+            z-index: 1000;
+            pointer-events: none;
+            max-width: 340px;
+            line-height: 1.5;
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--gray-200);
+            margin-bottom: 16px;
+        }
+        .tab {
+            padding: 10px 18px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-500);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .tab:hover {
+            color: var(--gray-700);
+        }
+        .tab.active {
+            color: var(--blue-600);
+            border-bottom-color: var(--blue-600);
+            font-weight: 600;
+        }
+        .tab.disabled {
+            color: var(--gray-300);
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .badge-warning {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .badge-running {
+            background: #fef3c7;
+            color: #92400e;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* T-layout */
+        .t-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: 100%;
+        }
+        .t-top {
+            flex-shrink: 0;
+        }
+        .t-bottom {
+            display: flex;
+            gap: 16px;
+            flex: 1;
+            min-height: 0;
+        }
+        .t-left {
+            flex: 1;
+            min-width: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .t-right {
+            width: 380px;
+            flex-shrink: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Job list */
+        .job-item {
+            padding: 12px 14px;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid var(--gray-200);
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .job-item:hover {
+            background: var(--blue-50);
+            border-color: var(--blue-300);
+            box-shadow: var(--shadow-sm);
+        }
+        .job-item.selected {
+            background: var(--blue-100);
+            border-color: var(--blue-400);
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .data-table th {
+            background: var(--gray-50);
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-600);
+            border-bottom: 2px solid var(--gray-200);
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            font-size: 0.8rem;
+        }
+        .data-table th:hover {
+            color: var(--blue-600);
+        }
+        .data-table td {
+            padding: 9px 12px;
+            border-bottom: 1px solid var(--gray-100);
+            white-space: nowrap;
+        }
+        .data-table tr {
+            transition: var(--transition);
+        }
+        .data-table tbody tr:hover {
+            background: var(--blue-50);
+        }
+
+        /* Mol card */
+        .mol-card {
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius-sm);
+            padding: 14px;
+            background: var(--white);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 160px;
+        }
+        .mol-card:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: var(--blue-300);
+            transform: translateY(-2px);
+        }
+        .mol-card.selected {
+            border-color: var(--blue-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            background: var(--blue-50);
+        }
+        .mol-card .mol-svg {
+            width: 100%;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mol-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 10px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        .modal {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-xl);
+            max-width: 90vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            z-index: 501;
+            padding: 24px;
+            position: relative;
+            animation: slideUp 0.25s ease;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: var(--gray-100);
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            color: var(--gray-500);
+        }
+        .modal-close:hover {
+            background: var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        /* Canvas container */
+        .canvas-container {
+            border-radius: var(--border-radius-sm);
+            overflow: hidden;
+            background: #fafafa;
+            border: 1px solid var(--gray-200);
+            cursor: grab;
+        }
+        .canvas-container:active {
+            cursor: grabbing;
+        }
+
+        /* View toggle */
+        .view-toggle {
+            display: flex;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius-xs);
+            overflow: hidden;
+        }
+        .view-toggle button {
+            padding: 7px 14px;
+            border: none;
+            background: var(--white);
+            cursor: pointer;
+            font-size: 0.82rem;
+            transition: var(--transition);
+            font-family: inherit;
+            color: var(--gray-600);
+        }
+        .view-toggle button.active {
+            background: var(--blue-600);
+            color: white;
+            font-weight: 500;
+        }
+
+        /* Notification dot */
+        .notif-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+            position: absolute;
+            top: 6px;
+            right: 8px;
+        }
+
+        /* Fullscreen */
+        .fullscreen {
+            position: fixed;
+            inset: 0;
+            z-index: 600;
+            background: var(--white);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* Scrollbar */
+        .t-left::-webkit-scrollbar,
+        .t-right::-webkit-scrollbar,
+        .modal::-webkit-scrollbar {
+            width: 4px;
+        }
+        .t-left::-webkit-scrollbar-thumb,
+        .t-right::-webkit-scrollbar-thumb,
+        .modal::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 1024px) {
+            .t-bottom {
+                flex-direction: column;
+            }
+            .t-right {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <div class="brand-icon">⚛</div>
+            <span class="brand-text">MolDesigner</span>
+        </div>
+        <nav class="nav-section">
+            <div class="nav-item active" data-page="modules">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                <span class="nav-label">模块</span>
+            </div>
+            <div class="nav-item" data-page="pipeline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+                <span class="nav-label">流程</span>
+            </div>
+            <div class="nav-item" data-page="data">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                <span class="nav-label">数据</span>
+            </div>
+            <div class="nav-item" data-page="jobs">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span class="nav-label">作业</span>
+            </div>
+        </nav>
+        <div class="nav-bottom">
+            <div class="bottom-item" title="使用说明书">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                <span class="bottom-label">使用说明书</span>
+            </div>
+            <div class="bottom-item" title="通知" style="position:relative;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="bottom-label">通知</span>
+                <span class="notif-dot"></span>
+            </div>
+            <div class="bottom-item" title="账号管理">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span class="bottom-label">账号管理</span>
+            </div>
+        </div>
+        <button class="collapse-btn" id="collapseBtn" title="收起边栏">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+
+        <!-- Modules Page -->
+        <div class="page active" id="page-modules">
+            <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:6px;color:var(--gray-800);">模块</h2>
+            <p style="color:var(--gray-500);margin-bottom:20px;font-size:0.9rem;">选择功能模块开始分子设计工作</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;">
+                <div class="card module-card" id="moduleSmg" style="border:1px solid var(--gray-200);">
+                    <div class="module-icon">🧬</div>
+                    <div>
+                        <h4 style="font-weight:600;color:var(--gray-800);margin-bottom:4px;">Small Molecule Generation</h4>
+                        <p style="font-size:0.82rem;color:var(--gray-500);line-height:1.5;">分子生成，当前仅支持骨架约束的小分子生成</p>
+                    </div>
+                </div>
+                <div class="card module-card" style="border:1px solid var(--gray-200);opacity:0.5;cursor:not-allowed;">
+                    <div class="module-icon">🔬</div>
+                    <div>
+                        <h4 style="font-weight:600;color:var(--gray-800);margin-bottom:4px;">Molecular Docking</h4>
+                        <p style="font-size:0.82rem;color:var(--gray-500);line-height:1.5;">分子对接模块（即将推出）</p>
+                    </div>
+                </div>
+                <div class="card module-card" style="border:1px solid var(--gray-200);opacity:0.5;cursor:not-allowed;">
+                    <div class="module-icon">📊</div>
+                    <div>
+                        <h4 style="font-weight:600;color:var(--gray-800);margin-bottom:4px;">Property Prediction</h4>
+                        <p style="font-size:0.82rem;color:var(--gray-500);line-height:1.5;">属性预测模块（即将推出）</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SMG Detail Page -->
+        <div class="page" id="page-smg" style="height:100%;display:none;flex-direction:column;">
+            <div class="t-layout" style="height:100%;">
+                <div class="t-top card" style="padding:14px 20px;display:flex;align-items:center;gap:12px;">
+                    <button class="btn btn-ghost btn-sm" id="btnBackToModules" style="flex-shrink:0;">← 返回模块</button>
+                    <div>
+                        <h3 style="font-weight:700;font-size:1.1rem;">🧬 Small Molecule Generation</h3>
+                        <p style="font-size:0.78rem;color:var(--gray-500);">基于骨架约束的R基替换分子生成 | 支持SMILES输入 | 批量生成与筛选</p>
+                    </div>
+                </div>
+                <div class="t-bottom">
+                    <div class="t-left">
+                        <div class="card" style="flex-shrink:0;">
+                            <h4 style="font-weight:600;margin-bottom:14px;">📝 项目创建</h4>
+                            <div class="tabs">
+                                <div class="tab active" data-tab="rgroup">R基替换</div>
+                                <div class="tab disabled" data-tab="scaffold">骨架重构</div>
+                                <div class="tab disabled" data-tab="denovo">全新生成</div>
+                            </div>
+                            <div id="tabContent">
+                                <div class="input-group" style="margin-bottom:12px;">
+                                    <label class="input-label">
+                                        分子结构 <span style="color:#ef4444;">*</span>
+                                        <span class="help-icon" id="helpSmiles" style="cursor:help;">?</span>
+                                    </label>
+                                    <div class="input-with-icons">
+                                        <input type="text" class="input-field" id="inputSmiles" placeholder="c1cnc2ccccc2c1" value="*c1cnc2ccccc2c1">
+                                        <div class="input-icons-right">
+                                            <button class="btn-icon" title="结构式编辑器" id="btnStructEditor" style="width:28px;height:28px;">✏</button>
+                                            <button class="btn-icon" title="上传文件" id="btnUpload" style="width:28px;height:28px;">📁</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                                    <div class="input-group" style="flex:1;min-width:140px;">
+                                        <label class="input-label">项目名称 <span style="color:#ef4444;">*</span></label>
+                                        <input type="text" class="input-field" id="inputProjectName" placeholder="输入项目名称" value="喹啉骨架-R基替换-001" style="font-family:var(--font-sans);">
+                                    </div>
+                                    <div class="input-group" style="flex:1;min-width:120px;">
+                                        <label class="input-label">生成分子数量</label>
+                                        <input type="number" class="input-field" id="inputNumMols" value="50" min="1" max="500" style="font-family:var(--font-sans);">
+                                    </div>
+                                </div>
+                                <div class="input-group" style="margin-top:10px;">
+                                    <label class="input-label">项目描述 <span style="color:var(--gray-400);font-weight:400;">(选填)</span></label>
+                                    <textarea class="input-field" id="inputDesc" rows="2" placeholder="描述项目目的..." style="font-family:var(--font-sans);resize:vertical;"></textarea>
+                                </div>
+                                <div style="display:flex;gap:8px;margin-top:14px;">
+                                    <button class="btn btn-primary" id="btnSubmit">🚀 提交任务</button>
+                                    <button class="btn btn-outline" id="btnReset">↻ 重置</button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Result area (shown after navigating to a completed job) -->
+                        <div class="card" id="resultArea" style="display:none;flex:1;flex-direction:column;min-height:400px;">
+                            <div id="resultContent"></div>
+                        </div>
+                    </div>
+                    <div class="t-right">
+                        <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:300px;">
+                            <h4 style="font-weight:600;margin-bottom:10px;flex-shrink:0;">📋 近期作业列表</h4>
+                            <div id="jobListSide" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+                                <p style="color:var(--gray-400);font-size:0.85rem;text-align:center;padding:20px;">暂无作业记录</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pipeline Page -->
+        <div class="page" id="page-pipeline">
+            <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:6px;">流程编排</h2>
+            <p style="color:var(--gray-500);margin-bottom:16px;font-size:0.9rem;">拖拽模块构建自动化分子设计流程</p>
+            <div style="display:flex;gap:16px;height:70vh;">
+                <div class="card" style="width:200px;flex-shrink:0;overflow-y:auto;">
+                    <h5 style="font-weight:600;margin-bottom:10px;font-size:0.85rem;">可用模块</h5>
+                    <div style="display:flex;flex-direction:column;gap:6px;" id="pipelineModules">
+                        <div class="card" style="padding:10px;font-size:0.82rem;cursor:grab;border:1px dashed var(--gray-300);">🧬 分子生成</div>
+                        <div class="card" style="padding:10px;font-size:0.82rem;cursor:grab;border:1px dashed var(--gray-300);">🎯 分子对接</div>
+                        <div class="card" style="padding:10px;font-size:0.82rem;cursor:grab;border:1px dashed var(--gray-300);">📊 属性预测</div>
+                        <div class="card" style="padding:10px;font-size:0.82rem;cursor:grab;border:1px dashed var(--gray-300);">🔍 虚拟筛选</div>
+                    </div>
+                </div>
+                <div class="card" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--gray-50);border:2px dashed var(--gray-300);">
+                    <p style="color:var(--gray-400);">拖拽模块到此处构建流程（Demo展示）</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Page -->
+        <div class="page" id="page-data">
+            <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:6px;">数据中心</h2>
+            <p style="color:var(--gray-500);margin-bottom:16px;font-size:0.9rem;">管理上传文件和作业结果数据</p>
+            <div class="card" style="margin-bottom:14px;">
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <button class="btn btn-primary btn-sm">📤 上传数据</button>
+                    <button class="btn btn-outline btn-sm">📁 新建文件夹</button>
+                    <span style="flex:1;"></span>
+                    <input type="text" class="input-field" placeholder="搜索数据..." style="width:200px;font-family:var(--font-sans);">
+                </div>
+            </div>
+            <div class="card">
+                <table class="data-table">
+                    <thead><tr><th>名称</th><th>类型</th><th>来源</th><th>大小</th><th>日期</th><th>操作</th></tr></thead>
+                    <tbody>
+                        <tr><td>📄 喹啉骨架-生成结果-001.csv</td><td>CSV</td><td>作业结果</td><td>2.4 MB</td><td>2026-06-28</td><td><button class="btn btn-ghost btn-xs">下载</button></td></tr>
+                        <tr><td>📄 对接结果-batch01.sdf</td><td>SDF</td><td>上传</td><td>8.1 MB</td><td>2026-06-25</td><td><button class="btn btn-ghost btn-xs">下载</button></td></tr>
+                        <tr><td>📁 筛选结果/</td><td>文件夹</td><td>手动</td><td>-</td><td>2026-06-20</td><td><button class="btn btn-ghost btn-xs">打开</button></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Jobs Page -->
+        <div class="page" id="page-jobs">
+            <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:6px;">作业管理</h2>
+            <p style="color:var(--gray-500);margin-bottom:16px;font-size:0.9rem;">所有运行作业的聚合管理</p>
+            <div class="card" style="margin-bottom:12px;">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                    <span style="font-weight:600;font-size:0.85rem;">筛选：</span>
+                    <select class="input-field" style="width:auto;font-family:var(--font-sans);padding:6px 10px;">
+                        <option>全部状态</option><option>已完成</option><option>运行中</option><option>失败</option><option>排队中</option>
+                    </select>
+                    <input type="text" class="input-field" placeholder="搜索编号/名称..." style="width:200px;font-family:var(--font-sans);">
+                    <button class="btn btn-outline btn-sm">🔍 高级筛选</button>
+                    <span style="flex:1;"></span>
+                    <button class="btn btn-ghost btn-sm">☑ 批量选择</button>
+                </div>
+            </div>
+            <div class="card" style="overflow-x:auto;">
+                <table class="data-table" id="jobsTable">
+                    <thead>
+                        <tr>
+                            <th>编号</th><th>名称</th><th>模块</th><th>创建时间</th><th>完成时间</th><th>耗时</th><th>状态</th><th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jobsTableBody">
+                        <tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:30px;">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Job Detail Page (inline) -->
+        <div class="page" id="page-job-detail" style="display:none;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <button class="btn btn-ghost btn-sm" id="btnBackToJobs">← 返回作业列表</button>
+                <h3 style="font-weight:700;">📋 作业详情</h3>
+            </div>
+            <div id="jobDetailContent"></div>
+        </div>
+
+    </main>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <!-- Modal for structure editor -->
+    <div class="modal-overlay" id="modalStructEditor" style="display:none;">
+        <div class="modal" style="width:600px;">
+            <button class="modal-close" id="closeStructEditor">✕</button>
+            <h4 style="font-weight:600;margin-bottom:14px;">✏ 结构式编辑器</h4>
+            <p style="font-size:0.82rem;color:var(--gray-500);margin-bottom:10px;">选择预设骨架或手动输入SMILES</p>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;" id="presetScaffolds">
+                <div class="card" style="padding:10px;cursor:pointer;text-align:center;font-size:0.75rem;border:2px solid transparent;" data-smiles="*c1cnc2ccccc2c1">
+                    <svg width="60" height="40" viewBox="0 0 120 80"><rect x="15" y="10" width="35" height="55" rx="8" fill="none" stroke="#2563eb" stroke-width="3"/><rect x="55" y="20" width="25" height="35" rx="5" fill="none" stroke="#2563eb" stroke-width="3"/><circle cx="25" cy="25" r="4" fill="#3b82f6"/></svg>
+                    <div>喹啉骨架</div>
+                </div>
+                <div class="card" style="padding:10px;cursor:pointer;text-align:center;font-size:0.75rem;border:2px solid transparent;" data-smiles="*c1ccccc1">
+                    <svg width="60" height="40" viewBox="0 0 80 80"><polygon points="40,8 68,28 68,60 40,78 12,60 12,28" fill="none" stroke="#2563eb" stroke-width="3"/></svg>
+                    <div>苯环骨架</div>
+                </div>
+                <div class="card" style="padding:10px;cursor:pointer;text-align:center;font-size:0.75rem;border:2px solid transparent;" data-smiles="*C(=O)N*">
+                    <svg width="60" height="40" viewBox="0 0 120 60"><line x1="20" y1="30" x2="50" y2="30" stroke="#2563eb" stroke-width="3"/><line x1="50" y1="30" x2="65" y2="10" stroke="#2563eb" stroke-width="2" stroke-dasharray="4"/><text x="55" y="50" fill="#2563eb" font-size="14">N</text></svg>
+                    <div>酰胺骨架</div>
+                </div>
+            </div>
+            <input type="text" class="input-field" id="editorSmilesInput" placeholder="输入SMILES..." style="font-family:monospace;">
+            <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;">
+                <button class="btn btn-outline btn-sm" id="cancelStructEditor">取消</button>
+                <button class="btn btn-primary btn-sm" id="confirmStructEditor">确认选择</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for molecule detail -->
+    <div class="modal-overlay" id="modalMolDetail" style="display:none;">
+        <div class="modal" style="width:700px;max-height:80vh;">
+            <button class="modal-close" id="closeMolDetail">✕</button>
+            <div id="molDetailContent"></div>
+        </div>
+    </div>
+
+    <!-- Modal for download -->
+    <div class="modal-overlay" id="modalDownload" style="display:none;">
+        <div class="modal" style="width:420px;">
+            <button class="modal-close" id="closeDownload">✕</button>
+            <h4 style="font-weight:600;margin-bottom:10px;">💾 下载结果</h4>
+            <p style="font-size:0.85rem;color:var(--gray-500);margin-bottom:12px;">选择下载格式和目录</p>
+            <select class="input-field" style="font-family:var(--font-sans);margin-bottom:10px;">
+                <option>CSV (.csv)</option><option>SDF (.sdf)</option><option>JSON (.json)</option>
+            </select>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button class="btn btn-outline btn-sm" id="cancelDownload">取消</button>
+                <button class="btn btn-primary btn-sm" id="confirmDownload">下载</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen result overlay -->
+    <div class="fullscreen" id="fullscreenResult" style="display:none;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <button class="btn btn-ghost btn-sm" id="exitFullscreen">✕ 退出全屏</button>
+            <h3 style="font-weight:700;">📊 全屏结果浏览</h3>
+        </div>
+        <div id="fullscreenContent" style="height:calc(100vh - 80px);overflow-y:auto;"></div>
+    </div>
+
+    <!-- Hidden file input -->
+    <input type="file" id="hiddenFileInput" style="display:none;" accept=".smi,.sdf,.csv,.txt,.mol">
+
+    <script>
+        // ===== STATE =====
+        const state = {
+            currentPage: 'modules',
+            sidebarCollapsed: false,
+            currentJobId: null,
+            jobs: [],
+            selectedMols: new Set(),
+            viewMode: 'card', // 'card' | 'table'
+            sortField: null,
+            sortDir: 'asc',
+            filterText: '',
+            fullscreenActive: false,
+            jobIdCounter: 100,
+        };
+
+        // Generate initial mock jobs
+        function generateMockJobs() {
+            const statuses = ['completed', 'running', 'completed', 'completed', 'queued', 'failed', 'completed'];
+            const names = [
+                '喹啉骨架-R基替换-001', '苯环衍生物生成', '酰胺键R基筛选',
+                '嘧啶骨架优化', '吡啶系列生成', '吲哚骨架替换', '噻唑R基探索'
+            ];
+            const jobs = [];
+            const now = Date.now();
+            for (let i = 0; i < names.length; i++) {
+                const created = new Date(now - (i + 1) * 3600000 * (3 + i % 5));
+                const completed = statuses[i] === 'completed' ? new Date(created.getTime() + (120 + i * 45) * 60000) :
+                    null;
+                const duration = completed ? Math.round((completed - created) / 60000) : null;
+                jobs.push({
+                    id: `JOB-${1000 + i}`,
+                    name: names[i],
+                    module: 'Small Molecule Generation',
+                    status: statuses[i],
+                    created: created,
+                    completed: completed,
+                    duration: duration,
+                    smiles: '*c1cnc2ccccc2c1',
+                    numMols: 40 + i * 8,
+                    description: `R基替换项目-${i + 1}`,
+                    results: statuses[i] === 'completed' ? generateMockResults(40 + i * 8) : null,
+                });
+            }
+            return jobs;
+        }
+
+        function generateMockResults(count) {
+            const results = [];
+            const rGroups = ['-CH3', '-OH', '-NH2', '-Cl', '-F', '-CF3', '-OCH3', '-COOH', '-CN', '-N(CH3)2',
+                '-CH2CH3', '-CH=CH2', '-C≡CH', '-NO2', '-SO2NH2', '-Ph', '-CH2OH', '-NHCOCH3', '-COOCH3', '-SH'
+            ];
+            const baseSmiles = 'c1cnc2ccccc2c1';
+            for (let i = 0; i < count; i++) {
+                const rGroup = rGroups[i % rGroups.length];
+                const dockingScore = -(5.5 + Math.random() * 6).toFixed(2);
+                const qed = (0.3 + Math.random() * 0.65).toFixed(3);
+                const logP = (1.2 + Math.random() * 3.5).toFixed(2);
+                const mw = (180 + Math.random() * 220).toFixed(1);
+                const tpsa = (30 + Math.random() * 80).toFixed(1);
+                const hbd = Math.floor(Math.random() * 4);
+                const hba = Math.floor(Math.random() * 6);
+                const rotBonds = Math.floor(Math.random() * 5);
+                results.push({
+                    id: `MOL-${i + 1}`,
+                    smiles: `${rGroup}${baseSmiles}`,
+                    rGroup: rGroup,
+                    dockingScore: parseFloat(dockingScore),
+                    qed: parseFloat(qed),
+                    logP: parseFloat(logP),
+                    mw: parseFloat(mw),
+                    tpsa: parseFloat(tpsa),
+                    hbd: hbd,
+                    hba: hba,
+                    rotBonds: rotBonds,
+                    synthAccess: (2 + Math.random() * 2.5).toFixed(2),
+                    solubility: -(2 + Math.random() * 5).toFixed(2),
+                });
+            }
+            return results;
+        }
+
+        state.jobs = generateMockJobs();
+        state.jobIdCounter = 1000 + state.jobs.length;
+
+        // ===== DOM REFS =====
+        const sidebar = document.getElementById('sidebar');
+        const collapseBtn = document.getElementById('collapseBtn');
+        const mainContent = document.getElementById('mainContent');
+        const tooltip = document.getElementById('tooltip');
+        const jobListSide = document.getElementById('jobListSide');
+        const resultArea = document.getElementById('resultArea');
+        const resultContent = document.getElementById('resultContent');
+        const fullscreenResult = document.getElementById('fullscreenResult');
+        const fullscreenContent = document.getElementById('fullscreenContent');
+
+        // ===== NAVIGATION =====
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                this.classList.add('active');
+                const page = this.dataset.page;
+                navigateTo(page);
+            });
+        });
+
+        function navigateTo(page) {
+            state.currentPage = page;
+            document.querySelectorAll('.page').forEach(p => { p.classList.remove('active');
+                p.style.display = 'none'; });
+            const targetPage = document.getElementById('page-' + page);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                targetPage.style.display = page === 'smg' || page === 'job-detail' ? 'flex' : 'block';
+            }
+            if (page === 'jobs') renderJobsTable();
+            if (page === 'smg') renderJobListSide();
+            mainContent.scrollTop = 0;
+        }
+
+        // Module card click → SMG page
+        document.getElementById('moduleSmg').addEventListener('click', function() {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const smgPage = 'smg';
+            state.currentPage = smgPage;
+            document.querySelectorAll('.page').forEach(p => { p.classList.remove('active');
+                p.style.display = 'none'; });
+            const target = document.getElementById('page-smg');
+            target.classList.add('active');
+            target.style.display = 'flex';
+            resultArea.style.display = 'none';
+            renderJobListSide();
+            mainContent.scrollTop = 0;
+        });
+
+        document.getElementById('btnBackToModules').addEventListener('click', function() {
+            navigateTo('modules');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelector('.nav-item[data-page="modules"]').classList.add('active');
+        });
+
+        document.getElementById('btnBackToJobs').addEventListener('click', function() {
+            navigateTo('jobs');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelector('.nav-item[data-page="jobs"]').classList.add('active');
+            renderJobsTable();
+        });
+
+        // ===== SIDEBAR COLLAPSE =====
+        collapseBtn.addEventListener('click', function() {
+            state.sidebarCollapsed = !state.sidebarCollapsed;
+            sidebar.classList.toggle('collapsed', state.sidebarCollapsed);
+        });
+
+        // ===== TOOLTIP =====
+        document.getElementById('helpSmiles').addEventListener('mouseenter', function(e) {
+            tooltip.textContent =
+                '输入带*的小分子SMILES，*代表生成部分，其他部分固定不变，支持输入多个*。例如：*c1cnc2ccccc2c1 格式：SMILES';
+            tooltip.classList.add('show');
+            positionTooltip(e, tooltip);
+        });
+        document.getElementById('helpSmiles').addEventListener('mouseleave', function() {
+            tooltip.classList.remove('show');
+        });
+        document.getElementById('helpSmiles').addEventListener('mousemove', function(e) {
+            positionTooltip(e, tooltip);
+        });
+
+        function positionTooltip(e, el) {
+            const rect = el.getBoundingClientRect();
+            el.style.left = (e.clientX + 15) + 'px';
+            el.style.top = (e.clientY - 40) + 'px';
+        }
+
+        // ===== STRUCTURE EDITOR MODAL =====
+        document.getElementById('btnStructEditor').addEventListener('click', function() {
+            document.getElementById('modalStructEditor').style.display = 'flex';
+            document.getElementById('editorSmilesInput').value = document.getElementById('inputSmiles').value;
+        });
+        document.getElementById('closeStructEditor').addEventListener('click', function() {
+            document.getElementById('modalStructEditor').style.display = 'none';
+        });
+        document.getElementById('cancelStructEditor').addEventListener('click', function() {
+            document.getElementById('modalStructEditor').style.display = 'none';
+        });
+        document.getElementById('confirmStructEditor').addEventListener('click', function() {
+            const val = document.getElementById('editorSmilesInput').value.trim();
+            if (val) document.getElementById('inputSmiles').value = val;
+            document.getElementById('modalStructEditor').style.display = 'none';
+        });
+        document.querySelectorAll('#presetScaffolds .card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('#presetScaffolds .card').forEach(c => c.style.borderColor =
+                    'transparent');
+                this.style.borderColor = 'var(--blue-500)';
+                document.getElementById('editorSmilesInput').value = this.dataset.smiles;
+            });
+        });
+
+        // ===== FILE UPLOAD =====
+        document.getElementById('btnUpload').addEventListener('click', function() {
+            document.getElementById('hiddenFileInput').click();
+        });
+        document.getElementById('hiddenFileInput').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const fname = e.target.files[0].name;
+                document.getElementById('inputSmiles').value = `[已加载: ${fname}] *c1cnc2ccccc2c1`;
+                showToast('文件已加载，SMILES已预填');
+            }
+        });
+
+        // ===== SUBMIT JOB =====
+        document.getElementById('btnSubmit').addEventListener('click', function() {
+            const smiles = document.getElementById('inputSmiles').value.trim();
+            const projectName = document.getElementById('inputProjectName').value.trim();
+            const numMols = parseInt(document.getElementById('inputNumMols').value) || 50;
+            const desc = document.getElementById('inputDesc').value.trim();
+
+            if (!smiles) { showToast('请输入分子结构SMILES', 'error'); return; }
+            if (!projectName) { showToast('请输入项目名称', 'error'); return; }
+
+            const jobId = `JOB-${state.jobIdCounter++}`;
+            const newJob = {
+                id: jobId,
+                name: projectName,
+                module: 'Small Molecule Generation',
+                status: 'running',
+                created: new Date(),
+                completed: null,
+                duration: null,
+                smiles: smiles,
+                numMols: numMols,
+                description: desc,
+                results: null,
+            };
+            state.jobs.unshift(newJob);
+            state.currentJobId = jobId;
+            renderJobListSide();
+            showToast('任务已提交，正在运行中...');
+
+            // Simulate completion after 4-6 seconds
+            const delay = 3500 + Math.random() * 3000;
+            setTimeout(() => {
+                newJob.status = 'completed';
+                newJob.completed = new Date();
+                newJob.duration = Math.round((newJob.completed - newJob.created) / 60000);
+                newJob.results = generateMockResults(numMols);
+                renderJobListSide();
+                if (state.currentJobId === jobId && state.currentPage === 'smg') {
+                    renderJobResult(newJob);
+                }
+                renderJobsTable();
+                showToast(`任务 ${jobId} 已完成！`);
+            }, delay);
+
+            // Show running state
+            document.getElementById('inputSmiles').value = '';
+            document.getElementById('inputProjectName').value = '';
+            document.getElementById('inputNumMols').value = '50';
+            document.getElementById('inputDesc').value = '';
+            resultArea.style.display = 'flex';
+            resultContent.innerHTML = `
+            <div style="text-align:center;padding:40px;">
+              <div style="font-size:3rem;animation:pulse 1.5s infinite;">⏳</div>
+              <p style="font-weight:600;margin-top:10px;">任务运行中...</p>
+              <p style="color:var(--gray-500);font-size:0.85rem;">编号: ${jobId} | 预计3-6秒完成模拟</p>
+            </div>`;
+        });
+
+        document.getElementById('btnReset').addEventListener('click', function() {
+            document.getElementById('inputSmiles').value = '*c1cnc2ccccc2c1';
+            document.getElementById('inputProjectName').value = '';
+            document.getElementById('inputNumMols').value = '50';
+            document.getElementById('inputDesc').value = '';
+            resultArea.style.display = 'none';
+            state.currentJobId = null;
+        });
+
+        // ===== RENDER JOB LIST SIDE =====
+        function renderJobListSide() {
+            if (state.jobs.length === 0) {
+                jobListSide.innerHTML =
+                    '<p style="color:var(--gray-400);font-size:0.85rem;text-align:center;padding:20px;">暂无作业记录</p>';
+                return;
+            }
+            jobListSide.innerHTML = state.jobs.map(j => {
+                const statusClass = j.status === 'completed' ? 'badge-success' : j.status === 'running' ?
+                    'badge-running' : j.status === 'failed' ? 'badge-warning' : 'badge-info';
+                const statusText = j.status === 'completed' ? '✓ 完成' : j.status === 'running' ? '⟳ 运行中' : j
+                    .status === 'failed' ? '✗ 失败' : '⏳ 排队中';
+                const isSelected = state.currentJobId === j.id;
+                return `
+              <div class="job-item ${isSelected ? 'selected' : ''}" data-jobid="${j.id}"
+                   onmouseenter="highlightJobRow('${j.id}')" onclick="viewJobResult('${j.id}')">
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${j.name}</div>
+                  <div style="font-size:0.72rem;color:var(--gray-500);">${j.id} | ${formatDate(j.created)}</div>
+                </div>
+                <span class="badge ${statusClass}" style="flex-shrink:0;">${statusText}</span>
+              </div>`;
+            }).join('');
+        }
+
+        function highlightJobRow(jobId) {
+            document.querySelectorAll('#jobListSide .job-item').forEach(el => {
+                el.classList.toggle('selected', el.dataset.jobid === jobId);
+            });
+        }
+
+        function viewJobResult(jobId) {
+            state.currentJobId = jobId;
+            const job = state.jobs.find(j => j.id === jobId);
+            if (!job) return;
+            if (job.status === 'completed' && job.results) {
+                renderJobResult(job);
+                resultArea.style.display = 'flex';
+            } else if (job.status === 'running') {
+                resultArea.style.display = 'flex';
+                resultContent.innerHTML = `
+              <div style="text-align:center;padding:40px;">
+                <div style="font-size:3rem;animation:pulse 1.5s infinite;">⏳</div>
+                <p style="font-weight:600;margin-top:10px;">任务运行中...</p>
+                <p style="color:var(--gray-500);font-size:0.85rem;">编号: ${jobId}</p>
+              </div>`;
+            }
+            renderJobListSide();
+            if (state.currentPage !== 'smg') {
+                navigateTo('smg');
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            }
+        }
+
+        function renderJobResult(job) {
+            state.currentJobId = job.id;
+            resultArea.style.display = 'flex';
+            state.selectedMols.clear();
+            state.viewMode = 'card';
+            const results = job.results || [];
+            resultContent.innerHTML = buildResultHTML(job, results);
+            attachResultListeners(job, results);
+            renderJobListSide();
+        }
+
+        function buildResultHTML(job, results) {
+            const metaCollapsed = true;
+            return `
+            <div style="display:flex;flex-direction:column;gap:12px;height:100%;">
+              <!-- Metadata -->
+              <div style="border:1px solid var(--gray-200);border-radius:var(--border-radius-sm);overflow:hidden;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;background:var(--gray-50);" id="toggleMeta">
+                  <span style="font-weight:600;font-size:0.9rem;">📋 任务结果元数据</span>
+                  <span style="font-size:0.8rem;color:var(--gray-500);" id="metaArrow">▶ 展开</span>
+                </div>
+                <div id="metaBody" style="display:none;padding:12px 14px;font-size:0.82rem;display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                  <div><strong>编号：</strong>${job.id}</div>
+                  <div><strong>项目名称：</strong>${job.name}</div>
+                  <div><strong>状态：</strong><span class="badge badge-success">✓ 完成</span></div>
+                  <div><strong>创建时间：</strong>${formatDate(job.created)}</div>
+                  <div><strong>完成时间：</strong>${formatDate(job.completed)}</div>
+                  <div><strong>处理用时：</strong>${job.duration} 分钟</div>
+                  <div><strong>SMILES模板：</strong><code style="font-size:0.75rem;">${job.smiles}</code></div>
+                  <div><strong>生成分子数：</strong>${results.length}</div>
+                </div>
+              </div>
+
+              <!-- Toolbar -->
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <div class="view-toggle">
+                  <button class="${state.viewMode==='card'?'active':''}" data-view="card">🃏 卡片</button>
+                  <button class="${state.viewMode==='table'?'active':''}" data-view="table">📋 表格</button>
+                </div>
+                <select class="input-field" style="width:auto;font-family:var(--font-sans);padding:6px 10px;font-size:0.8rem;" id="sortSelect">
+                  <option value="dockingScore">对接分数</option><option value="qed">类药性QED</option><option value="logP">LogP</option><option value="mw">分子量</option>
+                </select>
+                <button class="btn btn-outline btn-xs" id="btnSortToggle">↓ 降序</button>
+                <span style="flex:1;"></span>
+                <button class="btn btn-ghost btn-xs" id="btnSelectAll">☑ 全选</button>
+                <button class="btn btn-outline btn-xs" id="btnBatchDock">🎯 批量对接</button>
+                <button class="btn btn-outline btn-xs" id="btnBatchPredict">📊 批量预测</button>
+                <button class="btn btn-outline btn-xs" id="btnAnalyze">🔬 分析</button>
+                <button class="btn btn-ghost btn-xs" id="btnFullscreen">⛶ 全屏</button>
+                <button class="btn btn-ghost btn-xs" id="btnSaveToData">💾 另存</button>
+                <button class="btn btn-ghost btn-xs" id="btnDownload">⬇ 下载</button>
+              </div>
+
+              <!-- Results -->
+              <div style="flex:1;overflow-y:auto;min-height:250px;" id="resultsContainer">
+                ${state.viewMode==='card' ? buildCardView(results) : buildTableView(results)}
+              </div>
+
+              <!-- Batch selection info -->
+              <div style="font-size:0.78rem;color:var(--gray-500);" id="selectionInfo">已选: 0 / ${results.length}</div>
+            </div>`;
+        }
+
+        function buildCardView(results) {
+            return `<div class="mol-grid">${results.map((m,i) => `
+            <div class="mol-card" data-molid="${m.id}" onclick="toggleMolSelection('${m.id}', event)">
+              <div style="position:absolute;top:8px;right:8px;">
+                <input type="checkbox" ${state.selectedMols.has(m.id)?'checked':''} onclick="event.stopPropagation();toggleMolSelection('${m.id}')" style="cursor:pointer;">
+              </div>
+              <div class="mol-svg">${generateMolSVG(m.smiles, 120, 65)}</div>
+              <div style="font-weight:600;font-size:0.78rem;text-align:center;">${m.id}</div>
+              <div style="font-size:0.7rem;color:var(--gray-600);text-align:center;">R: ${m.rGroup}</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
+                <span class="badge badge-info" style="font-size:0.65rem;">对接:${m.dockingScore}</span>
+                <span class="badge badge-success" style="font-size:0.65rem;">QED:${m.qed}</span>
+              </div>
+              <button class="btn btn-ghost btn-xs" style="width:100%;margin-top:4px;" onclick="event.stopPropagation();openMolDetail('${m.id}')">🔍 详情</button>
+            </div>`).join('')}</div>`;
+        }
+
+        function buildTableView(results) {
+            return `<table class="data-table"><thead><tr>
+            <th>☑</th><th>ID</th><th>R基团</th><th>对接分数</th><th>QED</th><th>LogP</th><th>MW</th><th>TPSA</th><th>操作</th>
+          </tr></thead><tbody>${results.map(m => `
+            <tr>
+              <td><input type="checkbox" ${state.selectedMols.has(m.id)?'checked':''} onclick="toggleMolSelection('${m.id}')"></td>
+              <td><strong>${m.id}</strong></td><td>${m.rGroup}</td><td>${m.dockingScore}</td><td>${m.qed}</td>
+              <td>${m.logP}</td><td>${m.mw}</td><td>${m.tpsa}</td>
+              <td><button class="btn btn-ghost btn-xs" onclick="openMolDetail('${m.id}')">🔍</button></td>
+            </tr>`).join('')}</tbody></table>`;
+        }
+
+        function attachResultListeners(job, results) {
+            // Meta toggle
+            const toggleMeta = document.getElementById('toggleMeta');
+            const metaBody = document.getElementById('metaBody');
+            const metaArrow = document.getElementById('metaArrow');
+            if (toggleMeta && metaBody && metaArrow) {
+                let metaOpen = false;
+                toggleMeta.onclick = function() {
+                    metaOpen = !metaOpen;
+                    metaBody.style.display = metaOpen ? 'grid' : 'none';
+                    metaArrow.textContent = metaOpen ? '▼ 收起' : '▶ 展开';
+                };
+                metaBody.style.display = 'none';
+            }
+
+            // View toggle
+            document.querySelectorAll('#resultContent .view-toggle button').forEach(btn => {
+                btn.onclick = function() {
+                    state.viewMode = this.dataset.view;
+                    document.querySelectorAll('#resultContent .view-toggle button').forEach(b => b
+                        .classList.remove('active'));
+                    this.classList.add('active');
+                    const container = document.getElementById('resultsContainer');
+                    if (container) {
+                        container.innerHTML = state.viewMode === 'card' ? buildCardView(results) :
+                            buildTableView(results);
+                    }
+                    updateSelectionInfo(results);
+                };
+            });
+
+            // Sort
+            document.getElementById('sortSelect').onchange = function() { sortResults(results, job); };
+            document.getElementById('btnSortToggle').onclick = function() {
+                state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+                this.textContent = state.sortDir === 'asc' ? '↑ 升序' : '↓ 降序';
+                sortResults(results, job);
+            };
+
+            // Select all
+            document.getElementById('btnSelectAll').onclick = function() {
+                if (state.selectedMols.size === results.length) {
+                    state.selectedMols.clear();
+                } else {
+                    results.forEach(m => state.selectedMols.add(m.id));
+                }
+                refreshResultsView(results, job);
+            };
+
+            // Batch actions
+            document.getElementById('btnBatchDock').onclick = () => showToast('批量对接已提交（模拟）');
+            document.getElementById('btnBatchPredict').onclick = () => showToast('批量属性预测已提交（模拟）');
+            document.getElementById('btnAnalyze').onclick = () => openAnalysisModal(results);
+            document.getElementById('btnFullscreen').onclick = () => openFullscreenResult(job, results);
+            document.getElementById('btnSaveToData').onclick = () => showToast('已保存到数据板块');
+            document.getElementById('btnDownload').onclick = () => openDownloadModal();
+
+            updateSelectionInfo(results);
+        }
+
+        function sortResults(results, job) {
+            const field = document.getElementById('sortSelect')?.value || 'dockingScore';
+            results.sort((a, b) => {
+                const va = a[field] ?? 0;
+                const vb = b[field] ?? 0;
+                return state.sortDir === 'asc' ? va - vb : vb - va;
+            });
+            refreshResultsView(results, job);
+        }
+
+        function refreshResultsView(results, job) {
+            const container = document.getElementById('resultsContainer');
+            if (container) {
+                container.innerHTML = state.viewMode === 'card' ? buildCardView(results) : buildTableView(results);
+            }
+            updateSelectionInfo(results);
+        }
+
+        function updateSelectionInfo(results) {
+            const info = document.getElementById('selectionInfo');
+            if (info) info.textContent = `已选: ${state.selectedMols.size} / ${results.length}`;
+        }
+
+        window.toggleMolSelection = function(molId, event) {
+            if (state.selectedMols.has(molId)) {
+                state.selectedMols.delete(molId);
+            } else {
+                state.selectedMols.add(molId);
+            }
+            const job = state.jobs.find(j => j.id === state.currentJobId);
+            if (job && job.results) refreshResultsView(job.results, job);
+        };
+
+        window.openMolDetail = function(molId) {
+            const job = state.jobs.find(j => j.id === state.currentJobId);
+            if (!job || !job.results) return;
+            const mol = job.results.find(m => m.id === molId);
+            if (!mol) return;
+            const modal = document.getElementById('modalMolDetail');
+            const content = document.getElementById('molDetailContent');
+            content.innerHTML = `
+            <h4 style="font-weight:700;margin-bottom:10px;">🔬 分子详情: ${mol.id}</h4>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:200px;">
+                <div style="text-align:center;margin-bottom:10px;">${generateMolSVG(mol.smiles, 180, 100)}</div>
+                <p><strong>SMILES:</strong> <code style="font-size:0.75rem;word-break:break-all;">${mol.smiles}</code></p>
+                <p><strong>R基团:</strong> ${mol.rGroup}</p>
+                <p><strong>对接分数:</strong> ${mol.dockingScore} kcal/mol</p>
+                <p><strong>类药性QED:</strong> ${mol.qed}</p>
+                <p><strong>LogP:</strong> ${mol.logP}</p>
+                <p><strong>分子量:</strong> ${mol.mw} Da</p>
+                <p><strong>TPSA:</strong> ${mol.tpsa} Å²</p>
+              </div>
+              <div style="flex:1;min-width:250px;">
+                <p style="font-weight:600;font-size:0.85rem;">📊 雷达图</p>
+                <canvas id="radarChart" width="280" height="280"></canvas>
+                <p style="font-weight:600;font-size:0.85rem;margin-top:8px;">🧊 3D预览</p>
+                <canvas id="mol3DCanvas" width="280" height="180" style="border-radius:var(--border-radius-sm);background:#f0f4f8;cursor:grab;"></canvas>
+              </div>
+            </div>`;
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                drawRadarChart(mol);
+                init3DView(mol);
+            }, 200);
+        };
+
+        document.getElementById('closeMolDetail').addEventListener('click', function() {
+            document.getElementById('modalMolDetail').style.display = 'none';
+            stop3DAnimation();
+        });
+
+        function drawRadarChart(mol) {
+            const canvas = document.getElementById('radarChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const cx = 140,
+                cy = 140,
+                r = 110;
+            const labels = ['对接', 'QED', 'LogP', 'MW', 'TPSA', '合成'];
+            const values = [
+                Math.abs(mol.dockingScore) / 12,
+                mol.qed,
+                mol.logP / 5,
+                mol.mw / 400,
+                mol.tpsa / 120,
+                parseFloat(mol.synthAccess) / 5,
+            ];
+            const n = labels.length;
+            ctx.clearRect(0, 0, 280, 280);
+
+            // Grid
+            for (let g = 1; g <= 4; g++) {
+                ctx.beginPath();
+                for (let i = 0; i < n; i++) {
+                    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+                    const x = cx + (r * g / 4) * Math.cos(angle);
+                    const y = cy + (r * g / 4) * Math.sin(angle);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = '#e5e7eb';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+
+            // Axes
+            for (let i = 0; i < n; i++) {
+                const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+                ctx.strokeStyle = '#d1d5db';
+                ctx.stroke();
+                ctx.fillStyle = '#374151';
+                ctx.font = '11px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(labels[i], cx + (r + 18) * Math.cos(angle), cy + (r + 18) * Math.sin(angle) + 4);
+            }
+
+            // Data
+            ctx.beginPath();
+            for (let i = 0; i < n; i++) {
+                const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+                const v = Math.max(0.05, Math.min(1, values[i]));
+                const x = cx + r * v * Math.cos(angle);
+                const y = cy + r * v * Math.sin(angle);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(37,99,235,0.25)';
+            ctx.fill();
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Dots
+            for (let i = 0; i < n; i++) {
+                const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+                const v = Math.max(0.05, Math.min(1, values[i]));
+                const x = cx + r * v * Math.cos(angle);
+                const y = cy + r * v * Math.sin(angle);
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#2563eb';
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        let _3dAnimId = null;
+        let _3dRotation = { x: 0.3, y: 0.5 };
+
+        function init3DView(mol) {
+            stop3DAnimation();
+            const canvas = document.getElementById('mol3DCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width,
+                h = canvas.height;
+            let isDragging = false,
+                lastX, lastY;
+
+            function draw() {
+                ctx.clearRect(0, 0, w, h);
+                const cx = w / 2,
+                    cy = h / 2;
+                const atoms = [
+                    { x: 0, y: 0, z: 0, color: '#3b82f6', r: 16 },
+                    { x: 1, y: 0.3, z: 0, color: '#60a5fa', r: 12 },
+                    { x: 1.8, y: -0.5, z: 0.4, color: '#93c5fd', r: 11 },
+                    { x: -0.7, y: 0.9, z: -0.3, color: '#2563eb', r: 13 },
+                    { x: 0.5, y: -0.8, z: 0.6, color: '#60a5fa', r: 12 },
+                    { x: -1.2, y: -0.3, z: -0.5, color: '#3b82f6', r: 14 },
+                    { x: 2.2, y: 0.6, z: -0.2, color: '#93c5fd', r: 10 },
+                ];
+                const cosX = Math.cos(_3dRotation.x),
+                    sinX = Math.sin(_3dRotation.x);
+                const cosY = Math.cos(_3dRotation.y),
+                    sinY = Math.sin(_3dRotation.y);
+                const projected = atoms.map(a => {
+                    let y1 = a.y * cosX - a.z * sinX;
+                    let z1 = a.y * sinX + a.z * cosX;
+                    let x2 = a.x * cosY + z1 * sinY;
+                    let z2 = -a.x * sinY + z1 * cosY;
+                    const scale = 50;
+                    const depth = (z2 + 2) / 4;
+                    return { sx: cx + x2 * scale, sy: cy - y1 * scale, r: a.r * depth, color: a.color,
+                        z: z2 };
+                });
+                projected.sort((a, b) => a.z - b.z);
+                projected.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.sx, p.sy, Math.max(4, p.r), 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(p.sx - p.r * 0.25, p.sy - p.r * 0.3, p.r * 0.35, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                    ctx.fill();
+                });
+                // Bonds
+                for (let i = 0; i < projected.length - 1; i++) {
+                    for (let j = i + 1; j < projected.length; j++) {
+                        const dist = Math.hypot(projected[i].sx - projected[j].sx, projected[i].sy - projected[j].sy);
+                        if (dist < 70 && dist > 10) {
+                            ctx.beginPath();
+                            ctx.moveTo(projected[i].sx, projected[i].sy);
+                            ctx.lineTo(projected[j].sx, projected[j].sy);
+                            ctx.strokeStyle = 'rgba(100,120,140,0.5)';
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            canvas.onmousedown = function(e) { isDragging = true;
+                lastX = e.clientX;
+                lastY = e.clientY;
+                canvas.style.cursor = 'grabbing'; };
+            canvas.onmouseup = function() { isDragging = false;
+                canvas.style.cursor = 'grab'; };
+            canvas.onmouseleave = function() { isDragging = false;
+                canvas.style.cursor = 'grab'; };
+            canvas.onmousemove = function(e) {
+                if (!isDragging) return;
+                const dx = e.clientX - lastX;
+                const dy = e.clientY - lastY;
+                _3dRotation.y += dx * 0.01;
+                _3dRotation.x += dy * 0.01;
+                lastX = e.clientX;
+                lastY = e.clientY;
+                draw();
+            };
+            draw();
+            _3dAnimId = setInterval(() => { if (!isDragging) { _3dRotation.y += 0.005;
+                    draw(); } }, 50);
+        }
+
+        function stop3DAnimation() {
+            if (_3dAnimId) { clearInterval(_3dAnimId);
+                _3dAnimId = null; }
+        }
+
+        function openAnalysisModal(results) {
+            const selectedResults = results.filter(m => state.selectedMols.has(m.id));
+            const dataToShow = selectedResults.length > 0 ? selectedResults : results.slice(0, 20);
+            const modal = document.getElementById('modalMolDetail');
+            const content = document.getElementById('molDetailContent');
+            content.innerHTML = `
+            <h4 style="font-weight:700;margin-bottom:10px;">🔬 化学空间可视化</h4>
+            <p style="font-size:0.8rem;color:var(--gray-500);margin-bottom:8px;">展示${dataToShow.length}个分子在化学空间中的分布（PCA模拟）</p>
+            <canvas id="chemSpaceCanvas" width="600" height="400" style="border-radius:var(--border-radius-sm);background:#fafafa;width:100%;"></canvas>
+            <p style="font-size:0.75rem;color:var(--gray-400);margin-top:4px;">点击散点查看对应分子详情 | 颜色代表对接分数</p>
+            <div id="chemSpaceDetail" style="margin-top:8px;font-size:0.8rem;"></div>`;
+            modal.style.display = 'flex';
+            document.getElementById('closeMolDetail').onclick = function() {
+                modal.style.display = 'none';
+            };
+            setTimeout(() => drawChemSpace(dataToShow, results), 200);
+        }
+
+        function drawChemSpace(dataToShow, allResults) {
+            const canvas = document.getElementById('chemSpaceCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width,
+                h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            const points = dataToShow.map((m, i) => ({
+                x: 40 + Math.random() * (w - 80),
+                y: 30 + Math.random() * (h - 60),
+                mol: m,
+                color: m.dockingScore < -8 ? '#ef4444' : m.dockingScore < -6.5 ? '#f59e0b' : '#22c55e',
+                r: 6 + Math.random() * 4,
+            }));
+            // Grid
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 0.5;
+            for (let gx = 0; gx < w; gx += 40) { ctx.beginPath();
+                ctx.moveTo(gx, 0);
+                ctx.lineTo(gx, h);
+                ctx.stroke(); }
+            for (let gy = 0; gy < h; gy += 40) { ctx.beginPath();
+                ctx.moveTo(0, gy);
+                ctx.lineTo(w, gy);
+                ctx.stroke(); }
+            // Points
+            points.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+            canvas.onclick = function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const mx = (e.clientX - rect.left) * (w / rect.width);
+                const my = (e.clientY - rect.top) * (h / rect.height);
+                let closest = null,
+                    minDist = 20;
+                points.forEach(p => {
+                    const d = Math.hypot(mx - p.x, my - p.y);
+                    if (d < minDist) { minDist = d;
+                        closest = p; }
+                });
+                const detailEl = document.getElementById('chemSpaceDetail');
+                if (closest && detailEl) {
+                    detailEl.innerHTML =
+                        `<strong>${closest.mol.id}</strong> | R: ${closest.mol.rGroup} | 对接: ${closest.mol.dockingScore} | QED: ${closest.mol.qed} | LogP: ${closest.mol.logP}`;
+                }
+            };
+        }
+
+        function openFullscreenResult(job, results) {
+            fullscreenResult.style.display = 'block';
+            fullscreenContent.innerHTML = buildResultHTML(job, results);
+            document.body.style.overflow = 'hidden';
+            state.fullscreenActive = true;
+            const exitBtn = document.getElementById('exitFullscreen');
+            if (exitBtn) exitBtn.onclick = exitFullscreen;
+            attachResultListeners(job, results);
+        }
+
+        function exitFullscreen() {
+            fullscreenResult.style.display = 'none';
+            document.body.style.overflow = '';
+            state.fullscreenActive = false;
+            if (state.currentJobId && state.currentPage === 'smg') {
+                const job = state.jobs.find(j => j.id === state.currentJobId);
+                if (job && job.results) renderJobResult(job);
+            }
+        }
+        document.getElementById('exitFullscreen')?.addEventListener('click', exitFullscreen);
+
+        function openDownloadModal() {
+            document.getElementById('modalDownload').style.display = 'flex';
+        }
+        document.getElementById('closeDownload').addEventListener('click', () => document.getElementById('modalDownload')
+            .style.display = 'none');
+        document.getElementById('cancelDownload').addEventListener('click', () => document.getElementById('modalDownload')
+            .style.display = 'none');
+        document.getElementById('confirmDownload').addEventListener('click', () => {
+            document.getElementById('modalDownload').style.display = 'none';
+            showToast('下载已开始（模拟）');
+        });
+
+        // ===== MOL SVG GENERATOR =====
+        function generateMolSVG(smiles, w, h) {
+            const hash = smiles.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+            const rings = (hash % 3) + 1;
+            let svg = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+            const cx = w / 2,
+                cy = h / 2;
+            if (rings >= 1) {
+                const rx = 22,
+                    ry = 28;
+                svg +=
+                `<polygon points="${cx},${cy-ry} ${cx+rx*0.87},${cy-ry*0.5} ${cx+rx*0.87},${cy+ry*0.5} ${cx},${cy+ry} ${cx-rx*0.87},${cy+ry*0.5} ${cx-rx*0.87},${cy-ry*0.5}" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round"/>`;
+            }
+            if (rings >= 2) {
+                svg +=
+                `<polygon points="${cx+30},${cy-18} ${cx+48},${cy-8} ${cx+44},${cy+14} ${cx+22},${cy+12} ${cx+16},${cy-4}" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linejoin="round"/>`;
+            }
+            const rGroupColors = ['#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899'];
+            const rIdx = hash % rGroupColors.length;
+            svg +=
+                `<circle cx="${cx-28}" cy="${cy-20}" r="10" fill="${rGroupColors[rIdx]}" opacity="0.7"/><text x="${cx-28}" y="${cy-16}" text-anchor="middle" fill="white" font-size="8" font-weight="bold">R</text>`;
+            svg +=
+                `<circle cx="${cx+20}" cy="${cy+20}" r="8" fill="#60a5fa" opacity="0.6"/><circle cx="${cx-15}" cy="${cy+18}" r="6" fill="#93c5fd" opacity="0.6"/>`;
+            svg += '</svg>';
+            return svg;
+        }
+
+        // ===== RENDER JOBS TABLE =====
+        function renderJobsTable() {
+            const tbody = document.getElementById('jobsTableBody');
+            if (!tbody) return;
+            if (state.jobs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:30px;">暂无作业</td></tr>';
+                return;
+            }
+            tbody.innerHTML = state.jobs.map(j => {
+                const statusClass = j.status === 'completed' ? 'badge-success' : j.status === 'running' ?
+                    'badge-running' : j.status === 'failed' ? 'badge-warning' : 'badge-info';
+                const statusText = j.status === 'completed' ? '✓ 完成' : j.status === 'running' ? '⟳ 运行中' : j
+                    .status === 'failed' ? '✗ 失败' : '⏳ 排队中';
+                return `
+              <tr style="cursor:pointer;" onmouseenter="this.style.background='var(--blue-50)'" onmouseleave="this.style.background=''"
+                  onclick="viewJobDetailFromJobs('${j.id}')">
+                <td><code style="font-size:0.75rem;">${j.id}</code></td>
+                <td><strong>${j.name}</strong></td>
+                <td>${j.module}</td>
+                <td>${formatDate(j.created)}</td>
+                <td>${j.completed ? formatDate(j.completed) : '-'}</td>
+                <td>${j.duration ? j.duration+' min' : '-'}</td>
+                <td><span class="badge ${statusClass}">${statusText}</span></td>
+                <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();viewJobDetailFromJobs('${j.id}')">查看</button></td>
+              </tr>`;
+            }).join('');
+        }
+
+        window.viewJobDetailFromJobs = function(jobId) {
+            const job = state.jobs.find(j => j.id === jobId);
+            if (!job) return;
+            state.currentJobId = jobId;
+            const detailPage = document.getElementById('page-job-detail');
+            const detailContent = document.getElementById('jobDetailContent');
+            detailPage.style.display = 'flex';
+            detailPage.classList.add('active');
+            document.querySelectorAll('.page').forEach(p => { if (p !== detailPage) { p.classList.remove('active');
+                    p.style.display = 'none'; } });
+            state.currentPage = 'job-detail';
+            detailContent.innerHTML = `
+            <div class="card" style="margin-bottom:12px;">
+              <h4 style="font-weight:600;">${job.name}</h4>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.85rem;margin-top:10px;">
+                <div><strong>编号：</strong>${job.id}</div>
+                <div><strong>状态：</strong><span class="badge ${job.status==='completed'?'badge-success':job.status==='running'?'badge-running':'badge-info'}">${job.status}</span></div>
+                <div><strong>创建时间：</strong>${formatDate(job.created)}</div>
+                <div><strong>完成时间：</strong>${job.completed?formatDate(job.completed):'-'}</div>
+                <div><strong>耗时：</strong>${job.duration?job.duration+' min':'-'}</div>
+                <div><strong>SMILES模板：</strong><code>${job.smiles}</code></div>
+                <div><strong>生成数量：</strong>${job.numMols}</div>
+              </div>
+              ${job.status==='completed' && job.results ? `
+              <button class="btn btn-primary btn-sm" style="margin-top:12px;" onclick="viewJobResultFromDetail('${job.id}')">📊 查看生成结果</button>` : job.status==='running' ? '<p style="color:#f59e0b;margin-top:10px;">⟳ 任务运行中...</p>' : ''}
+            </div>`;
+            mainContent.scrollTop = 0;
+        };
+
+        window.viewJobResultFromDetail = function(jobId) {
+            navigateTo('smg');
+            const job = state.jobs.find(j => j.id === jobId);
+            if (job && job.results) {
+                state.currentJobId = jobId;
+                renderJobResult(job);
+                resultArea.style.display = 'flex';
+                renderJobListSide();
+            }
+        };
+
+        // ===== UTILS =====
+        function formatDate(d) {
+            if (!d) return '-';
+            const dt = new Date(d);
+            return dt.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                second: '2-digit' });
+        }
+
+        function showToast(msg, type = 'info') {
+            const existing = document.querySelector('.toast-msg');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = 'toast-msg';
+            toast.style.cssText = `
+            position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:2000;
+            background:${type==='error'?'#ef4444':'#1f2937'};color:white;padding:10px 22px;
+            border-radius:20px;font-size:0.85rem;font-weight:500;box-shadow:var(--shadow-lg);
+            animation:slideUp 0.3s ease;pointer-events:none;
+          `;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.4s';
+                setTimeout(() => toast.remove(), 400); }, 2500);
+        }
+
+        // ===== CLOSE MODALS ON OVERLAY CLICK =====
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) overlay.style.display = 'none';
+            });
+        });
+
+        // ===== INIT =====
+        function init() {
+            renderJobListSide();
+            renderJobsTable();
+            document.getElementById('page-smg').style.display = 'none';
+            document.getElementById('page-job-detail').style.display = 'none';
+            resultArea.style.display = 'none';
+        }
+        init();
+
+        console.log('🧬 MolDesigner Demo Ready');
+        console.log('  - 模块 → Small Molecule Generation → R基替换');
+        console.log('  - 流程、数据、作业板块可切换');
+        console.log('  - 提交任务后等待3-6秒模拟完成');
+        console.log('  - 支持卡片/表格双视图、分子详情、化学空间可视化');
+    </script>
+</body>
+</html>
