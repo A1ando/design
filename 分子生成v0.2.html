@@ -1,0 +1,2518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MolDesigner - 小分子药物设计平台</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-secondary: #f1f5f9;
+            --border: #e2e8f0;
+            --border-light: #f1f5f9;
+            --text: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff;
+            --primary-border: #bfdbfe;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 8px;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.12);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+            --sidebar-width: 220px;
+            --topbar-height: 56px;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+        }
+
+        /* ========== TOP BAR ========== */
+        .topbar {
+            height: var(--topbar-height);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-sm);
+        }
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: -0.5px;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        }
+        .brand-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+        .brand-name span {
+            color: var(--primary);
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .topbar-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-xs);
+            border: 1px solid transparent;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            position: relative;
+            font-size: 18px;
+        }
+        .topbar-btn:hover {
+            background: var(--surface-secondary);
+            border-color: var(--border);
+            color: var(--text);
+        }
+        .topbar-btn .badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+            border: 2px solid #fff;
+        }
+        .avatar-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #dbeafe;
+            color: #2563eb;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 4px;
+        }
+        .avatar-btn:hover {
+            border-color: #93c5fd;
+            background: #bfdbfe;
+        }
+
+        /* ========== MAIN LAYOUT ========== */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            padding: 12px 10px;
+            gap: 4px;
+            z-index: 50;
+        }
+        .sidebar-section {
+            margin-bottom: 8px;
+        }
+        .sidebar-section-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            padding: 8px 10px 4px;
+        }
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition);
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid transparent;
+            position: relative;
+        }
+        .sidebar-item:hover {
+            background: var(--surface-secondary);
+            color: var(--text);
+        }
+        .sidebar-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary-border);
+            font-weight: 600;
+        }
+        .sidebar-item.active::before {
+            content: '';
+            position: absolute;
+            left: -2px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 0 3px 3px 0;
+        }
+        .sidebar-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .sidebar-badge {
+            margin-left: auto;
+            background: #e2e8f0;
+            color: #64748b;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .sidebar-item.active .sidebar-badge {
+            background: #bfdbfe;
+            color: #1d4ed8;
+        }
+
+        /* ========== CONTENT AREA ========== */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 24px;
+            background: var(--bg);
+            position: relative;
+        }
+        .content-area::-webkit-scrollbar {
+            width: 6px;
+        }
+        .content-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .content-area::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        /* ========== MODULE CARDS ========== */
+        .page-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+        .page-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        .module-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+        }
+        .module-card:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-border);
+            transform: translateY(-2px);
+        }
+        .module-card:active {
+            transform: scale(0.985);
+            transition: 0.1s;
+        }
+        .module-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        .module-card-content h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .module-card-content p {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .module-card-arrow {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+            transition: all var(--transition);
+        }
+        .module-card:hover .module-card-arrow {
+            color: var(--primary);
+            right: 12px;
+        }
+
+        /* ========== FUNCTION PAGE LAYOUT ========== */
+        .function-page {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            gap: 16px;
+        }
+        .function-header {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: var(--shadow-sm);
+            flex-shrink: 0;
+        }
+        .function-header-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-sm);
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .function-header-info h2 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .function-header-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .function-body {
+            display: flex;
+            gap: 16px;
+            flex: 1;
+            min-height: 0;
+        }
+        .function-left {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            max-height: calc(100vh - 180px);
+        }
+        .function-right {
+            width: 380px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-height: calc(100vh - 180px);
+            overflow-y: auto;
+        }
+        .function-left::-webkit-scrollbar,
+        .function-right::-webkit-scrollbar {
+            width: 4px;
+        }
+        .function-left::-webkit-scrollbar-thumb,
+        .function-right::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+
+        /* ========== PANEL ========== */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-light);
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fafbfc;
+        }
+        .panel-body {
+            padding: 16px 18px;
+        }
+        .panel-body.no-padding {
+            padding: 0;
+        }
+
+        /* ========== TABS ========== */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+            background: #fafbfc;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+        .tab-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition);
+            white-space: nowrap;
+            position: relative;
+        }
+        .tab-item:hover {
+            color: var(--text);
+            background: rgba(0, 0, 0, 0.02);
+        }
+        .tab-item.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            font-weight: 600;
+        }
+        .tab-item.locked {
+            color: #cbd5e1;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .tab-item.locked::after {
+            content: '🔒';
+            font-size: 10px;
+            margin-left: 4px;
+        }
+
+        /* ========== FORM ELEMENTS ========== */
+        .form-group {
+            margin-bottom: 14px;
+        }
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+        .form-label .help-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            cursor: help;
+            color: #64748b;
+            transition: all var(--transition);
+            font-weight: 700;
+        }
+        .form-label .help-icon:hover {
+            background: #cbd5e1;
+            color: #334155;
+        }
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            font-size: 13px;
+            font-family: var(--font-mono);
+            transition: all var(--transition);
+            background: #fff;
+            color: var(--text);
+            outline: none;
+            letter-spacing: 0.3px;
+        }
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+            outline: none;
+        }
+        .form-input::placeholder {
+            color: #cbd5e1;
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+        .input-with-icons {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-with-icons .form-input {
+            padding-right: 80px;
+        }
+        .input-icons-right {
+            position: absolute;
+            right: 6px;
+            display: flex;
+            gap: 2px;
+            align-items: center;
+        }
+        .input-icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: all var(--transition);
+            font-size: 15px;
+        }
+        .input-icon-btn:hover {
+            background: #f1f5f9;
+            color: var(--primary);
+        }
+        .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            font-size: 13px;
+            resize: vertical;
+            min-height: 70px;
+            font-family: inherit;
+            transition: all var(--transition);
+            outline: none;
+            background: #fff;
+        }
+        .form-textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: var(--radius-xs);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            letter-spacing: 0.2px;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+            transform: translateY(-1px);
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+            transition: 0.1s;
+        }
+        .btn-outline {
+            background: #fff;
+            color: var(--text-secondary);
+            border-color: var(--border);
+        }
+        .btn-outline:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: var(--text);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border-color: transparent;
+        }
+        .btn-ghost:hover {
+            background: #f1f5f9;
+            color: var(--text);
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+        .btn-xs {
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 5px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* ========== JOB LIST ========== */
+        .job-item {
+            padding: 12px 14px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition);
+            margin-bottom: 8px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .job-item:hover {
+            border-color: var(--primary-border);
+            box-shadow: var(--shadow);
+        }
+        .job-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .job-status.running {
+            background: #f59e0b;
+            animation: pulse 1.5s infinite;
+        }
+        .job-status.completed {
+            background: #10b981;
+        }
+        .job-status.failed {
+            background: #ef4444;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+            }
+            50% {
+                opacity: 0.6;
+                box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+            }
+        }
+        .job-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .job-name {
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .job-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .job-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        /* ========== TOOLTIP ========== */
+        .tooltip-popup {
+            position: absolute;
+            background: #1e293b;
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 999;
+            pointer-events: none;
+            max-width: 320px;
+            line-height: 1.5;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-family: var(--font-mono);
+            letter-spacing: 0.2px;
+        }
+        .tooltip-popup.visible {
+            opacity: 1;
+        }
+
+        /* ========== TOAST ========== */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .toast {
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            background: #1e293b;
+            color: #fff;
+            font-size: 13px;
+            box-shadow: var(--shadow-lg);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 260px;
+        }
+        .toast.success {
+            border-left: 3px solid #10b981;
+        }
+        .toast.info {
+            border-left: 3px solid #3b82f6;
+        }
+        .toast.warning {
+            border-left: 3px solid #f59e0b;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+        }
+
+        /* ========== MODAL ========== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .modal {
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-xl);
+            max-width: 90vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: modalIn 0.25s ease;
+            min-width: 500px;
+        }
+        @keyframes modalIn {
+            from {
+                transform: scale(0.95) translateY(10px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 15px;
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 1;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: #f1f5f9;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+        }
+        .modal-close:hover {
+            background: #e2e8f0;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+
+        /* ========== RESULT CARDS ========== */
+        .result-meta-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            padding: 12px 16px;
+            background: #fafbfc;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .result-meta-expanded {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-light);
+            background: #fafbfc;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px;
+            font-size: 12px;
+        }
+        .result-meta-expanded .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .result-meta-expanded .meta-label {
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+        .result-meta-expanded .meta-value {
+            font-weight: 500;
+        }
+        .result-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border-light);
+            background: #fff;
+        }
+        .view-toggle {
+            display: flex;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .view-toggle button {
+            padding: 7px 12px;
+            border: none;
+            background: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all var(--transition);
+            color: var(--text-muted);
+        }
+        .view-toggle button.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .result-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
+            padding: 16px;
+        }
+        .result-card {
+            background: #fff;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            cursor: pointer;
+            transition: all var(--transition);
+            position: relative;
+            box-shadow: var(--shadow-sm);
+        }
+        .result-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-border);
+            transform: translateY(-1px);
+        }
+        .result-card.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            background: #fafeff;
+        }
+        .result-card .mol-structure {
+            width: 100%;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            background: #fafcfd;
+            border-radius: 6px;
+        }
+        .result-card .mol-structure svg {
+            max-width: 100%;
+            max-height: 90px;
+        }
+        .result-card .mol-id {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+        .result-card .mol-smiles {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            background: #f8fafc;
+            padding: 4px 6px;
+            border-radius: 4px;
+            margin: 4px 0;
+        }
+        .result-card .prop-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .prop-tag {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .prop-tag.score-high {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .prop-tag.score-mid {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .prop-tag.score-low {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .prop-tag.qed {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .result-table th {
+            background: #f8fafc;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+            font-size: 11px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+        .result-table th:hover {
+            color: var(--primary);
+        }
+        .result-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-light);
+            font-family: var(--font-mono);
+            font-size: 11px;
+        }
+        .result-table tr {
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .result-table tr:hover {
+            background: #f8fafc;
+        }
+        .result-table tr.selected {
+            background: #eff6ff;
+        }
+        .checkbox-cell {
+            width: 36px;
+            text-align: center;
+        }
+        .checkbox-cell input {
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+            accent-color: #2563eb;
+        }
+
+        /* ========== MOLECULE DETAIL MODAL ========== */
+        .mol-detail-layout {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .mol-detail-viz {
+            flex: 1;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .mol-detail-info {
+            flex: 1;
+            min-width: 250px;
+        }
+        .mol-2d-view {
+            background: #fafcfd;
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-light);
+            min-height: 200px;
+        }
+        .mol-3d-view {
+            background: #1a1a2e;
+            border-radius: var(--radius-sm);
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-light);
+            min-height: 200px;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+        }
+        .mol-3d-view canvas {
+            width: 100%;
+            height: 200px;
+        }
+        .prop-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .prop-table td {
+            padding: 6px 0;
+            font-size: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .prop-table td:first-child {
+            color: var(--text-muted);
+            width: 90px;
+            font-weight: 500;
+            font-family: inherit;
+        }
+        .prop-table td:last-child {
+            font-family: var(--font-mono);
+            font-weight: 500;
+        }
+
+        /* ========== CHEM SPACE & RADAR ========== */
+        .chemspace-container {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .chemspace-plot {
+            flex: 2;
+            min-width: 400px;
+            background: #fff;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+            position: relative;
+            overflow: hidden;
+        }
+        .chemspace-plot canvas {
+            width: 100%;
+            height: 400px;
+        }
+        .radar-plot {
+            flex: 1;
+            min-width: 280px;
+            background: #fff;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+        .radar-plot canvas {
+            width: 100%;
+            max-width: 350px;
+            height: 350px;
+        }
+
+        /* ========== FULLSCREEN OVERLAY ========== */
+        .fullscreen-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.2s;
+        }
+        .fullscreen-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .fullscreen-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        /* ========== HIDDEN ========== */
+        .hidden {
+            display: none !important;
+        }
+
+        /* ========== EMPTY STATE ========== */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state .empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        .empty-state p {
+            font-size: 13px;
+        }
+
+        /* ========== BACK BUTTON ========== */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--primary);
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: all var(--transition);
+            border: none;
+            background: transparent;
+            margin-bottom: 8px;
+        }
+        .back-btn:hover {
+            background: var(--primary-light);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 900px) {
+            .function-body {
+                flex-direction: column;
+            }
+            .function-right {
+                width: 100%;
+            }
+            .sidebar {
+                width: 60px;
+                padding: 8px 4px;
+            }
+            .sidebar-item span:not(.sidebar-icon) {
+                display: none;
+            }
+            .sidebar-badge {
+                display: none;
+            }
+            .sidebar-section-label {
+                display: none;
+            }
+            .sidebar-item {
+                justify-content: center;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== TOP BAR ==================== -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <div class="brand-icon">MD</div>
+            <div class="brand-name">Mol<span>Designer</span></div>
+        </div>
+        <div class="topbar-right">
+            <button class="topbar-btn" title="使用说明书" onclick="showToast('info','打开使用说明书')">📖</button>
+            <button class="topbar-btn" title="通知" onclick="showToast('info','您有3条新通知')">
+                🔔<span class="badge"></span>
+            </button>
+            <button class="avatar-btn" title="账号管理" onclick="showToast('info','账号: 张研究员 | 点击管理账号')">张</button>
+        </div>
+    </header>
+
+    <!-- ==================== MAIN CONTAINER ==================== -->
+    <div class="main-container">
+        <!-- ==================== SIDEBAR ==================== -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">功能导航</div>
+                <div class="sidebar-item active" data-nav="modules" onclick="navigateTo('modules')">
+                    <span class="sidebar-icon">🧩</span> 模块
+                </div>
+                <div class="sidebar-item" data-nav="workflows" onclick="navigateTo('workflows')">
+                    <span class="sidebar-icon">🔗</span> 流程
+                    <span class="sidebar-badge">3</span>
+                </div>
+                <div class="sidebar-item" data-nav="data" onclick="navigateTo('data')">
+                    <span class="sidebar-icon">📁</span> 数据
+                    <span class="sidebar-badge">12</span>
+                </div>
+                <div class="sidebar-item" data-nav="jobs" onclick="navigateTo('jobs')">
+                    <span class="sidebar-icon">📋</span> 作业
+                    <span class="sidebar-badge">8</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- ==================== CONTENT AREA ==================== -->
+        <main class="content-area" id="contentArea">
+            <!-- Default: Modules View -->
+            <div id="view-modules">
+                <h1 class="page-title">模块浏览</h1>
+                <p class="page-subtitle">探索可用的药物设计模块，点击进入相应功能</p>
+                <div class="module-grid">
+                    <!-- Small Molecule Generation Card -->
+                    <div class="module-card" onclick="openSMGFunction()">
+                        <div class="module-card-icon">⚛️</div>
+                        <div class="module-card-content">
+                            <h3>Small Molecule Generation</h3>
+                            <p>分子生成，当前仅支持骨架约束的小分子生成</p>
+                        </div>
+                        <span class="module-card-arrow">→</span>
+                    </div>
+                    <!-- Placeholder modules -->
+                    <div class="module-card" style="opacity:0.6;cursor:default;" onclick="showToast('warning','该模块尚未开放')">
+                        <div class="module-card-icon">🧬</div>
+                        <div class="module-card-content">
+                            <h3>Molecular Docking</h3>
+                            <p>分子对接模块（即将上线）</p>
+                        </div>
+                        <span class="module-card-arrow" style="color:#cbd5e1;">→</span>
+                    </div>
+                    <div class="module-card" style="opacity:0.6;cursor:default;" onclick="showToast('warning','该模块尚未开放')">
+                        <div class="module-card-icon">📊</div>
+                        <div class="module-card-content">
+                            <h3>Property Prediction</h3>
+                            <p>ADMET属性预测（即将上线）</p>
+                        </div>
+                        <span class="module-card-arrow" style="color:#cbd5e1;">→</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SMG Function View -->
+            <div id="view-smg-function" class="hidden">
+                <button class="back-btn" onclick="goBackToModules()">← 返回模块列表</button>
+                <div class="function-page">
+                    <!-- Function Header -->
+                    <div class="function-header">
+                        <div class="function-header-icon">⚛️</div>
+                        <div class="function-header-info">
+                            <h2>Small Molecule Generation</h2>
+                            <p>基于骨架约束的小分子生成 · 支持R基替换 · 支持多位点修饰</p>
+                        </div>
+                    </div>
+                    <!-- Function Body -->
+                    <div class="function-body">
+                        <!-- Left: Project Creation -->
+                        <div class="function-left">
+                            <div class="panel" id="projectCreatePanel">
+                                <div class="tabs" id="smgTabs">
+                                    <div class="tab-item active" data-tab="r-group" onclick="switchTab('r-group')">🔬 R基替换</div>
+                                    <div class="tab-item locked" data-tab="scaffold">🏗️ 骨架重构</div>
+                                    <div class="tab-item locked" data-tab="denovo">✨ 全新生成</div>
+                                </div>
+                                <div class="panel-body" id="tab-content-r-group">
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            分子结构 <span style="color:#ef4444;">*</span>
+                                            <span class="help-icon" id="helpIconSmiles" onmouseenter="showTooltip(event,'输入带*的小分子SMILES，*代表生成部分，其他部分固定不变，支持输入多个*。例如：*c1cnc2ccccc2c1 格式：SMILES')" onmouseleave="hideTooltip()">?</span>
+                                        </label>
+                                        <div class="input-with-icons">
+                                            <input type="text" class="form-input" id="inputSmiles" placeholder="*c1cnc2ccccc2c1" value="*c1cnc2ccccc2c1*">
+                                            <div class="input-icons-right">
+                                                <button class="input-icon-btn" title="结构式编辑器" onclick="openStructureEditor()">✏️</button>
+                                                <button class="input-icon-btn" title="上传文件" onclick="showToast('info','请选择包含SMILES的文本文件')">📤</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">项目名称 <span style="color:#ef4444;">*</span></label>
+                                        <input type="text" class="form-input" id="inputProjectName" placeholder="请输入项目名称" value="Demo项目-骨架约束生成" style="font-family:inherit;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">项目描述 <span style="color:var(--text-muted);font-weight:400;">(选填)</span></label>
+                                        <textarea class="form-textarea" id="inputProjectDesc" placeholder="描述您的生成任务...">基于喹啉骨架的R基替换，探索C2和C8位点的修饰空间</textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">生成分子数量</label>
+                                        <input type="number" class="form-input" id="inputMolCount" value="50" min="10" max="500" style="width:140px;font-family:inherit;">
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn btn-primary" onclick="submitProject()">🚀 提交生成任务</button>
+                                        <button class="btn btn-outline" onclick="resetForm()">🔄 重置</button>
+                                    </div>
+                                </div>
+                                <div class="panel-body hidden" id="tab-content-scaffold">
+                                    <div class="empty-state"><div class="empty-icon">🏗️</div><p>骨架重构功能即将开放，敬请期待</p></div>
+                                </div>
+                                <div class="panel-body hidden" id="tab-content-denovo">
+                                    <div class="empty-state"><div class="empty-icon">✨</div><p>全新分子生成功能即将开放，敬请期待</p></div>
+                                </div>
+                            </div>
+                            <!-- Project List -->
+                            <div class="panel">
+                                <div class="panel-header">📁 历史项目列表</div>
+                                <div class="panel-body no-padding" id="projectListContainer">
+                                    <div style="padding:12px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all 0.2s;" onmouseover="this.style.background='#fafcfd'" onmouseout="this.style.background=''" onclick="viewJobDetail('JOB-2024-001')">
+                                        <div class="job-status completed"></div>
+                                        <div class="job-info"><div class="job-name">喹啉骨架C2位点修饰</div><div class="job-meta">2024-06-15 · 50个分子 · 已完成</div></div>
+                                    </div>
+                                    <div style="padding:12px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all 0.2s;" onmouseover="this.style.background='#fafcfd'" onmouseout="this.style.background=''" onclick="viewJobDetail('JOB-2024-002')">
+                                        <div class="job-status completed"></div>
+                                        <div class="job-info"><div class="job-name">吡啶骨架多位点替换</div><div class="job-meta">2024-06-10 · 30个分子 · 已完成</div></div>
+                                    </div>
+                                    <div style="padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all 0.2s;" onmouseover="this.style.background='#fafcfd'" onmouseout="this.style.background=''" onclick="viewJobDetail('JOB-2024-003')">
+                                        <div class="job-status failed"></div>
+                                        <div class="job-info"><div class="job-name">测试项目-错误SMILES</div><div class="job-meta">2024-06-08 · 失败</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right: Recent Jobs -->
+                        <div class="function-right">
+                            <div class="panel" style="flex:1;display:flex;flex-direction:column;">
+                                <div class="panel-header">📋 近期作业列表</div>
+                                <div class="panel-body no-padding" style="flex:1;overflow-y:auto;" id="recentJobsContainer">
+                                    <div id="jobListInner">
+                                        <div class="job-item" onclick="viewJobDetail('JOB-2024-001')" style="margin:6px 8px;">
+                                            <div class="job-status completed"></div>
+                                            <div class="job-info"><div class="job-name">喹啉骨架C2位点修饰</div><div class="job-meta">2024-06-15 14:30 · 已完成</div></div>
+                                            <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();viewJobDetail('JOB-2024-001')">查看</button>
+                                        </div>
+                                        <div class="job-item" onclick="viewJobDetail('JOB-2024-002')" style="margin:6px 8px;">
+                                            <div class="job-status completed"></div>
+                                            <div class="job-info"><div class="job-name">吡啶骨架多位点替换</div><div class="job-meta">2024-06-10 09:15 · 已完成</div></div>
+                                            <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();viewJobDetail('JOB-2024-002')">查看</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Job Detail / Result View -->
+            <div id="view-job-detail" class="hidden">
+                <button class="back-btn" onclick="goBackToSMG()">← 返回功能页</button>
+                <div id="jobDetailContent"></div>
+            </div>
+
+            <!-- Placeholder views -->
+            <div id="view-workflows" class="hidden"><div class="empty-state"><div class="empty-icon">🔗</div><p>流程编排功能 · 可在此将不同模块串联为自动化流程</p><p style="font-size:11px;color:#cbd5e1;">（Demo占位视图）</p></div></div>
+            <div id="view-data" class="hidden"><div class="empty-state"><div class="empty-icon">📁</div><p>数据中心 · 存放上传文件及作业结果数据</p><p style="font-size:11px;color:#cbd5e1;">（Demo占位视图）</p></div></div>
+            <div id="view-jobs" class="hidden"><div class="empty-state"><div class="empty-icon">📋</div><p>作业聚合管理 · 查看、筛选、管理所有运行作业</p><p style="font-size:11px;color:#cbd5e1;">（Demo占位视图）</p></div></div>
+        </main>
+    </div>
+
+    <!-- ==================== TOOLTIP ==================== -->
+    <div class="tooltip-popup" id="globalTooltip"></div>
+
+    <!-- ==================== TOAST CONTAINER ==================== -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ==================== MODAL CONTAINER ==================== -->
+    <div id="modalContainer"></div>
+
+    <!-- ==================== FULLSCREEN OVERLAY ==================== -->
+    <div class="fullscreen-overlay hidden" id="fullscreenOverlay">
+        <div class="fullscreen-header">
+            <span>🔬 结果全屏浏览</span>
+            <button class="btn btn-sm btn-outline" onclick="closeFullscreen()">✕ 退出全屏</button>
+        </div>
+        <div class="fullscreen-body" id="fullscreenBody"></div>
+    </div>
+
+    <script>
+        // ==================== GLOBAL STATE ====================
+        const APP = {
+            currentView: 'modules',
+            currentTab: 'r-group',
+            jobResults: {},
+            selectedMolecules: new Set(),
+            resultViewMode: 'card',
+            sortField: 'docking_score',
+            sortOrder: 'asc',
+            currentJobId: null,
+            molCounter: 0,
+        };
+
+        // Simulated job data store
+        const jobStore = {
+            'JOB-2024-001': {
+                id: 'JOB-2024-001',
+                name: '喹啉骨架C2位点修饰',
+                status: 'completed',
+                createdAt: '2024-06-15 14:30:00',
+                duration: '2分34秒',
+                molCount: 50,
+                smiles: '*c1cnc2ccccc2c1*',
+                description: '基于喹啉骨架的R基替换',
+                molecules: [],
+            },
+            'JOB-2024-002': {
+                id: 'JOB-2024-002',
+                name: '吡啶骨架多位点替换',
+                status: 'completed',
+                createdAt: '2024-06-10 09:15:00',
+                duration: '1分48秒',
+                molCount: 30,
+                smiles: '*c1ccnc(*)c1',
+                description: '吡啶骨架C3/C5位点修饰',
+                molecules: [],
+            },
+            'JOB-2024-003': {
+                id: 'JOB-2024-003',
+                name: '测试项目-错误SMILES',
+                status: 'failed',
+                createdAt: '2024-06-08 11:00:00',
+                duration: 'N/A',
+                molCount: 0,
+                smiles: 'invalid',
+                description: '',
+                molecules: [],
+            },
+        };
+
+        // Generate mock molecules for completed jobs
+        function generateMockMolecules(jobId, count) {
+            const mols = [];
+            const scaffolds = ['c1cnc2ccccc2c1', 'c1ccncc1', 'c1ccccc1', 'c1cnccn1', 'c1cocc1'];
+            const rGroups = ['C', 'CC', 'CCC', 'C(C)C', 'OC', 'N(C)C', 'Cl', 'F', 'C(F)(F)F', 'c1ccccc1', 'C(=O)N',
+                'S(=O)(=O)N', 'C#N', 'OC(C)C', 'CC(=O)N'
+            ];
+            const baseScaffold = jobId === 'JOB-2024-001' ? 'c1cnc2ccccc2c1' : 'c1ccncc1';
+            for (let i = 0; i < count; i++) {
+                const r1 = rGroups[Math.floor(Math.random() * rGroups.length)];
+                const r2 = rGroups[Math.floor(Math.random() * rGroups.length)];
+                const smiles = jobId === 'JOB-2024-001' ?
+                    `${r1}${baseScaffold}${r2}` :
+                    `${r1}${baseScaffold}${r2}`;
+                const dockingScore = -(5 + Math.random() * 7).toFixed(1);
+                const qed = (0.3 + Math.random() * 0.65).toFixed(3);
+                const molWt = (250 + Math.random() * 300).toFixed(1);
+                const logP = (0.5 + Math.random() * 4.5).toFixed(2);
+                const hbd = Math.floor(Math.random() * 4);
+                const hba = Math.floor(Math.random() * 6) + 1;
+                const tpsa = (40 + Math.random() * 80).toFixed(1);
+                const rotBonds = Math.floor(Math.random() * 8) + 1;
+                mols.push({
+                    id: `MOL-${jobId}-${String(i+1).padStart(3,'0')}`,
+                    smiles,
+                    docking_score: parseFloat(dockingScore),
+                    qed: parseFloat(qed),
+                    molecular_weight: parseFloat(molWt),
+                    logP: parseFloat(logP),
+                    hbd,
+                    hba,
+                    tpsa: parseFloat(tpsa),
+                    rotatable_bonds: rotBonds,
+                    synthetic_accessibility: (1.5 + Math.random() * 3).toFixed(2),
+                });
+            }
+            return mols;
+        }
+
+        // Initialize job store with mock molecules
+        jobStore['JOB-2024-001'].molecules = generateMockMolecules('JOB-2024-001', 50);
+        jobStore['JOB-2024-002'].molecules = generateMockMolecules('JOB-2024-002', 30);
+
+        // ==================== NAVIGATION ====================
+        function navigateTo(view) {
+            APP.currentView = view;
+            // Update sidebar
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+            const navItem = document.querySelector(`[data-nav="${view}"]`);
+            if (navItem) navItem.classList.add('active');
+
+            // Hide all views
+            ['view-modules', 'view-smg-function', 'view-job-detail', 'view-workflows', 'view-data', 'view-jobs'].forEach(
+                v => {
+                    const el = document.getElementById(v);
+                    if (el) el.classList.add('hidden');
+                });
+
+            // Show target view
+            const targetId = `view-${view}`;
+            const target = document.getElementById(targetId);
+            if (target) target.classList.remove('hidden');
+
+            // If navigating to jobs, show job aggregation
+            if (view === 'jobs') {
+                renderJobAggregation();
+            }
+            if (view === 'data') {
+                renderDataView();
+            }
+        }
+
+        function openSMGFunction() {
+            APP.currentView = 'smg-function';
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+            document.getElementById('view-modules').classList.add('hidden');
+            document.getElementById('view-job-detail').classList.add('hidden');
+            document.getElementById('view-workflows').classList.add('hidden');
+            document.getElementById('view-data').classList.add('hidden');
+            document.getElementById('view-jobs').classList.add('hidden');
+            document.getElementById('view-smg-function').classList.remove('hidden');
+            updateRecentJobsList();
+        }
+
+        function goBackToModules() {
+            APP.currentView = 'modules';
+            document.getElementById('view-smg-function').classList.add('hidden');
+            document.getElementById('view-job-detail').classList.add('hidden');
+            document.getElementById('view-modules').classList.remove('hidden');
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+            const navItem = document.querySelector('[data-nav="modules"]');
+            if (navItem) navItem.classList.add('active');
+        }
+
+        function goBackToSMG() {
+            APP.currentView = 'smg-function';
+            document.getElementById('view-job-detail').classList.add('hidden');
+            document.getElementById('view-smg-function').classList.remove('hidden');
+            updateRecentJobsList();
+        }
+
+        function viewJobDetail(jobId) {
+            APP.currentJobId = jobId;
+            const job = jobStore[jobId];
+            if (!job) { showToast('warning', '作业不存在'); return; }
+            document.getElementById('view-smg-function').classList.add('hidden');
+            document.getElementById('view-modules').classList.add('hidden');
+            document.getElementById('view-workflows').classList.add('hidden');
+            document.getElementById('view-data').classList.add('hidden');
+            document.getElementById('view-jobs').classList.add('hidden');
+            const detailView = document.getElementById('view-job-detail');
+            detailView.classList.remove('hidden');
+            APP.selectedMolecules = new Set();
+            APP.resultViewMode = 'card';
+            renderJobDetail(job);
+            document.getElementById('contentArea').scrollTop = 0;
+        }
+
+        // ==================== TAB SWITCHING ====================
+        function switchTab(tabName) {
+            APP.currentTab = tabName;
+            document.querySelectorAll('#smgTabs .tab-item').forEach(t => t.classList.remove('active'));
+            const tabEl = document.querySelector(`[data-tab="${tabName}"]`);
+            if (tabEl && !tabEl.classList.contains('locked')) {
+                tabEl.classList.add('active');
+            }
+            ['tab-content-r-group', 'tab-content-scaffold', 'tab-content-denovo'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+            const contentMap = { 'r-group': 'tab-content-r-group', 'scaffold': 'tab-content-scaffold',
+                'denovo': 'tab-content-denovo' };
+            const targetContent = document.getElementById(contentMap[tabName]);
+            if (targetContent) targetContent.classList.remove('hidden');
+        }
+
+        // ==================== PROJECT SUBMISSION ====================
+        function submitProject() {
+            const smiles = document.getElementById('inputSmiles').value.trim();
+            const projectName = document.getElementById('inputProjectName').value.trim();
+            const projectDesc = document.getElementById('inputProjectDesc').value.trim();
+            const molCount = parseInt(document.getElementById('inputMolCount').value) || 50;
+
+            if (!smiles) { showToast('warning', '请输入分子结构SMILES'); return; }
+            if (!projectName) { showToast('warning', '请输入项目名称'); return; }
+            if (!smiles.includes('*')) { showToast('warning', 'SMILES中需包含至少一个*表示生成位点'); return; }
+
+            // Create new job
+            const jobId = 'JOB-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + String(Math.floor(
+                Math.random() * 900 + 100));
+            const newJob = {
+                id: jobId,
+                name: projectName,
+                status: 'running',
+                createdAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+                duration: '运行中...',
+                molCount: molCount,
+                smiles: smiles,
+                description: projectDesc,
+                molecules: [],
+            };
+            jobStore[jobId] = newJob;
+
+            // Add to recent jobs
+            updateRecentJobsList();
+            showToast('info', `任务 ${jobId} 已提交，正在运行中...`);
+
+            // Simulate completion after 3-5 seconds
+            const delay = 2500 + Math.random() * 3000;
+            setTimeout(() => {
+                newJob.status = 'completed';
+                newJob.duration = (1 + Math.random() * 4).toFixed(1) + '分' + Math.floor(Math.random() * 60) +
+                    '秒';
+                newJob.molecules = generateMockMolecules(jobId, molCount);
+                updateRecentJobsList();
+                showToast('success', `任务 ${jobId} 已完成！共生成 ${molCount} 个分子`);
+                // If user is on job detail view, refresh
+                if (APP.currentJobId === jobId && document.getElementById('view-job-detail') && !document
+                    .getElementById('view-job-detail').classList.contains('hidden')) {
+                    renderJobDetail(newJob);
+                }
+            }, delay);
+
+            // Also add to project list
+            addToProjectList(newJob);
+            resetForm();
+        }
+
+        function resetForm() {
+            document.getElementById('inputSmiles').value = '';
+            document.getElementById('inputProjectName').value = '';
+            document.getElementById('inputProjectDesc').value = '';
+            document.getElementById('inputMolCount').value = '50';
+        }
+
+        function addToProjectList(job) {
+            const container = document.getElementById('projectListContainer');
+            const statusClass = job.status === 'running' ? 'running' : 'completed';
+            const statusText = job.status === 'running' ? '运行中' : '已完成';
+            const div = document.createElement('div');
+            div.style.cssText =
+                'padding:12px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all 0.2s;';
+            div.onmouseover = function() { this.style.background = '#fafcfd'; };
+            div.onmouseout = function() { this.style.background = ''; };
+            div.onclick = function() { viewJobDetail(job.id); };
+            div.innerHTML = `
+            <div class="job-status ${statusClass}"></div>
+            <div class="job-info"><div class="job-name">${job.name}</div><div class="job-meta">${job.createdAt} · ${job.molCount}个分子 · ${statusText}</div></div>
+          `;
+            container.insertBefore(div, container.firstChild);
+        }
+
+        function updateRecentJobsList() {
+            const container = document.getElementById('jobListInner');
+            let html = '';
+            const jobs = Object.values(jobStore).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+            jobs.forEach(job => {
+                const statusClass = job.status;
+                const statusText = job.status === 'running' ? '运行中' : job.status === 'completed' ? '已完成' :
+                    '失败';
+                html += `
+              <div class="job-item" onclick="viewJobDetail('${job.id}')" style="margin:6px 8px;">
+                <div class="job-status ${statusClass}"></div>
+                <div class="job-info">
+                  <div class="job-name">${job.name}</div>
+                  <div class="job-meta">${job.createdAt} · ${statusText}</div>
+                </div>
+                <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();viewJobDetail('${job.id}')">${job.status==='running'?'监控':'查看'}</button>
+              </div>`;
+            });
+            if (!html) html =
+                '<div class="empty-state"><p style="font-size:12px;">暂无作业，请创建新项目</p></div>';
+            container.innerHTML = html;
+        }
+
+        // ==================== JOB DETAIL RENDERING ====================
+        function renderJobDetail(job) {
+            const container = document.getElementById('jobDetailContent');
+            const statusLabel = job.status === 'completed' ? '✅ 已完成' : job.status === 'running' ? '⏳ 运行中' :
+                '❌ 失败';
+            const statusColor = job.status === 'completed' ? '#10b981' : job.status === 'running' ? '#f59e0b' :
+            '#ef4444';
+
+            let metaExpandedHtml = `
+            <div class="result-meta-expanded" id="metaExpanded-${job.id}" style="display:none;">
+              <div class="meta-item"><span class="meta-label">编号</span><span class="meta-value">${job.id}</span></div>
+              <div class="meta-item"><span class="meta-label">项目名称</span><span class="meta-value">${job.name}</span></div>
+              <div class="meta-item"><span class="meta-label">状态</span><span class="meta-value" style="color:${statusColor}">${statusLabel}</span></div>
+              <div class="meta-item"><span class="meta-label">创建时间</span><span class="meta-value">${job.createdAt}</span></div>
+              <div class="meta-item"><span class="meta-label">处理用时</span><span class="meta-value">${job.duration}</span></div>
+              <div class="meta-item"><span class="meta-label">生成分子数</span><span class="meta-value">${job.molCount}</span></div>
+              <div class="meta-item"><span class="meta-label">输入SMILES</span><span class="meta-value" style="font-size:10px;">${job.smiles}</span></div>
+              <div class="meta-item"><span class="meta-label">描述</span><span class="meta-value">${job.description||'无'}</span></div>
+            </div>`;
+
+            let html = `
+            <div class="panel" style="margin-bottom:16px;">
+              <div class="result-meta-bar" onclick="toggleMetaExpanded('${job.id}')" style="display:flex;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:14px;">
+                  <span style="font-weight:600;">📋 ${job.id}</span>
+                  <span>📌 ${job.name}</span>
+                  <span style="color:${statusColor};font-weight:500;">${statusLabel}</span>
+                </div>
+                <span style="font-size:11px;color:var(--text-muted);">点击展开元数据 ▾</span>
+              </div>
+              ${metaExpandedHtml}`;
+
+            if (job.status === 'completed' && job.molecules.length > 0) {
+                html += `
+              <div class="result-toolbar">
+                <div class="view-toggle">
+                  <button class="${APP.resultViewMode==='card'?'active':''}" onclick="switchResultView('card','${job.id}')">🃏 卡片视图</button>
+                  <button class="${APP.resultViewMode==='table'?'active':''}" onclick="switchResultView('table','${job.id}')">📊 表格视图</button>
+                </div>
+                <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">| 排序: </span>
+                <select style="font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;" onchange="changeSort(this.value,'${job.id}')">
+                  <option value="docking_score">对接分数</option>
+                  <option value="qed">类药性(QED)</option>
+                  <option value="molecular_weight">分子量</option>
+                  <option value="logP">LogP</option>
+                </select>
+                <button class="btn btn-xs btn-ghost" onclick="toggleSortOrder()" title="切换排序方向">🔄</button>
+                <span style="flex:1;"></span>
+                <span style="font-size:11px;color:var(--text-muted);">已选: ${APP.selectedMolecules.size} 个</span>
+                <button class="btn btn-xs btn-outline" onclick="batchDocking()">🔬 批量对接</button>
+                <button class="btn btn-xs btn-outline" onclick="batchPredict()">📊 属性预测</button>
+                <button class="btn btn-xs btn-outline" onclick="openAnalysis('${job.id}')">📈 分析</button>
+                <button class="btn btn-xs btn-outline" onclick="openFullscreen('${job.id}')">🖥️ 全屏</button>
+                <button class="btn btn-xs btn-outline" onclick="saveToData('${job.id}')">💾 另存</button>
+                <button class="btn btn-xs btn-outline" onclick="downloadResults('${job.id}')">⬇️ 下载</button>
+              </div>`;
+
+                // Sort molecules
+                const sortedMols = [...job.molecules].sort((a, b) => {
+                    const valA = a[APP.sortField] || 0;
+                    const valB = b[APP.sortField] || 0;
+                    return APP.sortOrder === 'asc' ? valA - valB : valB - valA;
+                });
+
+                if (APP.resultViewMode === 'card') {
+                    html += `<div class="result-cards-grid" id="resultCardsContainer-${job.id}">`;
+                    sortedMols.forEach((mol, idx) => {
+                        const selected = APP.selectedMolecules.has(mol.id) ? ' selected' : '';
+                        const scoreClass = mol.docking_score < -8 ? 'score-high' : mol.docking_score < -6 ?
+                            'score-mid' : 'score-low';
+                        html += `
+                    <div class="result-card${selected}" id="card-${mol.id}" onclick="toggleSelectMol('${mol.id}','${job.id}')">
+                      <div class="mol-structure">${generate2DSVG(mol.smiles, idx)}</div>
+                      <div class="mol-id">${mol.id}</div>
+                      <div class="mol-smiles" title="${mol.smiles}">${mol.smiles}</div>
+                      <div class="prop-tags">
+                        <span class="prop-tag ${scoreClass}">对接: ${mol.docking_score}</span>
+                        <span class="prop-tag qed">QED: ${mol.qed}</span>
+                        <span class="prop-tag" style="background:#f0fdf4;color:#166534;">MW: ${mol.molecular_weight}</span>
+                      </div>
+                      <button class="btn btn-xs btn-ghost" style="margin-top:6px;width:100%;" onclick="event.stopPropagation();openMolDetail('${mol.id}','${job.id}')">🔍 详情</button>
+                    </div>`;
+                    });
+                    html += `</div>`;
+                } else {
+                    html +=
+                        `<div style="overflow-x:auto;padding:8px;" id="resultTableContainer-${job.id}"><table class="result-table"><thead><tr>
+                <th class="checkbox-cell"><input type="checkbox" onchange="toggleAllMols(this,'${job.id}')" title="全选"></th>
+                <th>编号</th><th>SMILES</th><th onclick="setSort('docking_score','${job.id}')">对接分数 ▾</th>
+                <th onclick="setSort('qed','${job.id}')">QED ▾</th><th onclick="setSort('molecular_weight','${job.id}')">分子量 ▾</th>
+                <th onclick="setSort('logP','${job.id}')">LogP ▾</th><th>操作</th></tr></thead><tbody>`;
+                    sortedMols.forEach(mol => {
+                        const checked = APP.selectedMolecules.has(mol.id) ? 'checked' : '';
+                        html += `
+                    <tr class="${APP.selectedMolecules.has(mol.id)?'selected':''}" id="row-${mol.id}">
+                      <td class="checkbox-cell"><input type="checkbox" ${checked} onchange="toggleSelectMol('${mol.id}','${job.id}');event.stopPropagation();"></td>
+                      <td>${mol.id}</td>
+                      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${mol.smiles}">${mol.smiles}</td>
+                      <td>${mol.docking_score}</td><td>${mol.qed}</td><td>${mol.molecular_weight}</td><td>${mol.logP}</td>
+                      <td><button class="btn btn-xs btn-ghost" onclick="openMolDetail('${mol.id}','${job.id}')">🔍</button></td>
+                    </tr>`;
+                    });
+                    html += `</tbody></table></div>`;
+                }
+            } else if (job.status === 'running') {
+                html += `
+              <div class="panel-body" style="text-align:center;padding:40px;">
+                <div style="font-size:48px;animation:pulse 1.5s infinite;">⏳</div>
+                <p style="margin-top:12px;font-weight:500;">任务运行中...</p>
+                <p style="font-size:12px;color:var(--text-muted);">请稍候，结果即将生成</p>
+              </div>`;
+            } else if (job.status === 'failed') {
+                html += `
+              <div class="panel-body" style="text-align:center;padding:40px;">
+                <div style="font-size:48px;">❌</div>
+                <p style="margin-top:12px;font-weight:500;color:#ef4444;">任务执行失败</p>
+                <p style="font-size:12px;color:var(--text-muted);">请检查输入SMILES格式是否正确</p>
+              </div>`;
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function toggleMetaExpanded(jobId) {
+            const el = document.getElementById(`metaExpanded-${jobId}`);
+            if (el) el.style.display = el.style.display === 'none' ? 'grid' : 'none';
+        }
+
+        function switchResultView(mode, jobId) {
+            APP.resultViewMode = mode;
+            const job = jobStore[jobId];
+            if (job) renderJobDetail(job);
+        }
+
+        function setSort(field, jobId) {
+            if (APP.sortField === field) {
+                APP.sortOrder = APP.sortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                APP.sortField = field;
+                APP.sortOrder = 'asc';
+            }
+            const job = jobStore[jobId];
+            if (job) renderJobDetail(job);
+        }
+
+        function changeSort(field, jobId) {
+            APP.sortField = field;
+            APP.sortOrder = 'asc';
+            const job = jobStore[jobId];
+            if (job) renderJobDetail(job);
+        }
+
+        function toggleSortOrder() {
+            APP.sortOrder = APP.sortOrder === 'asc' ? 'desc' : 'asc';
+            if (APP.currentJobId && jobStore[APP.currentJobId]) {
+                renderJobDetail(jobStore[APP.currentJobId]);
+            }
+        }
+
+        function toggleSelectMol(molId, jobId) {
+            if (APP.selectedMolecules.has(molId)) {
+                APP.selectedMolecules.delete(molId);
+            } else {
+                APP.selectedMolecules.add(molId);
+            }
+            // Update UI
+            const card = document.getElementById(`card-${molId}`);
+            const row = document.getElementById(`row-${molId}`);
+            if (card) card.classList.toggle('selected', APP.selectedMolecules.has(molId));
+            if (row) row.classList.toggle('selected', APP.selectedMolecules.has(molId));
+            // Update toolbar
+            const job = jobStore[jobId];
+            if (job) renderJobDetail(job);
+        }
+
+        function toggleAllMols(checkbox, jobId) {
+            const job = jobStore[jobId];
+            if (!job) return;
+            if (checkbox.checked) {
+                job.molecules.forEach(m => APP.selectedMolecules.add(m.id));
+            } else {
+                job.molecules.forEach(m => APP.selectedMolecules.delete(m.id));
+            }
+            renderJobDetail(job);
+        }
+
+        // ==================== MOLECULE DETAIL MODAL ====================
+        function openMolDetail(molId, jobId) {
+            const job = jobStore[jobId];
+            if (!job) return;
+            const mol = job.molecules.find(m => m.id === molId);
+            if (!mol) return;
+
+            const modalHTML = `
+            <div class="modal-overlay" id="molDetailModal" onclick="if(event.target===this)closeModal()">
+              <div class="modal" style="max-width:750px;min-width:600px;" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                  <span>🔬 分子详情 · ${mol.id}</span>
+                  <button class="modal-close" onclick="closeModal()">✕</button>
+                </div>
+                <div class="modal-body">
+                  <div class="mol-detail-layout">
+                    <div class="mol-detail-viz">
+                      <div class="mol-2d-view">${generate2DSVG(mol.smiles, 0, 220)}</div>
+                      <div class="mol-3d-view" id="mol3DView">
+                        <canvas id="mol3DCanvas" width="400" height="200"></canvas>
+                      </div>
+                      <p style="font-size:10px;color:var(--text-muted);text-align:center;">🖱️ 3D视图支持旋转缩放（模拟）</p>
+                    </div>
+                    <div class="mol-detail-info">
+                      <p style="font-weight:600;margin-bottom:8px;">📋 属性信息</p>
+                      <table class="prop-table">
+                        <tr><td>SMILES</td><td style="font-size:10px;word-break:break-all;">${mol.smiles}</td></tr>
+                        <tr><td>对接分数</td><td>${mol.docking_score} kcal/mol</td></tr>
+                        <tr><td>类药性(QED)</td><td>${mol.qed}</td></tr>
+                        <tr><td>分子量</td><td>${mol.molecular_weight} Da</td></tr>
+                        <tr><td>LogP</td><td>${mol.logP}</td></tr>
+                        <tr><td>氢键供体</td><td>${mol.hbd}</td></tr>
+                        <tr><td>氢键受体</td><td>${mol.hba}</td></tr>
+                        <tr><td>TPSA</td><td>${mol.tpsa} Å²</td></tr>
+                        <tr><td>可旋转键</td><td>${mol.rotatable_bonds}</td></tr>
+                        <tr><td>合成可及性</td><td>${mol.synthetic_accessibility}</td></tr>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+            document.getElementById('modalContainer').innerHTML = modalHTML;
+            // Start 3D animation
+            setTimeout(() => start3DAnimation(), 200);
+        }
+
+        function closeModal() {
+            document.getElementById('modalContainer').innerHTML = '';
+        }
+
+        // ==================== 3D ANIMATION (Simulated) ====================
+        function start3DAnimation() {
+            const canvas = document.getElementById('mol3DCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const atoms = [
+                { x: 150, y: 80, z: 0, r: 18, color: '#4a90d9' },
+                { x: 200, y: 50, z: 30, r: 14, color: '#e74c3c' },
+                { x: 250, y: 80, z: -20, r: 18, color: '#4a90d9' },
+                { x: 200, y: 120, z: 10, r: 12, color: '#f39c12' },
+                { x: 280, y: 110, z: 40, r: 15, color: '#2ecc71' },
+                { x: 160, y: 130, z: -30, r: 16, color: '#9b59b6' },
+                { x: 220, y: 90, z: 50, r: 10, color: '#95a5a6' },
+            ];
+            const bonds = [
+                [0, 1],
+                [1, 2],
+                [2, 4],
+                [1, 3],
+                [0, 3],
+                [3, 5],
+                [2, 6]
+            ];
+            let angle = 0;
+
+            function animate() {
+                if (!document.getElementById('mol3DCanvas')) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+                angle += 0.015;
+                const rotated = atoms.map(a => {
+                    const rx = a.x - cx;
+                    const rz = a.z;
+                    const nx = rx * Math.cos(angle) - rz * Math.sin(angle);
+                    const nz = rx * Math.sin(angle) + rz * Math.cos(angle);
+                    return { ...a, sx: cx + nx, sy: a.y, nz };
+                });
+                // Draw bonds
+                bonds.forEach(([i, j]) => {
+                    ctx.beginPath();
+                    ctx.moveTo(rotated[i].sx, rotated[i].sy);
+                    ctx.lineTo(rotated[j].sx, rotated[j].sy);
+                    ctx.strokeStyle = '#rgba(255,255,255,0.5)';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                });
+                // Draw atoms
+                rotated.forEach(a => {
+                    const gradient = ctx.createRadialGradient(a.sx - 3, a.sy - 3, 1, a.sx, a.sy, a.r);
+                    gradient.addColorStop(0, '#ffffff');
+                    gradient.addColorStop(0.4, a.color);
+                    gradient.addColorStop(1, '#1a1a2e');
+                    ctx.beginPath();
+                    ctx.arc(a.sx, a.sy, a.r, 0, Math.PI * 2);
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // ==================== 2D STRUCTURE SVG GENERATION ====================
+        function generate2DSVG(smiles, seed, size = 90) {
+            const hash = seed * 7 + smiles.length * 13;
+            const hasAromatic = smiles.includes('c') || smiles.includes('cnc') || smiles.includes('ccc');
+            const hasN = smiles.includes('n') || smiles.includes('N');
+            const hasO = smiles.includes('o') || smiles.includes('O');
+            const hasCl = smiles.includes('Cl');
+            const hasF = smiles.includes('F');
+
+            let svgContent = '';
+            const cx = size / 2;
+            const cy = size / 2;
+            const hexR = size * 0.28;
+
+            // Draw hexagon (aromatic ring)
+            if (hasAromatic || (hash % 3 !== 0)) {
+                const pts = [];
+                for (let i = 0; i < 6; i++) {
+                    const a = (Math.PI / 3) * i - Math.PI / 6;
+                    pts.push(`${cx+hexR*Math.cos(a)},${cy+hexR*Math.sin(a)}`);
+                }
+                svgContent +=
+                    `<polygon points="${pts.join(' ')}" fill="none" stroke="#334155" stroke-width="2.5" stroke-linejoin="round"/>`;
+                // Inner circle for aromaticity
+                svgContent +=
+                    `<circle cx="${cx}" cy="${cy}" r="${hexR*0.65}" fill="none" stroke="#334155" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.6"/>`;
+                // N atoms in ring
+                if (hasN && hash % 2 === 0) {
+                    const nPos = pts[1].split(',');
+                    svgContent +=
+                        `<text x="${parseFloat(nPos[0])}" y="${parseFloat(nPos[1])+4}" text-anchor="middle" font-size="13" font-weight="700" fill="#2563eb" font-family="sans-serif">N</text>`;
+                }
+            }
+
+            // Substituents
+            const angles = [Math.PI / 3, -Math.PI / 3, Math.PI, 0, Math.PI / 1.5, -Math.PI / 1.5];
+            const groups = [];
+            if (hasCl) groups.push({ label: 'Cl', color: '#16a34a', angle: angles[hash % 6] });
+            if (hasF) groups.push({ label: 'F', color: '#0891b2', angle: angles[(hash + 1) % 6] });
+            if (hasO) groups.push({ label: 'OH', color: '#dc2626', angle: angles[(hash + 2) % 6] });
+            if (hasN && hash % 3 === 1) groups.push({ label: 'NH₂', color: '#2563eb', angle: angles[(hash + 3) % 6] });
+            if (groups.length === 0) groups.push({ label: 'R', color: '#7c3aed', angle: angles[hash % 6] });
+            if (groups.length < 2 && hash % 2 === 0) groups.push({ label: 'CH₃', color: '#64748b', angle: angles[(hash + 4) %
+                    6
+                ] });
+
+            groups.forEach((g, i) => {
+                const ax = cx + (hexR + 22) * Math.cos(g.angle);
+                const ay = cy + (hexR + 22) * Math.sin(g.angle);
+                const sx = cx + hexR * Math.cos(g.angle);
+                const sy = cy + hexR * Math.sin(g.angle);
+                svgContent +=
+                    `<line x1="${sx}" y1="${sy}" x2="${ax}" y2="${ay}" stroke="#334155" stroke-width="2" stroke-linecap="round"/>`;
+                svgContent +=
+                    `<text x="${ax}" y="${ay+5}" text-anchor="middle" font-size="11" font-weight="600" fill="${g.color}" font-family="sans-serif">${g.label}</text>`;
+            });
+
+            return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`;
+        }
+
+        // ==================== FULLSCREEN ====================
+        function openFullscreen(jobId) {
+            const overlay = document.getElementById('fullscreenOverlay');
+            overlay.classList.remove('hidden');
+            const job = jobStore[jobId];
+            if (!job) return;
+            // Clone the result view into fullscreen
+            const tempDiv = document.createElement('div');
+            APP.currentJobId = jobId;
+            renderJobDetail(job);
+            const detailContent = document.getElementById('jobDetailContent').innerHTML;
+            document.getElementById('fullscreenBody').innerHTML = detailContent;
+            // Re-render in main view
+            setTimeout(() => {
+                APP.currentJobId = jobId;
+                renderJobDetail(job);
+            }, 100);
+        }
+
+        function closeFullscreen() {
+            document.getElementById('fullscreenOverlay').classList.add('hidden');
+            if (APP.currentJobId && jobStore[APP.currentJobId]) {
+                renderJobDetail(jobStore[APP.currentJobId]);
+            }
+        }
+
+        // ==================== SAVE TO DATA & DOWNLOAD ====================
+        function saveToData(jobId) {
+            showToast('success', `作业 ${jobId} 的结果已保存到数据板块`);
+        }
+
+        function downloadResults(jobId) {
+            const job = jobStore[jobId];
+            if (!job || !job.molecules.length) { showToast('warning', '无数据可下载'); return; }
+            // Simulate download dialog
+            const format = 'CSV';
+            showToast('info', `正在准备下载... 格式: ${format} | 包含 ${job.molecules.length} 条记录`);
+            setTimeout(() => showToast('success', `下载完成: ${jobId}_results.csv`), 1500);
+        }
+
+        // ==================== BATCH OPERATIONS ====================
+        function batchDocking() {
+            const count = APP.selectedMolecules.size;
+            if (count === 0) { showToast('warning', '请先选择分子'); return; }
+            showToast('info', `已提交 ${count} 个分子的批量对接任务`);
+            setTimeout(() => showToast('success', '批量对接完成'), 3000);
+        }
+
+        function batchPredict() {
+            const count = APP.selectedMolecules.size;
+            if (count === 0) { showToast('warning', '请先选择分子'); return; }
+            showToast('info', `已提交 ${count} 个分子的属性预测任务`);
+            setTimeout(() => showToast('success', '批量属性预测完成'), 2500);
+        }
+
+        // ==================== ANALYSIS MODAL ====================
+        function openAnalysis(jobId) {
+            const job = jobStore[jobId];
+            if (!job || !job.molecules.length) { showToast('warning', '无数据可供分析'); return; }
+            const selectedMols = APP.selectedMolecules.size > 0 ?
+                job.molecules.filter(m => APP.selectedMolecules.has(m.id)) :
+                job.molecules.slice(0, 10);
+
+            const modalHTML = `
+            <div class="modal-overlay" id="analysisModal" onclick="if(event.target===this)closeAnalysis()">
+              <div class="modal" style="max-width:950px;min-width:700px;" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                  <span>📈 分子分析 · ${job.name}</span>
+                  <button class="modal-close" onclick="closeAnalysis()">✕</button>
+                </div>
+                <div class="modal-body">
+                  <div class="chemspace-container">
+                    <div class="chemspace-plot">
+                      <p style="font-weight:600;padding:8px 12px;font-size:13px;">🗺️ 化学空间可视化 (PCA模拟)</p>
+                      <canvas id="chemspaceCanvas" width="600" height="380"></canvas>
+                      <p style="font-size:10px;color:var(--text-muted);padding:4px 12px;">● 生成分子 &nbsp; ○ 参考化合物 &nbsp; 点击散点查看对应分子</p>
+                    </div>
+                    <div class="radar-plot">
+                      <p style="font-weight:600;font-size:13px;text-align:center;width:100%;">🎯 雷达图 (首个选中分子)</p>
+                      <canvas id="radarCanvas" width="320" height="320"></canvas>
+                    </div>
+                  </div>
+                  <div style="margin-top:12px;padding:10px;background:#fafcfd;border-radius:8px;font-size:12px;" id="chemspaceDetail">
+                    <span style="color:var(--text-muted);">点击化学空间中的蓝色圆点查看对应分子详情</span>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+            document.getElementById('modalContainer').innerHTML = modalHTML;
+
+            setTimeout(() => {
+                drawChemSpace(job, selectedMols);
+                if (selectedMols.length > 0) drawRadarChart(selectedMols[0]);
+            }, 300);
+        }
+
+        function closeAnalysis() {
+            document.getElementById('modalContainer').innerHTML = '';
+        }
+
+        function drawChemSpace(job, selectedMols) {
+            const canvas = document.getElementById('chemspaceCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
+
+            // Background reference compounds
+            const refPoints = [];
+            for (let i = 0; i < 200; i++) {
+                refPoints.push({ x: 40 + Math.random() * (W - 80), y: 30 + Math.random() * (H - 70), type: 'ref' });
+            }
+            refPoints.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(180,190,200,0.5)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(160,170,180,0.3)';
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            });
+
+            // Generated molecules mapped to 2D space using mock PCA
+            const molPoints = [];
+            job.molecules.forEach((mol, i) => {
+                const px = 60 + (parseFloat(mol.molecular_weight) - 250) / 300 * (W - 120) + (Math.random() - 0.5) *
+                    40;
+                const py = H - 50 - (parseFloat(mol.logP) - 0.5) / 5 * (H - 100) + (Math.random() - 0.5) * 30;
+                const isSelected = APP.selectedMolecules.has(mol.id) || selectedMols.some(s => s.id === mol
+                    .id);
+                molPoints.push({ x: Math.max(30, Math.min(W - 30, px)), y: Math.max(20, Math.min(H - 20, py)), mol,
+                    isSelected });
+            });
+
+            molPoints.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.isSelected ? 7 : 5, 0, Math.PI * 2);
+                ctx.fillStyle = p.isSelected ? '#2563eb' : 'rgba(37,99,235,0.6)';
+                ctx.fill();
+                ctx.strokeStyle = p.isSelected ? '#1d4ed8' : 'rgba(37,99,235,0.8)';
+                ctx.lineWidth = p.isSelected ? 2.5 : 1.5;
+                ctx.stroke();
+                if (p.isSelected) {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(37,99,235,0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            });
+
+            // Axis labels
+            ctx.fillStyle = '#64748b';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('PC1 (分子量相关)', W - 130, H - 10);
+            ctx.fillText('PC2 (LogP相关)', 8, 20);
+            ctx.fillText('← 低分子量', 40, H - 10);
+            ctx.fillText('高分子量 →', W - 170, H - 10);
+
+            // Click handler
+            canvas.onclick = function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                const my = e.clientY - rect.top;
+                let closest = null;
+                let minDist = 25;
+                molPoints.forEach(p => {
+                    const dist = Math.sqrt((mx - p.x) ** 2 + (my - p.y) ** 2);
+                    if (dist < minDist) { minDist = dist;
+                        closest = p; }
+                });
+                if (closest) {
+                    document.getElementById('chemspaceDetail').innerHTML = `
+                <strong>${closest.mol.id}</strong> | SMILES: <code>${closest.mol.smiles}</code> | 对接: ${closest.mol.docking_score} | QED: ${closest.mol.qed} | MW: ${closest.mol.molecular_weight}
+              `;
+                    drawRadarChart(closest.mol);
+                    // Highlight
+                    drawChemSpace(job, selectedMols);
+                    ctx.beginPath();
+                    ctx.arc(closest.x, closest.y, 14, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([4, 2]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            };
+        }
+
+        function drawRadarChart(mol) {
+            const canvas = document.getElementById('radarCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+            const cx = W / 2;
+            const cy = H / 2;
+            const r = 120;
+            ctx.clearRect(0, 0, W, H);
+
+            const attributes = [
+                { label: '对接分数', value: Math.max(0, Math.min(1, (Math.abs(mol.docking_score) - 4) / 7)), max: 1 },
+                { label: 'QED', value: mol.qed, max: 1 },
+                { label: '分子量\n(归一化)', value: Math.max(0, Math.min(1, (mol.molecular_weight - 200) / 350)), max: 1 },
+                { label: 'LogP\n(归一化)', value: Math.max(0, Math.min(1, mol.logP / 6)), max: 1 },
+                { label: 'HBA', value: Math.max(0, Math.min(1, mol.hba / 8)), max: 1 },
+                { label: '合成可及性', value: Math.max(0, Math.min(1, (5 - mol.synthetic_accessibility) / 3.5)), max: 1 },
+            ];
+            const n = attributes.length;
+
+            // Draw grid
+            for (let level = 1; level <= 4; level++) {
+                const lr = r * level / 4;
+                ctx.beginPath();
+                for (let i = 0; i < n; i++) {
+                    const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+                    const px = cx + lr * Math.cos(angle);
+                    const py = cy + lr * Math.sin(angle);
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = 'rgba(200,210,220,0.5)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+
+            // Draw axes
+            for (let i = 0; i < n; i++) {
+                const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+                ctx.strokeStyle = 'rgba(180,190,200,0.4)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+
+            // Draw data polygon
+            ctx.beginPath();
+            for (let i = 0; i < n; i++) {
+                const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+                const val = attributes[i].value;
+                const px = cx + r * val * Math.cos(angle);
+                const py = cy + r * val * Math.sin(angle);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(37,99,235,0.2)';
+            ctx.fill();
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Draw points
+            for (let i = 0; i < n; i++) {
+                const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+                const val = attributes[i].value;
+                const px = cx + r * val * Math.cos(angle);
+                const py = cy + r * val * Math.sin(angle);
+                ctx.beginPath();
+                ctx.arc(px, py, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#2563eb';
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // Labels
+            ctx.fillStyle = '#334155';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            for (let i = 0; i < n; i++) {
+                const angle = (Math.PI * 2 / n) * i - Math.PI / 2;
+                const lx = cx + (r + 30) * Math.cos(angle);
+                const ly = cy + (r + 30) * Math.sin(angle);
+                const lines = attributes[i].label.split('\n');
+                lines.forEach((line, li) => {
+                    ctx.fillText(line, lx, ly + li * 12);
+                });
+            }
+            ctx.textAlign = 'start';
+        }
+
+        // ==================== STRUCTURE EDITOR (Simulated) ====================
+        function openStructureEditor() {
+            const modalHTML = `
+            <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+              <div class="modal" style="max-width:550px;" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                  <span>✏️ 结构式编辑器 (模拟)</span>
+                  <button class="modal-close" onclick="closeModal()">✕</button>
+                </div>
+                <div class="modal-body">
+                  <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">选择预设骨架或输入SMILES片段：</p>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+                    <button class="btn btn-sm btn-outline" onclick="insertSmiles('*c1cnc2ccccc2c1*')">喹啉骨架</button>
+                    <button class="btn btn-sm btn-outline" onclick="insertSmiles('*c1ccnc(*)c1')">吡啶骨架</button>
+                    <button class="btn btn-sm btn-outline" onclick="insertSmiles('*c1ccccc1*')">苯环骨架</button>
+                    <button class="btn btn-sm btn-outline" onclick="insertSmiles('*c1cnccn1*')">嘧啶骨架</button>
+                    <button class="btn btn-sm btn-outline" onclick="insertSmiles('*c1cocc1*')">呋喃骨架</button>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">自定义SMILES</label>
+                    <input type="text" class="form-input" id="customSmilesInput" placeholder="输入SMILES..." style="font-family:var(--font-mono);">
+                  </div>
+                  <button class="btn btn-primary btn-sm" onclick="insertCustomSmiles()">✅ 插入到输入框</button>
+                </div>
+              </div>
+            </div>`;
+            document.getElementById('modalContainer').innerHTML = modalHTML;
+        }
+
+        function insertSmiles(smiles) {
+            document.getElementById('inputSmiles').value = smiles;
+            closeModal();
+            showToast('info', 'SMILES已插入');
+        }
+
+        function insertCustomSmiles() {
+            const val = document.getElementById('customSmilesInput')?.value?.trim();
+            if (val) {
+                document.getElementById('inputSmiles').value = val;
+                closeModal();
+                showToast('info', '自定义SMILES已插入');
+            }
+        }
+
+        // ==================== TOOLTIP ====================
+        function showTooltip(event, text) {
+            const tooltip = document.getElementById('globalTooltip');
+            tooltip.textContent = text;
+            tooltip.classList.add('visible');
+            const rect = event.target.getBoundingClientRect();
+            tooltip.style.left = rect.left + 'px';
+            tooltip.style.top = (rect.bottom + 8) + 'px';
+        }
+
+        function hideTooltip() {
+            document.getElementById('globalTooltip').classList.remove('visible');
+        }
+
+        // ==================== TOAST ====================
+        function showToast(type, message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: '✅', info: 'ℹ️', warning: '⚠️' };
+            toast.innerHTML = `<span>${icons[type]||''}</span> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 2800);
+        }
+
+        // ==================== DATA VIEW ====================
+        function renderDataView() {
+            const view = document.getElementById('view-data');
+            if (!view || view.classList.contains('hidden')) return;
+            view.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">📁</div>
+              <p style="font-weight:600;">数据中心</p>
+              <p style="font-size:12px;color:var(--text-muted);">存放上传文件及作业结果数据，方便调用</p>
+              <div style="margin-top:16px;text-align:left;max-width:500px;margin-left:auto;margin-right:auto;">
+                <div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin:6px 0;background:#fff;font-size:12px;">📄 JOB-2024-001_results.csv <span style="color:var(--text-muted);">· 50条记录</span></div>
+                <div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin:6px 0;background:#fff;font-size:12px;">📄 JOB-2024-002_results.csv <span style="color:var(--text-muted);">· 30条记录</span></div>
+                <div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin:6px 0;background:#fff;font-size:12px;">📤 uploaded_scaffold.smi <span style="color:var(--text-muted);">· 上传文件</span></div>
+              </div>
+            </div>`;
+        }
+
+        function renderJobAggregation() {
+            const view = document.getElementById('view-jobs');
+            if (!view || view.classList.contains('hidden')) return;
+            let html = `<h1 class="page-title">作业聚合管理</h1><p class="page-subtitle">所有运行结果的作业聚合地，方便管理、筛选、查看作业详情</p>`;
+            html += `<div style="display:flex;flex-direction:column;gap:8px;max-width:700px;">`;
+            Object.values(jobStore).forEach(job => {
+                const sc = job.status;
+                html += `
+              <div style="padding:14px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-sm);" onclick="viewJobDetail('${job.id}')">
+                <div class="job-status ${sc}"></div>
+                <div style="flex:1;"><strong>${job.name}</strong><br><span style="font-size:11px;color:var(--text-muted);">${job.id} · ${job.createdAt} · ${sc==='completed'?'已完成':sc==='running'?'运行中':'失败'}</span></div>
+                <button class="btn btn-xs btn-outline">查看详情 →</button>
+              </div>`;
+            });
+            html += `</div>`;
+            view.innerHTML = html;
+        }
+
+        // ==================== INITIALIZATION ====================
+        function init() {
+            updateRecentJobsList();
+            // Set initial view
+            navigateTo('modules');
+            // Close modal on Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    closeAnalysis();
+                    if (!document.getElementById('fullscreenOverlay').classList.contains('hidden')) {
+                        closeFullscreen();
+                    }
+                }
+            });
+        }
+
+        // Start the app
+        document.addEventListener('DOMContentLoaded', init);
+
+        console.log('🧬 MolDesigner Demo Ready');
+        console.log('📋 功能: 模块浏览 → Small Molecule Generation → 项目创建 → 作业提交 → 结果查看');
+        console.log('🔬 支持: 卡片/表格双视图 | 2D/3D分子可视化 | 化学空间分析 | 雷达图 | 批量操作');
+        console.log('💡 提示: 点击模块卡片开始体验完整工作流');
+    </script>
+</body>
+</html>
