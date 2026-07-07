@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Molecule - 小分子药物设计平台</title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554',
+                        }
+                    },
+                    borderRadius: {
+                        'xl': '16px',
+                        '2xl': '20px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --radius: 16px;
+            --primary: #3b82f6;
+            --primary-foreground: #ffffff;
+            --background: #f8fafc;
+            --foreground: #0f172a;
+            --muted: #f1f5f9;
+            --muted-foreground: #64748b;
+            --border: #e2e8f0;
+            --card: #ffffff;
+            --card-foreground: #0f172a;
+            --accent: #f1f5f9;
+            --accent-foreground: #0f172a;
+            --destructive: #ef4444;
+            --destructive-foreground: #ffffff;
+            --ring: #3b82f6;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            min-width: 240px;
+            height: 100vh;
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease, min-width 0.3s ease;
+            z-index: 30;
+            position: relative;
+        }
+        .sidebar.collapsed {
+            width: 64px;
+            min-width: 64px;
+        }
+        .sidebar.collapsed .nav-label,
+        .sidebar.collapsed .brand-text,
+        .sidebar.collapsed .bottom-label {
+            display: none;
+        }
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 12px;
+        }
+        .sidebar.collapsed .brand-area {
+            justify-content: center;
+            padding: 16px 8px;
+        }
+        .sidebar.collapsed .bottom-area .nav-item {
+            justify-content: center;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin: 2px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            color: #475569;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            user-select: none;
+        }
+        .nav-item:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+        .nav-item.active {
+            background: #eff6ff;
+            color: #2563eb;
+            font-weight: 600;
+        }
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            height: 100vh;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+
+        /* Cards */
+        .card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.2s ease;
+        }
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+        .card-no-border {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .card-no-border:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            user-select: none;
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+        }
+        .btn-primary:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        }
+        .btn-outline {
+            background: #ffffff;
+            color: #334155;
+            border-color: #cbd5e1;
+        }
+        .btn-outline:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+        .btn-ghost {
+            background: transparent;
+            color: #475569;
+            border-color: transparent;
+        }
+        .btn-ghost:hover {
+            background: #f1f5f9;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+        .btn-xs {
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 6px;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: #fff;
+            border-color: #ef4444;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* Input */
+        .input-field {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #ffffff;
+            color: #0f172a;
+            transition: all 0.15s ease;
+            outline: none;
+        }
+        .input-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            ring: 2px solid #3b82f6;
+        }
+        .input-field::placeholder {
+            color: #94a3b8;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .badge-warning {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .badge-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .badge-pending {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        /* Tooltip */
+        .tooltip-trigger {
+            position: relative;
+            cursor: help;
+        }
+        .tooltip-trigger:hover .tooltip-content {
+            display: block;
+        }
+        .tooltip-content {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 100;
+            pointer-events: none;
+            max-width: 360px;
+            white-space: normal;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .tooltip-content::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #1e293b;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.5);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .modal {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.25s ease;
+        }
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th,
+        .data-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 13px;
+        }
+        .data-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .data-table tr:hover td {
+            background: #fafbfc;
+        }
+        .data-table tr.selected td {
+            background: #eff6ff;
+        }
+
+        /* Tab */
+        .tab-item {
+            padding: 10px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+        }
+        .tab-item.active {
+            background: #eff6ff;
+            color: #2563eb;
+            border-color: #bfdbfe;
+            font-weight: 600;
+        }
+        .tab-item:hover:not(.active) {
+            background: #f8fafc;
+            color: #334155;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1e293b;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            z-index: 200;
+            animation: slideInRight 0.3s ease;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+        @keyframes slideInRight {
+            from {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Molecule SVG container */
+        .mol-structure {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 120px;
+            background: #fafcfd;
+            border-radius: 12px;
+            border: 1px solid #e8ecf1;
+            overflow: hidden;
+        }
+        .mol-structure svg {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* Fullscreen */
+        .fullscreen-overlay {
+            position: fixed;
+            inset: 0;
+            background: #fff;
+            z-index: 60;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Pulse animation */
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+        .pulse-dot {
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        /* Hover highlight row */
+        .hover-highlight:hover {
+            background: #f8fafc;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Login Page -->
+    <div id="login-page" style="display:flex;height:100vh;align-items:center;justify-content:center;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 40%,#f8fafc 100%);">
+        <div style="background:#fff;border-radius:20px;padding:40px;width:420px;box-shadow:0 20px 60px rgba(37,99,235,0.12);border:1px solid #e2e8f0;">
+            <div style="text-align:center;margin-bottom:32px;">
+                <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:8px;">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l2-2 2 2 4-4"/></svg>
+                    <span style="font-size:24px;font-weight:700;color:#1e293b;">Molecule</span>
+                </div>
+                <p style="color:#64748b;font-size:14px;">小分子药物设计平台</p>
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;display:block;">账号</label>
+                <input id="login-username" class="input-field" type="text" placeholder="请输入账号" value="admin" style="width:100%;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;display:block;">密码</label>
+                <input id="login-password" class="input-field" type="password" placeholder="请输入密码" value="admin123" style="width:100%;">
+            </div>
+            <button class="btn btn-primary" style="width:100%;padding:12px;font-size:15px;border-radius:12px;" onclick="handleLogin()">登 录</button>
+            <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">演示账号: admin / admin123</p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app-container" style="display:none;height:100vh;">
+        <div style="display:flex;height:100vh;">
+            <!-- Sidebar -->
+            <div class="sidebar" id="sidebar">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid #f1f5f9;" class="brand-area">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M8 12l2-2 2 2 4-4"/></svg>
+                        <span class="brand-text" style="font-weight:700;font-size:17px;color:#1e293b;">Molecule</span>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="toggleSidebar()" style="padding:6px;border-radius:8px;" title="收起边栏">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 8l-4 4 4 4"/></svg>
+                    </button>
+                </div>
+                <nav style="flex:1;padding:8px 0;overflow-y:auto;">
+                    <div class="nav-item active" data-page="home" onclick="navigateTo('home', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        <span class="nav-label">主页</span>
+                    </div>
+                    <div class="nav-item" data-page="modules" onclick="navigateTo('modules', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                        <span class="nav-label">模块</span>
+                    </div>
+                    <div class="nav-item" data-page="workflows" onclick="navigateTo('workflows', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                        <span class="nav-label">流程</span>
+                    </div>
+                    <div class="nav-item" data-page="data" onclick="navigateTo('data', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                        <span class="nav-label">数据</span>
+                    </div>
+                    <div class="nav-item" data-page="jobs" onclick="navigateTo('jobs', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span class="nav-label">作业</span>
+                    </div>
+                </nav>
+                <div style="border-top:1px solid #f1f5f9;padding:8px 0;" class="bottom-area">
+                    <div class="nav-item" onclick="showToast('使用说明书功能')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span class="nav-label bottom-label">使用说明</span>
+                    </div>
+                    <div class="nav-item" onclick="showToast('通知功能')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <span class="nav-label bottom-label">通知</span>
+                    </div>
+                    <div class="nav-item" onclick="handleLogout()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span class="nav-label bottom-label">账号管理</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="main-content" id="main-content">
+                <!-- Pages will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Structure Editor Modal -->
+    <div id="structure-editor-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeStructureEditor()">
+        <div class="modal" style="width:700px;padding:24px;" onclick="event.stopPropagation()">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h3 style="font-weight:700;font-size:16px;">结构式编辑器</h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeStructureEditor()" style="padding:6px;border-radius:8px;">✕</button>
+            </div>
+            <div style="background:#fafcfd;border:2px dashed #e2e8f0;border-radius:16px;padding:40px;text-align:center;min-height:250px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;">
+                <svg width="80" height="80" viewBox="0 0 120 120" style="opacity:0.6;">
+                    <circle cx="60" cy="40" r="18" fill="none" stroke="#3b82f6" stroke-width="2.5"/>
+                    <circle cx="60" cy="40" r="10" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <circle cx="42" cy="58" r="14" fill="none" stroke="#3b82f6" stroke-width="2"/>
+                    <circle cx="78" cy="58" r="14" fill="none" stroke="#3b82f6" stroke-width="2"/>
+                    <circle cx="60" cy="78" r="12" fill="none" stroke="#3b82f6" stroke-width="2"/>
+                    <line x1="48" y1="48" x2="54" y2="54" stroke="#3b82f6" stroke-width="2"/>
+                    <line x1="66" y1="54" x2="72" y2="48" stroke="#3b82f6" stroke-width="2"/>
+                    <line x1="52" y1="66" x2="56" y2="68" stroke="#3b82f6" stroke-width="2"/>
+                    <line x1="64" y1="68" x2="68" y2="66" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="60" y="44" text-anchor="middle" font-size="10" fill="#3b82f6" font-weight="600">N</text>
+                    <text x="32" y="62" text-anchor="middle" font-size="9" fill="#3b82f6">O</text>
+                    <text x="88" y="62" text-anchor="middle" font-size="9" fill="#3b82f6">OH</text>
+                    <text x="60" y="95" text-anchor="middle" font-size="9" fill="#ef4444" font-weight="600">*</text>
+                </svg>
+                <p style="color:#64748b;font-size:13px;">Demo结构编辑器 - 点击预设片段进行组装</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+                    <button class="btn btn-outline btn-xs" onclick="insertSmiles('*c1cnc2ccccc2c1');closeStructureEditor()">喹啉骨架(*)</button>
+                    <button class="btn btn-outline btn-xs" onclick="insertSmiles('c1cc(*)ccc1');closeStructureEditor()">苯环R基</button>
+                    <button class="btn btn-outline btn-xs" onclick="insertSmiles('*C(=O)N');closeStructureEditor()">酰胺基</button>
+                    <button class="btn btn-outline btn-xs" onclick="insertSmiles('*c1ccc(Cl)cc1');closeStructureEditor()">氯苯基</button>
+                </div>
+            </div>
+            <div style="margin-top:12px;">
+                <label style="font-size:12px;color:#64748b;">当前SMILES:</label>
+                <input id="editor-smiles-output" class="input-field" style="margin-top:4px;" value="*c1cnc2ccccc2c1" readonly>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+                <button class="btn btn-outline" onclick="closeStructureEditor()">取消</button>
+                <button class="btn btn-primary" onclick="applyStructureEditor()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Result Modal -->
+    <div id="fullscreen-result" class="fullscreen-overlay" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #e2e8f0;background:#fff;">
+            <span style="font-weight:700;font-size:16px;">结果详情 - 全屏查看</span>
+            <button class="btn btn-ghost btn-sm" onclick="closeFullscreen()" style="padding:6px 12px;">✕ 退出全屏</button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:20px;" id="fullscreen-content"></div>
+    </div>
+
+    <!-- Molecule Detail Modal -->
+    <div id="molecule-detail-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeMoleculeDetail()">
+        <div class="modal" style="width:500px;padding:24px;" onclick="event.stopPropagation()">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h3 style="font-weight:700;font-size:16px;">分子完整信息</h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeMoleculeDetail()">✕</button>
+            </div>
+            <div id="molecule-detail-content"></div>
+        </div>
+    </div>
+
+    <!-- CSV Download Modal -->
+    <div id="csv-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeCsvModal()">
+        <div class="modal" style="width:400px;padding:24px;" onclick="event.stopPropagation()">
+            <h3 style="font-weight:700;font-size:16px;margin-bottom:12px;">下载CSV</h3>
+            <p style="color:#64748b;font-size:13px;margin-bottom:16px;">选择下载目录（模拟）</p>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+                <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer;">
+                    <input type="radio" name="csv-dir" value="downloads" checked> 📁 下载文件夹
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer;">
+                    <input type="radio" name="csv-dir" value="desktop"> 💻 桌面
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer;">
+                    <input type="radio" name="csv-dir" value="custom"> 📂 自定义目录
+                </label>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+                <button class="btn btn-outline" onclick="closeCsvModal()">取消</button>
+                <button class="btn btn-primary" onclick="downloadCsv()">下载 CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Field Config Modal -->
+    <div id="field-config-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeFieldConfig()">
+        <div class="modal" style="width:450px;padding:24px;" onclick="event.stopPropagation()">
+            <h3 style="font-weight:700;font-size:16px;margin-bottom:16px;">配置展示字段</h3>
+            <div id="field-config-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+                <button class="btn btn-outline" onclick="closeFieldConfig()">取消</button>
+                <button class="btn btn-primary" onclick="applyFieldConfig()">应用</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== GLOBAL STATE ====================
+        const APP = {
+            currentPage: 'home',
+            currentModuleView: null, // 'smg' for Small Molecule Generation
+            currentJobTab: 'center', // 'center' or 'trash'
+            currentResultView: 'card', // 'card' or 'table'
+            currentJobDetailId: null,
+            sidebarCollapsed: false,
+            selectedJobIds: new Set(),
+            pendingCsvJobId: null,
+            fieldConfigJobId: null,
+            visibleFields: ['formula', 'mw', 'tpsa', 'logp', 'hba', 'hbd'],
+            allFields: [
+                { key: 'formula', label: '分子式' },
+                { key: 'mw', label: '分子量 (MW)' },
+                { key: 'tpsa', label: 'TPSA' },
+                { key: 'logp', label: 'LogP' },
+                { key: 'hba', label: 'HBA' },
+                { key: 'hbd', label: 'HBD' },
+                { key: 'inchikey', label: 'InChiKey' },
+                { key: 'smiles', label: 'SMILES' },
+            ],
+            targetSmilesInputId: null,
+        };
+
+        // ==================== DATA STORE ====================
+        let projects = [
+            { id: 'proj-001', name: '喹啉衍生物R基优化', description: '针对喹啉骨架进行R基团替换筛选', smiles: '*c1cnc2ccccc2c1',
+                status: 'completed', created_at: '2026-06-20 10:30', completed_at: '2026-06-20 11:45',
+                molecule_count: 120 },
+            { id: 'proj-002', name: '苯环系列R基替换', description: '苯环对位R基多样性生成', smiles: 'c1cc(*)ccc1',
+                status: 'completed', created_at: '2026-06-22 14:00', completed_at: '2026-06-22 15:20',
+                molecule_count: 85 },
+            { id: 'proj-003', name: '吡啶骨架修饰', description: '吡啶环不同位置取代', smiles: '*c1ccccn1', status: 'running',
+                created_at: '2026-07-01 09:00', completed_at: null, molecule_count: 0 },
+        ];
+
+        let jobs = [
+            { id: 'job-001', project_id: 'proj-001', name: '喹啉衍生物R基优化', description: '针对喹啉骨架进行R基团替换筛选',
+                status: 'completed', created_at: '2026-06-20 10:30', completed_at: '2026-06-20 11:45', duration: '1h 15min',
+                result_count: 120 },
+            { id: 'job-002', project_id: 'proj-002', name: '苯环系列R基替换', description: '苯环对位R基多样性生成',
+                status: 'completed', created_at: '2026-06-22 14:00', completed_at: '2026-06-22 15:20', duration: '1h 20min',
+                result_count: 85 },
+            { id: 'job-003', project_id: 'proj-003', name: '吡啶骨架修饰', description: '吡啶环不同位置取代', status: 'running',
+                created_at: '2026-07-01 09:00', completed_at: null, duration: '进行中...', result_count: 0 },
+            { id: 'job-004', project_id: 'proj-001', name: '喹啉衍生物第二批', description: '扩大R基库进行二次筛选',
+                status: 'completed', created_at: '2026-06-25 08:00', completed_at: '2026-06-25 09:30', duration: '1h 30min',
+                result_count: 200 },
+        ];
+
+        let trashJobs = [];
+
+        // Generate mock results for completed jobs
+        function generateMockResults(jobId, count) {
+            const results = [];
+            const formulas = ['C₁₅H₁₂N₂O', 'C₁₆H₁₄N₂O₂', 'C₁₄H₁₀ClN₃', 'C₁₇H₁₆N₂O₃', 'C₁₃H₉F₂N₃O',
+                'C₁₈H₁₈N₂O₄', 'C₁₅H₁₁BrN₂O', 'C₁₆H₁₃N₃O₂', 'C₁₄H₁₀N₂O₂S', 'C₁₇H₁₅N₂O₂F'
+            ];
+            const inchikeys = ['ABCDEFGHIJKLMNOP', 'BCDEFGHIJKLMNOPQ', 'CDEFGHIJKLMNOPQR', 'DEFGHIJKLMNOPQRS',
+                'EFGHIJKLMNOPQRST', 'FGHIJKLMNOPQRSTU', 'GHIJKLMNOPQRSTUV', 'HIJKLMNOPQRSTUVW'
+            ];
+            for (let i = 0; i < count; i++) {
+                const mw = (250 + Math.random() * 200).toFixed(2);
+                results.push({
+                    id: `${jobId}-res-${i + 1}`,
+                    job_id: jobId,
+                    formula: formulas[i % formulas.length],
+                    mw: parseFloat(mw),
+                    tpsa: (40 + Math.random() * 80).toFixed(1),
+                    logp: (0.5 + Math.random() * 4).toFixed(2),
+                    hba: Math.floor(2 + Math.random() * 6),
+                    hbd: Math.floor(1 + Math.random() * 4),
+                    inchikey: inchikeys[i % inchikeys.length] + '-XXXXXX',
+                    smiles: `C${12 + i % 6}c1cnc2ccccc2c1C${i % 4}O${i % 3}`,
+                });
+            }
+            return results;
+        }
+
+        let resultsStore = {};
+        // Initialize results for completed jobs
+        jobs.forEach(j => {
+            if (j.status === 'completed' && j.result_count > 0) {
+                resultsStore[j.id] = generateMockResults(j.id, Math.min(j.result_count, 50));
+            }
+        });
+        // Add some for job-004
+        resultsStore['job-004'] = generateMockResults('job-004', 40);
+
+        // Data store (saved results)
+        let dataStore = [];
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function showToast(msg, duration = 2500) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = msg;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, duration);
+        }
+
+        function getStatusBadge(status) {
+            const map = {
+                'completed': '<span class="badge badge-success">✓ 已完成</span>',
+                'running': '<span class="badge badge-info pulse-dot">⏳ 运行中</span>',
+                'pending': '<span class="badge badge-pending">🕐 等待中</span>',
+                'failed': '<span class="badge badge-error">✕ 失败</span>',
+            };
+            return map[status] || map['pending'];
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            return dateStr;
+        }
+
+        function generateId() {
+            return 'id-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
+        }
+
+        // ==================== LOGIN ====================
+        function handleLogin() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            if (username === 'admin' && password === 'admin123') {
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+                navigateTo('home');
+                showToast('登录成功，欢迎使用Molecule平台');
+            } else {
+                showToast('账号或密码错误，请重试');
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('login-page').style.display = 'flex';
+            document.getElementById('app-container').style.display = 'none';
+            document.getElementById('login-password').value = '';
+            APP.currentPage = 'home';
+            APP.currentModuleView = null;
+            showToast('已退出登录');
+        }
+
+        // ==================== SIDEBAR ====================
+        function toggleSidebar() {
+            APP.sidebarCollapsed = !APP.sidebarCollapsed;
+            const sidebar = document.getElementById('sidebar');
+            if (APP.sidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+            } else {
+                sidebar.classList.remove('collapsed');
+            }
+        }
+
+        function navigateTo(page, navEl) {
+            APP.currentPage = page;
+            APP.currentModuleView = null;
+            APP.currentJobDetailId = null;
+            // Update active nav
+            document.querySelectorAll('.nav-item[data-page]').forEach(el => el.classList.remove('active'));
+            if (navEl) navEl.classList.add('active');
+            else {
+                const target = document.querySelector(`.nav-item[data-page="${page}"]`);
+                if (target) target.classList.add('active');
+            }
+            renderPage();
+        }
+
+        // ==================== RENDER ENGINE ====================
+        function renderPage() {
+            const container = document.getElementById('main-content');
+            switch (APP.currentPage) {
+                case 'home':
+                    container.innerHTML = renderHomePage();
+                    break;
+                case 'modules':
+                    container.innerHTML = APP.currentModuleView === 'smg' ? renderSMGDetailPage() : renderModulesPage();
+                    break;
+                case 'workflows':
+                    container.innerHTML = renderWorkflowsPage();
+                    break;
+                case 'data':
+                    container.innerHTML = renderDataPage();
+                    break;
+                case 'jobs':
+                    container.innerHTML = APP.currentJobDetailId ? renderJobDetailPage() : renderJobsPage();
+                    break;
+                default:
+                    container.innerHTML = renderHomePage();
+            }
+            attachEventListeners();
+        }
+
+        // ==================== HOME PAGE ====================
+        function renderHomePage() {
+            const totalJobs = jobs.length + trashJobs.length;
+            const completedJobs = jobs.filter(j => j.status === 'completed').length;
+            const runningJobs = jobs.filter(j => j.status === 'running').length;
+            const hasJobs = jobs.length > 0;
+
+            let recentJobsHTML = '';
+            if (!hasJobs) {
+                recentJobsHTML = `
+                <div class="card" style="text-align:center;padding:40px;">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="1.5" style="margin:0 auto 12px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    <p style="color:#64748b;font-size:14px;margin-bottom:16px;">还没有任何作业，开始你的第一个分子生成项目吧</p>
+                    <button class="btn btn-primary" onclick="navigateTo('modules');APP.currentModuleView='smg';renderPage();">🚀 开始 Small Molecule Generation</button>
+                </div>`;
+            } else {
+                const recent = [...jobs].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')).slice(0,
+                    5);
+                recentJobsHTML = recent.map(j => `
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9;cursor:pointer;" class="hover-highlight" onclick="APP.currentPage='jobs';APP.currentJobDetailId='${j.id}';renderPage();">
+                        <div>
+                            <span style="font-weight:500;font-size:14px;">${j.name}</span>
+                            <span style="color:#94a3b8;font-size:12px;margin-left:8px;">${formatDate(j.created_at)}</span>
+                        </div>
+                        <div>${getStatusBadge(j.status)}</div>
+                    </div>
+                `).join('');
+            }
+
+            return `
+            <div style="padding:24px 28px;max-width:1200px;">
+                <div style="background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 40%,#1e40af 100%);border-radius:16px;padding:28px 32px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden;">
+                    <div style="position:absolute;right:-20px;top:-30px;opacity:0.15;">
+                        <svg width="180" height="180" viewBox="0 0 120 120"><circle cx="60" cy="40" r="20" fill="none" stroke="white" stroke-width="3"/><circle cx="40" cy="65" r="15" fill="none" stroke="white" stroke-width="2.5"/><circle cx="80" cy="65" r="15" fill="none" stroke="white" stroke-width="2.5"/><line x1="48" y1="52" x2="55" y2="58" stroke="white" stroke-width="2"/><line x1="65" y1="58" x2="72" y2="52" stroke="white" stroke-width="2"/></svg>
+                    </div>
+                    <h2 style="font-size:22px;font-weight:700;margin-bottom:6px;">👋 欢迎回来</h2>
+                    <p style="opacity:0.9;font-size:14px;">小分子药物设计平台 — 加速你的分子发现流程</p>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+                    <div class="card" style="text-align:center;"><div style="font-size:28px;font-weight:700;color:#2563eb;">${totalJobs}</div><div style="font-size:12px;color:#64748b;margin-top:4px;">总作业数</div></div>
+                    <div class="card" style="text-align:center;"><div style="font-size:28px;font-weight:700;color:#16a34a;">${completedJobs}</div><div style="font-size:12px;color:#64748b;margin-top:4px;">已完成</div></div>
+                    <div class="card" style="text-align:center;"><div style="font-size:28px;font-weight:700;color:#f59e0b;">${runningJobs}</div><div style="font-size:12px;color:#64748b;margin-top:4px;">运行中</div></div>
+                    <div class="card" style="text-align:center;"><div style="font-size:28px;font-weight:700;color:#6366f1;">${dataStore.length}</div><div style="font-size:12px;color:#64748b;margin-top:4px;">已保存数据</div></div>
+                </div>
+                <div style="margin-bottom:24px;">
+                    <h3 style="font-weight:700;font-size:15px;margin-bottom:12px;">快速入口</h3>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                        <div class="card-no-border" style="cursor:pointer;" onclick="navigateTo('modules');APP.currentModuleView='smg';renderPage();">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                                <span style="font-size:24px;">🧬</span>
+                                <span style="font-weight:600;font-size:14px;">Small Molecule Generation</span>
+                            </div>
+                            <p style="font-size:12px;color:#64748b;">分子生成，当前仅支持骨架约束的小分子生成</p>
+                        </div>
+                        <div class="card-no-border" style="cursor:pointer;" onclick="navigateTo('workflows');renderPage();">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                                <span style="font-size:24px;">🔗</span><span style="font-weight:600;font-size:14px;">流程编排</span>
+                            </div>
+                            <p style="font-size:12px;color:#64748b;">不同模块的编排组合</p>
+                        </div>
+                        <div class="card-no-border" style="cursor:pointer;" onclick="navigateTo('data');renderPage();">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                                <span style="font-size:24px;">📊</span><span style="font-weight:600;font-size:14px;">数据中心</span>
+                            </div>
+                            <p style="font-size:12px;color:#64748b;">管理上传和作业结果数据</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 style="font-weight:700;font-size:15px;margin-bottom:12px;">近期作业</h3>
+                    ${recentJobsHTML}
+                </div>
+            </div>`;
+        }
+
+        // ==================== MODULES PAGE ====================
+        function renderModulesPage() {
+            return `
+            <div style="padding:24px 28px;max-width:1200px;">
+                <h2 style="font-size:20px;font-weight:700;margin-bottom:20px;">模块中心</h2>
+                <div class="card-no-border" style="display:inline-block;width:320px;cursor:pointer;" onclick="APP.currentModuleView='smg';renderPage();">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                        <span style="font-size:28px;">🧬</span>
+                        <div>
+                            <div style="font-weight:700;font-size:16px;">Small Molecule Generation</div>
+                            <div style="font-size:12px;color:#64748b;">分子生成，当前仅支持骨架约束的小分子生成</div>
+                        </div>
+                    </div>
+                </div>
+                <p style="color:#94a3b8;font-size:13px;margin-top:24px;">更多模块即将上线...</p>
+            </div>`;
+        }
+
+        // ==================== SMG DETAIL (T-Layout) ====================
+        function renderSMGDetailPage() {
+            const recentJobs = [...jobs].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')).slice(0,
+            8);
+            const projectList = [...projects];
+
+            return `
+            <div style="padding:0;height:100%;display:flex;flex-direction:column;">
+                <div style="background:#fff;border-bottom:1px solid #e2e8f0;padding:16px 28px;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                        <button class="btn btn-ghost btn-sm" onclick="APP.currentModuleView=null;renderPage();">← 返回模块</button>
+                    </div>
+                    <h2 style="font-size:18px;font-weight:700;">🧬 Small Molecule Generation</h2>
+                    <p style="font-size:13px;color:#64748b;">基于骨架约束的小分子生成 — 支持R基替换、骨架重构及全新生成</p>
+                </div>
+                <div style="display:flex;flex:1;overflow:hidden;">
+                    <!-- Left: Project Creation -->
+                    <div style="width:50%;border-right:1px solid #e2e8f0;overflow-y:auto;padding:20px 24px;background:#fff;">
+                        <h3 style="font-weight:700;font-size:15px;margin-bottom:16px;">项目创建</h3>
+                        <div style="display:flex;gap:4px;margin-bottom:20px;background:#f8fafc;padding:4px;border-radius:12px;">
+                            <span class="tab-item active" onclick="switchSMGTab(this,'r-group')">R基替换</span>
+                            <span class="tab-item" onclick="switchSMGTab(this,'scaffold')" style="color:#cbd5e1;cursor:not-allowed;">骨架重构</span>
+                            <span class="tab-item" onclick="switchSMGTab(this,'denovo')" style="color:#cbd5e1;cursor:not-allowed;">全新生成</span>
+                        </div>
+                        <form id="smg-project-form" onsubmit="submitSMGProject(event)" style="display:flex;flex-direction:column;gap:16px;">
+                            <div>
+                                <label style="font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                                    分子结构 <span style="color:#ef4444;">*</span>
+                                    <span class="tooltip-trigger" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#e2e8f0;font-size:11px;font-weight:700;color:#64748b;cursor:help;">?
+                                        <span class="tooltip-content">输入带*的小分子SMILES，*代表生成部分，其他部分固定不变，支持输入多个*。例如：*c1cnc2ccccc2c1 格式：SMILES</span>
+                                    </span>
+                                </label>
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <input id="smg-smiles-input" class="input-field" placeholder="c1cnc2ccccc2c1" style="flex:1;" value="*c1cnc2ccccc2c1">
+                                    <button type="button" class="btn btn-outline btn-sm" title="结构式编辑器" onclick="openStructureEditor('smg-smiles-input')" style="padding:8px 10px;">🧬</button>
+                                    <button type="button" class="btn btn-outline btn-sm" title="上传文件" onclick="showToast('文件上传功能(模拟)')" style="padding:8px 10px;">📁</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label style="font-weight:600;font-size:13px;margin-bottom:6px;display:block;">项目名称 <span style="color:#ef4444;">*</span></label>
+                                <input id="smg-project-name" class="input-field" placeholder="输入项目名称" required>
+                            </div>
+                            <div>
+                                <label style="font-weight:600;font-size:13px;margin-bottom:6px;display:block;">项目描述 <span style="color:#94a3b8;font-weight:400;">(选填)</span></label>
+                                <textarea id="smg-project-desc" class="input-field" placeholder="描述项目目标和参数..." rows="3" style="resize:vertical;"></textarea>
+                            </div>
+                            <div>
+                                <label style="font-weight:600;font-size:13px;margin-bottom:6px;display:block;">生成分子数量</label>
+                                <select id="smg-molecule-count" class="input-field">
+                                    <option value="50">50</option>
+                                    <option value="100" selected>100</option>
+                                    <option value="200">200</option>
+                                    <option value="500">500</option>
+                                </select>
+                            </div>
+                            <div style="display:flex;gap:12px;">
+                                <button type="submit" class="btn btn-primary" style="flex:1;">提交任务</button>
+                                <button type="button" class="btn btn-outline" onclick="resetSMGForm()" style="flex:1;">重置</button>
+                            </div>
+                        </form>
+                        <div style="margin-top:24px;border-top:1px solid #f1f5f9;padding-top:16px;">
+                            <h4 style="font-weight:600;font-size:13px;margin-bottom:10px;">历史项目</h4>
+                            ${projectList.map(p => `
+                                <div style="padding:10px 12px;border-radius:10px;margin-bottom:6px;cursor:pointer;background:#fafcfd;border:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;" onclick="APP.currentPage='jobs';APP.currentJobDetailId='${jobs.find(j=>j.project_id===p.id)?.id||''}';renderPage();">
+                                    <span style="font-size:13px;font-weight:500;">${p.name}</span>
+                                    ${getStatusBadge(p.status)}
+                                </div>
+                            `).join('')}
+                            ${projectList.length===0?'<p style="color:#94a3b8;font-size:12px;">暂无历史项目</p>':''}
+                        </div>
+                    </div>
+                    <!-- Right: Recent Jobs -->
+                    <div style="width:50%;overflow-y:auto;padding:20px 24px;background:#fafcfd;">
+                        <h3 style="font-weight:700;font-size:15px;margin-bottom:16px;">近期作业列表</h3>
+                        ${recentJobs.map(j => `
+                            <div class="card" style="margin-bottom:10px;padding:14px 16px;cursor:pointer;" onclick="APP.currentPage='jobs';APP.currentJobDetailId='${j.id}';renderPage();">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <div>
+                                        <div style="font-weight:600;font-size:13px;">${j.name}</div>
+                                        <div style="font-size:11px;color:#94a3b8;">${formatDate(j.created_at)}</div>
+                                    </div>
+                                    ${getStatusBadge(j.status)}
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${recentJobs.length===0?'<p style="color:#94a3b8;font-size:12px;text-align:center;padding:40px;">暂无作业</p>':''}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function switchSMGTab(el, tab) {
+            document.querySelectorAll('#smg-project-form').forEach(f => {
+                const tabs = f.parentElement.querySelectorAll('.tab-item');
+                tabs.forEach(t => t.classList.remove('active'));
+            });
+            el.classList.add('active');
+            if (tab !== 'r-group') {
+                showToast('该功能暂未开放，敬请期待');
+                el.classList.remove('active');
+                el.parentElement.querySelector('.tab-item:first-child').classList.add('active');
+            }
+        }
+
+        function resetSMGForm() {
+            document.getElementById('smg-smiles-input').value = '*c1cnc2ccccc2c1';
+            document.getElementById('smg-project-name').value = '';
+            document.getElementById('smg-project-desc').value = '';
+            document.getElementById('smg-molecule-count').value = '100';
+        }
+
+        function submitSMGProject(e) {
+            e.preventDefault();
+            const smiles = document.getElementById('smg-smiles-input').value.trim();
+            const name = document.getElementById('smg-project-name').value.trim();
+            const desc = document.getElementById('smg-project-desc').value.trim();
+            const count = parseInt(document.getElementById('smg-molecule-count').value);
+
+            if (!smiles || !name) {
+                showToast('请填写必填字段：分子结构和项目名称');
+                return;
+            }
+
+            const projectId = generateId();
+            const jobId = generateId();
+            const now = new Date().toISOString().replace('T', ' ').substring(0, 16);
+
+            const newProject = {
+                id: projectId,
+                name: name,
+                description: desc,
+                smiles: smiles,
+                status: 'running',
+                created_at: now,
+                completed_at: null,
+                molecule_count: count,
+            };
+            const newJob = {
+                id: jobId,
+                project_id: projectId,
+                name: name,
+                description: desc,
+                status: 'running',
+                created_at: now,
+                completed_at: null,
+                duration: '进行中...',
+                result_count: count,
+            };
+
+            projects.unshift(newProject);
+            jobs.unshift(newJob);
+            resultsStore[jobId] = [];
+
+            showToast('任务已提交，正在运行中...');
+            resetSMGForm();
+            renderPage();
+
+            // Simulate async completion
+            const delay = 3000 + Math.random() * 5000;
+            setTimeout(() => {
+                newProject.status = 'completed';
+                newProject.completed_at = new Date().toISOString().replace('T', ' ').substring(0, 16);
+                newJob.status = 'completed';
+                newJob.completed_at = newProject.completed_at;
+                newJob.duration = Math.floor(delay / 1000 / 60) + 'min ' + Math.floor(delay / 1000 % 60) + 's';
+                resultsStore[jobId] = generateMockResults(jobId, Math.min(count, 50));
+                newJob.result_count = resultsStore[jobId].length;
+                showToast(`作业 "${name}" 已完成！`);
+                renderPage();
+            }, delay);
+        }
+
+        // ==================== STRUCTURE EDITOR ====================
+        function openStructureEditor(inputId) {
+            APP.targetSmilesInputId = inputId;
+            const currentVal = document.getElementById(inputId).value;
+            document.getElementById('editor-smiles-output').value = currentVal || '*c1cnc2ccccc2c1';
+            document.getElementById('structure-editor-modal').style.display = 'flex';
+        }
+
+        function closeStructureEditor() {
+            document.getElementById('structure-editor-modal').style.display = 'none';
+            APP.targetSmilesInputId = null;
+        }
+
+        function insertSmiles(smiles) {
+            document.getElementById('editor-smiles-output').value = smiles;
+        }
+
+        function applyStructureEditor() {
+            const smiles = document.getElementById('editor-smiles-output').value;
+            if (APP.targetSmilesInputId && document.getElementById(APP.targetSmilesInputId)) {
+                document.getElementById(APP.targetSmilesInputId).value = smiles;
+            }
+            closeStructureEditor();
+            showToast('结构式已应用');
+        }
+
+        // ==================== WORKFLOWS PAGE ====================
+        function renderWorkflowsPage() {
+            return `
+            <div style="padding:24px 28px;max-width:1200px;">
+                <h2 style="font-size:20px;font-weight:700;margin-bottom:20px;">流程编排</h2>
+                <div class="card" style="text-align:center;padding:60px;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 12px;"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                    <p style="color:#64748b;font-size:14px;">流程编排功能 — 将不同模块串联成自动化工作流</p>
+                    <p style="color:#94a3b8;font-size:12px;margin-top:4px;">拖拽模块节点，连接数据流，构建端到端的分子设计流程</p>
+                    <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                        <div style="background:#f8fafc;border:1px dashed #e2e8f0;border-radius:12px;padding:16px 20px;text-align:center;">
+                            <span style="font-size:20px;">🧬</span><br><span style="font-size:11px;color:#64748b;">SMG模块</span>
+                        </div>
+                        <span style="display:flex;align-items:center;color:#94a3b8;">→</span>
+                        <div style="background:#f8fafc;border:1px dashed #e2e8f0;border-radius:12px;padding:16px 20px;text-align:center;">
+                            <span style="font-size:20px;">🔍</span><br><span style="font-size:11px;color:#64748b;">筛选模块</span>
+                        </div>
+                        <span style="display:flex;align-items:center;color:#94a3b8;">→</span>
+                        <div style="background:#f8fafc;border:1px dashed #e2e8f0;border-radius:12px;padding:16px 20px;text-align:center;">
+                            <span style="font-size:20px;">📊</span><br><span style="font-size:11px;color:#64748b;">分析模块</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // ==================== DATA PAGE ====================
+        function renderDataPage() {
+            return `
+            <div style="padding:24px 28px;max-width:1200px;">
+                <h2 style="font-size:20px;font-weight:700;margin-bottom:20px;">数据中心</h2>
+                <p style="color:#64748b;font-size:13px;margin-bottom:16px;">存放上传数据及作业结果数据，方便随时调用</p>
+                ${dataStore.length === 0 ? `
+                <div class="card" style="text-align:center;padding:60px;">
+                    <p style="color:#94a3b8;">暂无保存的数据。在作业结果中点击"另存"可将数据保存到此。</p>
+                </div>` : `
+                <div class="card" style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead><tr><th>名称</th><th>来源</th><th>保存时间</th><th>分子数</th><th>操作</th></tr></thead>
+                        <tbody>
+                            ${dataStore.map(d => `
+                                <tr>
+                                    <td style="font-weight:500;">${d.name}</td>
+                                    <td>${d.source}</td>
+                                    <td>${d.saved_at}</td>
+                                    <td>${d.count}</td>
+                                    <td><button class="btn btn-outline btn-xs" onclick="removeDataItem('${d.id}')">删除</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>`}
+            </div>`;
+        }
+
+        function removeDataItem(id) {
+            dataStore = dataStore.filter(d => d.id !== id);
+            showToast('数据项已删除');
+            renderPage();
+        }
+
+        // ==================== JOBS PAGE ====================
+        function renderJobsPage() {
+            const tab = APP.currentJobTab;
+            const sourceList = tab === 'center' ? jobs : trashJobs;
+            const searchTerm = document.getElementById('job-search-input')?.value?.toLowerCase() || '';
+
+            let filtered = sourceList;
+            if (searchTerm) {
+                filtered = sourceList.filter(j => j.name.toLowerCase().includes(searchTerm) || j.id.toLowerCase()
+                    .includes(searchTerm));
+            }
+
+            // Sort by created_at desc
+            filtered = [...filtered].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+
+            return `
+            <div style="padding:24px 28px;max-width:1300px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                    <h2 style="font-size:20px;font-weight:700;">作业管理</h2>
+                    <div style="display:flex;gap:8px;">
+                        <input id="job-search-input" class="input-field" placeholder="搜索作业标题..." style="width:240px;padding:8px 12px;" value="${searchTerm}" oninput="debounceSearch()">
+                        ${tab==='center' ? `
+                        <button class="btn btn-outline btn-sm" onclick="batchRemoveJobs()" ${APP.selectedJobIds.size===0?'disabled':''}>移除选中 (${APP.selectedJobIds.size})</button>
+                        ` : ''}
+                    </div>
+                </div>
+                <div style="display:flex;gap:4px;margin-bottom:16px;background:#f8fafc;padding:4px;border-radius:12px;width:fit-content;">
+                    <span class="tab-item ${tab==='center'?'active':''}" onclick="APP.currentJobTab='center';APP.selectedJobIds.clear();renderPage();">作业中心 (${jobs.length})</span>
+                    <span class="tab-item ${tab==='trash'?'active':''}" onclick="APP.currentJobTab='trash';APP.selectedJobIds.clear();renderPage();">回收站 (${trashJobs.length})</span>
+                </div>
+                <div class="card" style="overflow-x:auto;padding:0;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                ${tab==='center'?'<th style="width:40px;"><input type="checkbox" onchange="toggleSelectAll(this)" id="select-all-checkbox"></th>':''}
+                                <th>编号</th><th>名称</th><th>描述</th><th>创建时间</th><th>完成时间</th><th>处理用时</th><th>状态</th><th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filtered.map(j => `
+                                <tr class="hover-highlight ${APP.selectedJobIds.has(j.id)?'selected':''}" 
+                                    onmouseenter="highlightRow(this)" 
+                                    onmouseleave="unhighlightRow(this)"
+                                    onclick="${tab==='center'?`APP.currentJobDetailId='${j.id}';renderPage();`:''}"
+                                    style="cursor:pointer;">
+                                    ${tab==='center'?`<td onclick="event.stopPropagation();"><input type="checkbox" ${APP.selectedJobIds.has(j.id)?'checked':''} onchange="toggleSelectJob('${j.id}',this)"></td>`:''}
+                                    <td style="font-family:monospace;font-size:11px;">${j.id.substring(0,10)}...</td>
+                                    <td style="font-weight:500;">${j.name}</td>
+                                    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${j.description||'—'}</td>
+                                    <td>${formatDate(j.created_at)}</td>
+                                    <td>${formatDate(j.completed_at)}</td>
+                                    <td>${j.duration||'—'}</td>
+                                    <td>${getStatusBadge(j.status)}</td>
+                                    <td onclick="event.stopPropagation();">
+                                        ${tab==='center'?`
+                                            <button class="btn btn-outline btn-xs" onclick="APP.currentJobDetailId='${j.id}';renderPage();">查看</button>
+                                            <button class="btn btn-ghost btn-xs" style="color:#ef4444;" onclick="removeSingleJob('${j.id}')">移除</button>
+                                        `:`
+                                            <button class="btn btn-outline btn-xs" style="color:#16a34a;" onclick="restoreJob('${j.id}')">恢复</button>
+                                        `}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                            ${filtered.length===0?`<tr><td colspan="${tab==='center'?'8':'7'}" style="text-align:center;padding:40px;color:#94a3b8;">暂无数据</td></tr>`:''}
+                        </tbody>
+                    </table>
+                </div>
+            </div>`;
+        }
+
+        function highlightRow(row) {
+            row.style.background = '#fafcfd';
+        }
+
+        function unhighlightRow(row) {
+            if (!row.classList.contains('selected')) row.style.background = '';
+        }
+
+        function toggleSelectAll(checkbox) {
+            APP.selectedJobIds.clear();
+            if (checkbox.checked) {
+                jobs.forEach(j => APP.selectedJobIds.add(j.id));
+            }
+            renderPage();
+        }
+
+        function toggleSelectJob(jobId, checkbox) {
+            if (checkbox.checked) APP.selectedJobIds.add(jobId);
+            else APP.selectedJobIds.delete(jobId);
+            renderPage();
+        }
+
+        function batchRemoveJobs() {
+            if (APP.selectedJobIds.size === 0) return;
+            const toRemove = jobs.filter(j => APP.selectedJobIds.has(j.id));
+            jobs = jobs.filter(j => !APP.selectedJobIds.has(j.id));
+            trashJobs.push(...toRemove);
+            APP.selectedJobIds.clear();
+            showToast(`已将 ${toRemove.length} 个作业移至回收站`);
+            renderPage();
+        }
+
+        function removeSingleJob(jobId) {
+            const job = jobs.find(j => j.id === jobId);
+            if (job) {
+                jobs = jobs.filter(j => j.id !== jobId);
+                trashJobs.push(job);
+                APP.selectedJobIds.delete(jobId);
+                showToast('作业已移至回收站');
+                renderPage();
+            }
+        }
+
+        function restoreJob(jobId) {
+            const job = trashJobs.find(j => j.id === jobId);
+            if (job) {
+                trashJobs = trashJobs.filter(j => j.id !== jobId);
+                jobs.push(job);
+                showToast('作业已恢复');
+                renderPage();
+            }
+        }
+
+        function debounceSearch() {
+            clearTimeout(window._searchTimeout);
+            window._searchTimeout = setTimeout(() => renderPage(), 300);
+        }
+
+        // ==================== JOB DETAIL PAGE ====================
+        function renderJobDetailPage() {
+            const jobId = APP.currentJobDetailId;
+            const job = [...jobs, ...trashJobs].find(j => j.id === jobId);
+            if (!job) {
+                APP.currentJobDetailId = null;
+                return renderJobsPage();
+            }
+
+            const results = resultsStore[jobId] || [];
+            const project = projects.find(p => p.id === job.project_id);
+            const viewType = APP.currentResultView;
+
+            // Build results HTML
+            let resultsHTML = '';
+            if (viewType === 'card') {
+                resultsHTML = `
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;">
+                    ${results.map((r,idx) => `
+                        <div class="card" style="padding:14px;cursor:pointer;text-align:center;" ondblclick="openMoleculeDetail('${r.id}')">
+                            <div class="mol-structure" style="margin-bottom:8px;">
+                                ${generateMoleculeSVG(idx)}
+                            </div>
+                            <div style="font-weight:600;font-size:12px;">${r.formula}</div>
+                            <div style="font-size:11px;color:#64748b;">MW: ${r.mw}</div>
+                            ${APP.visibleFields.includes('tpsa')?`<div style="font-size:11px;color:#64748b;">TPSA: ${r.tpsa}</div>`:''}
+                            ${APP.visibleFields.includes('logp')?`<div style="font-size:11px;color:#64748b;">LogP: ${r.logp}</div>`:''}
+                            ${APP.visibleFields.includes('hba')?`<div style="font-size:11px;color:#64748b;">HBA: ${r.hba}</div>`:''}
+                            ${APP.visibleFields.includes('hbd')?`<div style="font-size:11px;color:#64748b;">HBD: ${r.hbd}</div>`:''}
+                        </div>
+                    `).join('')}
+                    ${results.length===0?`<div style="grid-column:1/-1;text-align:center;padding:40px;color:#94a3b8;">${job.status==='running'?'任务运行中，结果即将生成...':'暂无结果数据'}</div>`:''}
+                </div>`;
+            } else {
+                resultsHTML = `
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead><tr>
+                            <th>#</th>
+                            ${APP.visibleFields.includes('formula')?'<th>分子式</th>':''}
+                            ${APP.visibleFields.includes('mw')?'<th>MW</th>':''}
+                            ${APP.visibleFields.includes('tpsa')?'<th>TPSA</th>':''}
+                            ${APP.visibleFields.includes('logp')?'<th>LogP</th>':''}
+                            ${APP.visibleFields.includes('hba')?'<th>HBA</th>':''}
+                            ${APP.visibleFields.includes('hbd')?'<th>HBD</th>':''}
+                            ${APP.visibleFields.includes('inchikey')?'<th>InChiKey</th>':''}
+                            ${APP.visibleFields.includes('smiles')?'<th>SMILES</th>':''}
+                        </tr></thead>
+                        <tbody>
+                            ${results.map((r,idx) => `
+                                <tr class="hover-highlight" style="cursor:pointer;" ondblclick="openMoleculeDetail('${r.id}')">
+                                    <td>${idx+1}</td>
+                                    ${APP.visibleFields.includes('formula')?`<td style="font-weight:500;">${r.formula}</td>`:''}
+                                    ${APP.visibleFields.includes('mw')?`<td>${r.mw}</td>`:''}
+                                    ${APP.visibleFields.includes('tpsa')?`<td>${r.tpsa}</td>`:''}
+                                    ${APP.visibleFields.includes('logp')?`<td>${r.logp}</td>`:''}
+                                    ${APP.visibleFields.includes('hba')?`<td>${r.hba}</td>`:''}
+                                    ${APP.visibleFields.includes('hbd')?`<td>${r.hbd}</td>`:''}
+                                    ${APP.visibleFields.includes('inchikey')?`<td style="font-size:10px;">${r.inchikey}</td>`:''}
+                                    ${APP.visibleFields.includes('smiles')?`<td style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;">${r.smiles}</td>`:''}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+            }
+
+            return `
+            <div style="padding:24px 28px;max-width:1400px;">
+                <button class="btn btn-ghost btn-sm" onclick="APP.currentJobDetailId=null;renderPage();" style="margin-bottom:16px;">← 返回作业列表</button>
+                <div class="card" style="margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+                        <div>
+                            <h3 style="font-weight:700;font-size:17px;display:flex;align-items:center;gap:8px;">
+                                <span id="detail-job-name">${job.name}</span>
+                                <button class="btn btn-ghost btn-xs" onclick="editJobName('${job.id}')">✏️</button>
+                            </h3>
+                            <p style="color:#64748b;font-size:13px;display:flex;align-items:center;gap:8px;">
+                                <span id="detail-job-desc">${job.description||'暂无描述'}</span>
+                                <button class="btn btn-ghost btn-xs" onclick="editJobDesc('${job.id}')">✏️</button>
+                            </p>
+                        </div>
+                        ${getStatusBadge(job.status)}
+                    </div>
+                    <div style="margin-top:12px;display:flex;gap:24px;font-size:12px;color:#64748b;flex-wrap:wrap;">
+                        <span>编号: <strong>${job.id}</strong></span>
+                        <span>项目: <strong>${project?.name||'—'}</strong></span>
+                        <span>创建: ${formatDate(job.created_at)}</span>
+                        <span>完成: ${formatDate(job.completed_at)}</span>
+                        <span>用时: ${job.duration||'—'}</span>
+                        <span>结果数: ${results.length}</span>
+                    </div>
+                    <details style="margin-top:8px;font-size:12px;color:#94a3b8;">
+                        <summary style="cursor:pointer;">展开更多元数据</summary>
+                        <div style="padding:8px;background:#fafcfd;border-radius:8px;margin-top:4px;">
+                            <p>SMILES模板: ${project?.smiles||'—'}</p>
+                            <p>目标数量: ${job.result_count}</p>
+                            <p>作业ID: ${job.id}</p>
+                        </div>
+                    </details>
+                </div>
+                <!-- Toolbar -->
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+                    <div style="display:flex;gap:4px;background:#f8fafc;padding:3px;border-radius:10px;">
+                        <span class="tab-item ${viewType==='card'?'active':''}" style="font-size:12px;" onclick="APP.currentResultView='card';renderPage();">📇 卡片视图</span>
+                        <span class="tab-item ${viewType==='table'?'active':''}" style="font-size:12px;" onclick="APP.currentResultView='table';renderPage();">📋 表格视图</span>
+                    </div>
+                    <button class="btn btn-outline btn-xs" onclick="openFieldConfig('${jobId}')">⚙️ 配置字段</button>
+                    <button class="btn btn-outline btn-xs" onclick="openFullscreen('${jobId}')">🖥️ 全屏</button>
+                    <button class="btn btn-outline btn-xs" onclick="saveToData('${jobId}')">💾 另存到数据</button>
+                    <button class="btn btn-outline btn-xs" onclick="openCsvModal('${jobId}')">📥 CSV下载</button>
+                    <select class="input-field" style="width:auto;padding:6px 10px;font-size:12px;" onchange="sortResults('${jobId}',this.value)">
+                        <option value="default">默认排序</option>
+                        <option value="mw-asc">MW ↑</option>
+                        <option value="mw-desc">MW ↓</option>
+                        <option value="logp-asc">LogP ↑</option>
+                        <option value="logp-desc">LogP ↓</option>
+                        <option value="tpsa-asc">TPSA ↑</option>
+                        <option value="tpsa-desc">TPSA ↓</option>
+                    </select>
+                </div>
+                ${resultsHTML}
+            </div>`;
+        }
+
+        function generateMoleculeSVG(idx) {
+            const colors = ['#3b82f6', '#6366f1', '#8b5cf6', '#2563eb', '#4f46e5'];
+            const color = colors[idx % colors.length];
+            const shapes = [
+                `<svg width="100" height="80" viewBox="0 0 120 90"><circle cx="60" cy="35" r="16" fill="none" stroke="${color}" stroke-width="2.5"/><circle cx="60" cy="35" r="8" fill="none" stroke="${color}" stroke-width="1.2" stroke-dasharray="3 2"/><circle cx="40" cy="55" r="12" fill="none" stroke="${color}" stroke-width="2"/><circle cx="80" cy="55" r="12" fill="none" stroke="${color}" stroke-width="2"/><line x1="47" y1="45" x2="53" y2="50" stroke="${color}" stroke-width="1.8"/><line x1="67" y1="50" x2="73" y2="45" stroke="${color}" stroke-width="1.8"/><circle cx="60" cy="70" r="8" fill="none" stroke="${color}" stroke-width="1.5"/><text x="60" y="39" text-anchor="middle" font-size="8" fill="${color}" font-weight="700">N</text></svg>`,
+                `<svg width="100" height="80" viewBox="0 0 120 90"><circle cx="60" cy="30" r="15" fill="none" stroke="${color}" stroke-width="2.5"/><circle cx="42" cy="50" r="13" fill="none" stroke="${color}" stroke-width="2"/><circle cx="78" cy="50" r="13" fill="none" stroke="${color}" stroke-width="2"/><circle cx="50" cy="68" r="10" fill="none" stroke="${color}" stroke-width="1.8"/><circle cx="70" cy="68" r="10" fill="none" stroke="${color}" stroke-width="1.8"/><line x1="50" y1="40" x2="46" y2="46" stroke="${color}" stroke-width="1.5"/><line x1="70" y1="40" x2="74" y2="46" stroke="${color}" stroke-width="1.5"/></svg>`,
+                `<svg width="100" height="80" viewBox="0 0 120 90"><circle cx="60" cy="40" r="18" fill="none" stroke="${color}" stroke-width="2.5"/><circle cx="60" cy="40" r="10" fill="none" stroke="${color}" stroke-width="1.3" stroke-dasharray="4 3"/><circle cx="38" cy="60" r="11" fill="none" stroke="${color}" stroke-width="2"/><circle cx="82" cy="60" r="11" fill="none" stroke="${color}" stroke-width="2"/><circle cx="60" cy="72" r="9" fill="none" stroke="${color}" stroke-width="1.5"/><text x="60" y="44" text-anchor="middle" font-size="9" fill="${color}" font-weight="700">O</text></svg>`,
+            ];
+            return shapes[idx % shapes.length];
+        }
+
+        function openMoleculeDetail(resultId) {
+            let found = null;
+            Object.values(resultsStore).forEach(arr => {
+                const r = arr.find(x => x.id === resultId);
+                if (r) found = r;
+            });
+            if (!found) return;
+            document.getElementById('molecule-detail-content').innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
+                    <div><strong>Formula:</strong> ${found.formula}</div>
+                    <div><strong>MW:</strong> ${found.mw}</div>
+                    <div><strong>TPSA:</strong> ${found.tpsa}</div>
+                    <div><strong>LogP:</strong> ${found.logp}</div>
+                    <div><strong>HBA:</strong> ${found.hba}</div>
+                    <div><strong>HBD:</strong> ${found.hbd}</div>
+                    <div style="grid-column:1/-1;"><strong>InChiKey:</strong> <span style="font-size:10px;">${found.inchikey}</span></div>
+                    <div style="grid-column:1/-1;"><strong>SMILES:</strong> <span style="font-size:10px;">${found.smiles}</span></div>
+                </div>
+            `;
+            document.getElementById('molecule-detail-modal').style.display = 'flex';
+        }
+
+        function closeMoleculeDetail() {
+            document.getElementById('molecule-detail-modal').style.display = 'none';
+        }
+
+        function editJobName(jobId) {
+            const job = [...jobs, ...trashJobs].find(j => j.id === jobId);
+            if (!job) return;
+            const newName = prompt('编辑项目名称:', job.name);
+            if (newName && newName.trim()) {
+                job.name = newName.trim();
+                const proj = projects.find(p => p.id === job.project_id);
+                if (proj) proj.name = newName.trim();
+                showToast('名称已更新');
+                renderPage();
+            }
+        }
+
+        function editJobDesc(jobId) {
+            const job = [...jobs, ...trashJobs].find(j => j.id === jobId);
+            if (!job) return;
+            const newDesc = prompt('编辑描述:', job.description || '');
+            if (newDesc !== null) {
+                job.description = newDesc.trim();
+                const proj = projects.find(p => p.id === job.project_id);
+                if (proj) proj.description = newDesc.trim();
+                showToast('描述已更新');
+                renderPage();
+            }
+        }
+
+        function openFullscreen(jobId) {
+            APP.currentJobDetailId = jobId;
+            const content = renderJobDetailPage();
+            document.getElementById('fullscreen-content').innerHTML = content;
+            document.getElementById('fullscreen-result').style.display = 'flex';
+            // Re-attach listeners in fullscreen
+            setTimeout(() => attachEventListeners(), 100);
+        }
+
+        function closeFullscreen() {
+            document.getElementById('fullscreen-result').style.display = 'none';
+            renderPage();
+        }
+
+        function saveToData(jobId) {
+            const results = resultsStore[jobId] || [];
+            const job = [...jobs, ...trashJobs].find(j => j.id === jobId);
+            if (results.length === 0) {
+                showToast('没有可保存的结果');
+                return;
+            }
+            const dataItem = {
+                id: generateId(),
+                name: job ? job.name + ' - 结果' : '作业结果',
+                source: job ? job.name : '未知',
+                saved_at: new Date().toISOString().replace('T', ' ').substring(0, 16),
+                count: results.length,
+                results: [...results],
+            };
+            dataStore.push(dataItem);
+            showToast(`已保存 ${results.length} 条结果到数据中心`);
+        }
+
+        function openCsvModal(jobId) {
+            APP.pendingCsvJobId = jobId;
+            document.getElementById('csv-modal').style.display = 'flex';
+        }
+
+        function closeCsvModal() {
+            document.getElementById('csv-modal').style.display = 'none';
+            APP.pendingCsvJobId = null;
+        }
+
+        function downloadCsv() {
+            const jobId = APP.pendingCsvJobId;
+            if (!jobId) return;
+            const results = resultsStore[jobId] || [];
+            if (results.length === 0) {
+                showToast('没有数据可下载');
+                closeCsvModal();
+                return;
+            }
+            const fields = ['formula', 'mw', 'tpsa', 'logp', 'hba', 'hbd', 'inchikey', 'smiles'];
+            let csv = fields.join(',') + '\n';
+            results.forEach(r => {
+                csv += fields.map(f => r[f] || '').join(',') + '\n';
+            });
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `results-${jobId}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+            closeCsvModal();
+            showToast('CSV下载已开始');
+        }
+
+        function openFieldConfig(jobId) {
+            APP.fieldConfigJobId = jobId;
+            const list = document.getElementById('field-config-list');
+            list.innerHTML = APP.allFields.map(f => `
+                <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;">
+                    <input type="checkbox" value="${f.key}" ${APP.visibleFields.includes(f.key)?'checked':''}>
+                    <span style="font-size:13px;">${f.label}</span>
+                </label>
+            `).join('');
+            document.getElementById('field-config-modal').style.display = 'flex';
+        }
+
+        function closeFieldConfig() {
+            document.getElementById('field-config-modal').style.display = 'none';
+            APP.fieldConfigJobId = null;
+        }
+
+        function applyFieldConfig() {
+            const checks = document.querySelectorAll('#field-config-list input[type="checkbox"]');
+            APP.visibleFields = [];
+            checks.forEach(c => { if (c.checked) APP.visibleFields.push(c.value); });
+            if (APP.visibleFields.length === 0) APP.visibleFields = ['formula', 'mw'];
+            closeFieldConfig();
+            showToast('字段配置已更新');
+            renderPage();
+        }
+
+        function sortResults(jobId, sortBy) {
+            const results = resultsStore[jobId];
+            if (!results) return;
+            if (sortBy === 'mw-asc') results.sort((a, b) => a.mw - b.mw);
+            else if (sortBy === 'mw-desc') results.sort((a, b) => b.mw - a.mw);
+            else if (sortBy === 'logp-asc') results.sort((a, b) => parseFloat(a.logp) - parseFloat(b.logp));
+            else if (sortBy === 'logp-desc') results.sort((a, b) => parseFloat(b.logp) - parseFloat(a.logp));
+            else if (sortBy === 'tpsa-asc') results.sort((a, b) => parseFloat(a.tpsa) - parseFloat(b.tpsa));
+            else if (sortBy === 'tpsa-desc') results.sort((a, b) => parseFloat(b.tpsa) - parseFloat(a.tpsa));
+            showToast('排序已应用');
+            renderPage();
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        function attachEventListeners() {
+            // Re-bind any dynamic event listeners if needed
+            // Most events are inline for simplicity in this demo
+        }
+
+        // ==================== INITIALIZATION ====================
+        function init() {
+            // Check if user is already logged in (demo: always show login first)
+            document.getElementById('login-page').style.display = 'flex';
+            document.getElementById('app-container').style.display = 'none';
+
+            // Handle Enter key on login
+            document.getElementById('login-password').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') handleLogin();
+            });
+            document.getElementById('login-username').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') document.getElementById('login-password').focus();
+            });
+
+            // Handle Escape key for modals
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeStructureEditor();
+                    closeMoleculeDetail();
+                    closeCsvModal();
+                    closeFieldConfig();
+                    if (document.getElementById('fullscreen-result').style.display === 'flex') {
+                        closeFullscreen();
+                    }
+                }
+            });
+        }
+
+        // Run initialization
+        init();
+        console.log('Molecule - 小分子药物设计平台 Demo 已就绪');
+        console.log('功能包括: 登录、主页看板、模块(Small Molecule Generation)、流程、数据、作业管理');
+        console.log('模拟数据已加载，登录账号: admin / admin123');
+    </script>
+</body>
+</html>
