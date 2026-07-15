@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>组织架构管理树</title>
+    <style>
+        /* ===== 全局重置 & 基础 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f0f4f9;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 30px 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 880px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 20, 40, 0.12);
+            padding: 28px 32px 36px;
+            transition: all 0.2s;
+            height: fit-content;
+            max-height: 98vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-bottom: 18px;
+            border-bottom: 2px solid #eef3f8;
+            flex-shrink: 0;
+        }
+
+        .app-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a2b3e;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-header h1 span {
+            background: linear-gradient(135deg, #2b7be4, #1a5bbf);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 2px 12px;
+            border-radius: 30px;
+            letter-spacing: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-wrapper {
+            display: flex;
+            align-items: center;
+            background: #f2f6fc;
+            border-radius: 30px;
+            padding: 0 14px;
+            border: 1px solid #e2e9f2;
+            transition: all 0.25s;
+        }
+        .search-wrapper:focus-within {
+            border-color: #2b7be4;
+            box-shadow: 0 0 0 4px rgba(43, 123, 228, 0.12);
+            background: #fff;
+        }
+        .search-wrapper .search-icon {
+            color: #8a9baa;
+            font-size: 15px;
+            margin-right: 6px;
+            user-select: none;
+        }
+        .search-wrapper input {
+            border: none;
+            background: transparent;
+            padding: 9px 0;
+            font-size: 14px;
+            outline: none;
+            width: 150px;
+            color: #1a2b3e;
+            transition: width 0.25s;
+        }
+        .search-wrapper input::placeholder {
+            color: #b0c0ce;
+        }
+        .search-wrapper input:focus {
+            width: 190px;
+        }
+        .search-wrapper .clear-btn {
+            background: none;
+            border: none;
+            color: #b0c0ce;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 2px;
+            display: none;
+            transition: color 0.2s;
+        }
+        .search-wrapper .clear-btn:hover {
+            color: #e74c3c;
+        }
+        .search-wrapper .clear-btn.visible {
+            display: block;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #eef3f8;
+            color: #1a2b3e;
+            white-space: nowrap;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2b7be4, #1a5bbf);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #3b8bf4, #256acf);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #cdd9e6;
+        }
+        .btn-outline:hover {
+            background: #f2f6fc;
+            border-color: #b0c0ce;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #6a7f94;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .btn-icon:hover {
+            background: #eef3f8;
+            color: #1a2b3e;
+            transform: scale(1.08);
+        }
+        .btn-icon.danger:hover {
+            background: #fbe9e7;
+            color: #c62828;
+        }
+        .btn-icon.success:hover {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .btn-icon.warning:hover {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .tree-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 14px;
+            padding-right: 4px;
+            min-height: 200px;
+            max-height: 70vh;
+        }
+        .tree-container::-webkit-scrollbar {
+            width: 5px;
+        }
+        .tree-container::-webkit-scrollbar-track {
+            background: #f0f4f9;
+            border-radius: 10px;
+        }
+        .tree-container::-webkit-scrollbar-thumb {
+            background: #cdd9e6;
+            border-radius: 10px;
+        }
+        .tree-container::-webkit-scrollbar-thumb:hover {
+            background: #b0c0ce;
+        }
+
+        .tree {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .tree .tree-node {
+            list-style: none;
+            margin: 2px 0;
+        }
+
+        .tree .tree-node .node-wrapper {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px 6px 6px;
+            border-radius: 10px;
+            transition: background 0.15s, box-shadow 0.15s;
+            cursor: default;
+            gap: 4px;
+            border: 1px solid transparent;
+            flex-wrap: nowrap;
+        }
+        .tree .tree-node .node-wrapper:hover {
+            background: #f6faff;
+            border-color: #e2e9f2;
+        }
+        .tree .tree-node .node-wrapper.selected {
+            background: #e8f0fe;
+            border-color: #2b7be4;
+            box-shadow: 0 0 0 2px rgba(43, 123, 228, 0.12);
+        }
+
+        .toggle-btn {
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            color: #8a9baa;
+            border-radius: 6px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .toggle-btn:hover {
+            background: #e2e9f2;
+            color: #1a2b3e;
+        }
+        .toggle-btn.leaf {
+            visibility: hidden;
+            cursor: default;
+        }
+        .toggle-btn .arrow {
+            display: inline-block;
+            transition: transform 0.25s ease;
+            font-size: 12px;
+        }
+        .toggle-btn .arrow.open {
+            transform: rotate(90deg);
+        }
+
+        .node-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1a2b3e;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background 0.15s;
+            flex: 1 1 auto;
+            min-width: 40px;
+            word-break: break-word;
+            cursor: pointer;
+            line-height: 1.4;
+        }
+        .node-name:hover {
+            background: rgba(43, 123, 228, 0.06);
+        }
+        .node-name .highlight {
+            background: #ffeb3b;
+            padding: 0 2px;
+            border-radius: 2px;
+            font-weight: 600;
+        }
+
+        .node-actions {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+            margin-left: 4px;
+        }
+        .node-wrapper:hover .node-actions,
+        .node-wrapper.selected .node-actions {
+            opacity: 1;
+        }
+        .node-actions .btn-icon {
+            width: 28px;
+            height: 28px;
+            font-size: 14px;
+        }
+
+        .children-container {
+            padding-left: 26px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.25s ease;
+            max-height: 0;
+            opacity: 0;
+        }
+        .children-container.open {
+            max-height: 2000px;
+            opacity: 1;
+        }
+
+        .search-info {
+            font-size: 13px;
+            color: #6a7f94;
+            padding: 8px 4px 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .search-info .count {
+            background: #eef3f8;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            color: #4a5a6a;
+        }
+
+        .node-badge {
+            font-size: 11px;
+            background: #eef3f8;
+            color: #6a7f94;
+            padding: 1px 10px;
+            border-radius: 30px;
+            margin-left: 4px;
+            font-weight: 400;
+            flex-shrink: 0;
+        }
+
+        .io-buttons {
+            display: flex;
+            gap: 6px;
+        }
+        .io-buttons .btn {
+            font-size: 13px;
+            padding: 6px 14px;
+        }
+
+        @media (max-width: 720px) {
+            .app-container {
+                padding: 18px 14px 24px;
+                border-radius: 16px;
+            }
+            .app-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .app-header h1 {
+                font-size: 20px;
+            }
+            .header-actions {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .search-wrapper input {
+                width: 100px;
+            }
+            .search-wrapper input:focus {
+                width: 130px;
+            }
+            .children-container {
+                padding-left: 16px;
+            }
+            .node-actions {
+                opacity: 1;
+            }
+            .tree .tree-node .node-wrapper {
+                padding: 5px 6px 5px 4px;
+            }
+            .node-name {
+                font-size: 13px;
+                min-width: 30px;
+            }
+            .btn-icon {
+                width: 26px;
+                height: 26px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 430px) {
+            .app-container {
+                padding: 12px 8px 18px;
+            }
+            .search-wrapper input {
+                width: 70px;
+                font-size: 13px;
+            }
+            .search-wrapper input:focus {
+                width: 90px;
+            }
+            .header-actions .btn {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+            .btn-icon {
+                width: 24px;
+                height: 24px;
+                font-size: 12px;
+            }
+        }
+
+        .tree-container {
+            scrollbar-width: thin;
+            scrollbar-color: #cdd9e6 #f0f4f9;
+        }
+
+        @keyframes fadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .tree-node {
+            animation: fadeSlide 0.2s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container" id="app">
+    <header class="app-header">
+        <h1>🏢 组织架构 <span>树</span></h1>
+        <div class="header-actions">
+            <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="搜索部门..." />
+                <button class="clear-btn" id="clearSearchBtn" title="清除搜索">✕</button>
+            </div>
+            <div class="io-buttons">
+                <button class="btn btn-outline" id="exportBtn">📤 导出JSON</button>
+                <button class="btn btn-outline" id="importBtn">📥 导入JSON</button>
+            </div>
+            <button class="btn btn-primary" id="addRootBtn"><span>＋</span> 添加根节点</button>
+            <input type="file" id="fileInput" accept=".json,application/json" style="display:none" />
+        </div>
+    </header>
+
+    <div class="search-info" id="searchInfo" style="display:none;">
+        <span id="searchResultText">找到 <strong id="matchCount">0</strong> 个匹配节点</span>
+        <span class="count" id="totalCount">共 0 个节点</span>
+    </div>
+
+    <div class="tree-container" id="treeContainer">
+        <div id="treeRoot"></div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    //  内置数据（直接使用您提供的 JSON）
+    // ============================================================
+    const initialData = {
+        "id": 100,
+        "name": "制药_集团研发",
+        "expanded": true,
+        "children": [
+            {
+                "id": 101,
+                "name": "NDDS创新中心",
+                "expanded": false,
+                "children": [
+                    {
+                        "id": 102,
+                        "name": "药物化学研究部",
+                        "expanded": false,
+                        "children": [
+                            { "id": 110, "name": "合成工艺研究室", "expanded": true, "children": [] },
+                            { "id": 111, "name": "化学中试车间", "expanded": true, "children": [] },
+                            { "id": 112, "name": "药用辅料研究室", "expanded": true, "children": [] },
+                            { "id": 113, "name": "药物化学研究室", "expanded": true, "children": [] }
+                        ]
+                    },
+                    {
+                        "id": 103,
+                        "name": "药物分析研究中心",
+                        "expanded": false,
+                        "children": [
+                            { "id": 114, "name": "质量研究一室", "expanded": true, "children": [] },
+                            { "id": 115, "name": "质量研究二室", "expanded": true, "children": [] },
+                            { "id": 116, "name": "质量研究三室", "expanded": true, "children": [] },
+                            { "id": 117, "name": "临床产品分析部", "expanded": true, "children": [] },
+                            {
+                                "id": 118,
+                                "name": "分析技术部",
+                                "expanded": false,
+                                "children": [
+                                    { "id": 119, "name": "分析技术一室", "expanded": true, "children": [] },
+                                    { "id": 120, "name": "分析技术二室", "expanded": true, "children": [] }
+                                ]
+                            },
+                            { "id": 121, "name": "CTS组", "expanded": true, "children": [] },
+                            { "id": 122, "name": "CMC Writer组", "expanded": true, "children": [] }
+                        ]
+                    },
+                    { "id": 104, "name": "制剂中试中心", "expanded": true, "children": [] },
+                    { "id": 123, "name": "制剂研究中心", "expanded": true, "children": [] },
+                    { "id": 124, "name": "工艺与技术转移中心", "expanded": true, "children": [] }
+                ]
+            },
+            { "id": 105, "name": "研发人力资源部", "expanded": true, "children": [] },
+            { "id": 108, "name": "集团研发总裁办", "expanded": true, "children": [] },
+            {
+                "id": 109,
+                "name": "转化医学研究部",
+                "expanded": false,
+                "children": [
+                    { "id": 125, "name": "药物设计研究室", "expanded": true, "children": [] }
+                ]
+            },
+            {
+                "id": 126,
+                "name": "NCE创新中心",
+                "expanded": false,
+                "children": [
+                    { "id": 127, "name": "药理毒理学研究部", "expanded": true, "children": [] },
+                    { "id": 128, "name": "药代动力学研究部", "expanded": true, "children": [] }
+                ]
+            },
+            { "id": 129, "name": "NAD创新中心", "expanded": true, "children": [] },
+            { "id": 130, "name": "新药评价部", "expanded": true, "children": [] },
+            {
+                "id": 131,
+                "name": "研发运营中心",
+                "expanded": false,
+                "children": [
+                    { "id": 143, "name": "项目管理部", "expanded": true, "children": [] },
+                    { "id": 144, "name": "科研保障部", "expanded": true, "children": [] }
+                ]
+            },
+            { "id": 132, "name": "欧洲研发", "expanded": true, "children": [] },
+            { "id": 133, "name": "知识产权部", "expanded": true, "children": [] },
+            {
+                "id": 134,
+                "name": "临床医学研究中心",
+                "expanded": false,
+                "children": [
+                    { "id": 145, "name": "日本临床管理部", "expanded": true, "children": [] },
+                    { "id": 147, "name": "美国临床运营部", "expanded": true, "children": [] },
+                    { "id": 148, "name": "中国临床运营部", "expanded": true, "children": [] },
+                    {
+                        "id": 149,
+                        "name": "临床医学部",
+                        "expanded": false,
+                        "children": [
+                            { "id": 150, "name": "药物警戒组", "expanded": true, "children": [] },
+                            { "id": 151, "name": "医学撰写组", "expanded": true, "children": [] },
+                            { "id": 152, "name": "医学顾问二组", "expanded": true, "children": [] },
+                            { "id": 153, "name": "医学顾问一组", "expanded": true, "children": [] }
+                        ]
+                    },
+                    { "id": 154, "name": "药物警戒部", "expanded": true, "children": [] },
+                    {
+                        "id": 155,
+                        "name": "临床科学部",
+                        "expanded": false,
+                        "children": [
+                            { "id": 158, "name": "MA质控组", "expanded": true, "children": [] },
+                            { "id": 159, "name": "早期临床组", "expanded": true, "children": [] },
+                            { "id": 160, "name": "数据管理组", "expanded": true, "children": [] },
+                            { "id": 161, "name": "生物统计组", "expanded": true, "children": [] }
+                        ]
+                    },
+                    { "id": 156, "name": "临床质量管理部", "expanded": true, "children": [] },
+                    { "id": 157, "name": "国际临床开发部", "expanded": true, "children": [] }
+                ]
+            },
+            {
+                "id": 135,
+                "name": "注册与监管事务中心",
+                "expanded": false,
+                "children": [
+                    { "id": 140, "name": "国际注册部", "expanded": true, "children": [] },
+                    {
+                        "id": 141,
+                        "name": "国际监管事务部",
+                        "expanded": true,
+                        "children": [
+                            { "id": 142, "name": "中国注册部", "expanded": true, "children": [] }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 136,
+                "name": "研发质量管理部",
+                "expanded": false,
+                "children": [
+                    { "id": 137, "name": "研发QA室", "expanded": true, "children": [] },
+                    { "id": 138, "name": "研发QC室", "expanded": true, "children": [] }
+                ]
+            },
+            { "id": 139, "name": "科技发展部", "expanded": true, "children": [] }
+        ]
+    };
+
+    // ============================================================
+    //  核心逻辑（与之前一致，支持增删改查、导入导出）
+    // ============================================================
+    let treeData = JSON.parse(JSON.stringify(initialData));
+    let nextId = 200; // 确保新ID不冲突，后续会刷新
+    let searchKeyword = '';
+
+    function refreshNextId(node) {
+        const all = collectAllNodes(node);
+        let max = 0;
+        for (const n of all) if (n.id > max) max = n.id;
+        nextId = max + 1;
+    }
+    refreshNextId(treeData);
+
+    function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+    function generateId() { return nextId++; }
+    function countNodes(node) { let c = 1; if (node.children) for (const ch of node.children) c += countNodes(ch); return c; }
+    function collectAllNodes(node, res = []) { res.push(node); if (node.children) for (const ch of node.children) collectAllNodes(ch, res); return res; }
+    function findNodeById(node, id) { if (node.id === id) return node; if (node.children) for (const ch of node.children) { const f = findNodeById(ch, id); if (f) return f; } return null; }
+    function findParent(node, targetId, parent = null) { if (node.id === targetId) return parent; if (node.children) for (const ch of node.children) { const r = findParent(ch, targetId, node); if (r !== undefined) return r; } return undefined; }
+    function deleteNodeById(node, id) { if (!node.children) return false; for (let i = 0; i < node.children.length; i++) { if (node.children[i].id === id) { node.children.splice(i, 1); return true; } if (deleteNodeById(node.children[i], id)) return true; } return false; }
+    function matchesKeyword(node, kw) { if (!kw) return true; const l = kw.toLowerCase(); if (node.name.toLowerCase().includes(l)) return true; if (node.children) for (const ch of node.children) if (matchesKeyword(ch, kw)) return true; return false; }
+    function getMatchingIds(node, kw, res = new Set()) { if (!kw) return res; const l = kw.toLowerCase(); if (node.name.toLowerCase().includes(l)) res.add(node.id); if (node.children) for (const ch of node.children) getMatchingIds(ch, kw, res); return res; }
+    function getAncestorsIds(node, targetId, anc = []) { if (node.id === targetId) return anc; if (node.children) for (const ch of node.children) { const r = getAncestorsIds(ch, targetId, [...anc, node.id]); if (r) return r; } return null; }
+    function ensureExpanded(node) { if (node.expanded === undefined) node.expanded = true; if (node.children) for (const ch of node.children) ensureExpanded(ch); }
+
+    function renderTree() {
+        const rootEl = document.getElementById('treeRoot');
+        const searchInfo = document.getElementById('searchInfo');
+        const matchCount = document.getElementById('matchCount');
+        const totalCount = document.getElementById('totalCount');
+
+        const total = countNodes(treeData);
+        totalCount.textContent = `共 ${total} 个节点`;
+
+        const keyword = searchKeyword.trim();
+        const matchingIds = getMatchingIds(treeData, keyword);
+
+        if (keyword) {
+            const allNodes = collectAllNodes(treeData);
+            for (const node of allNodes) {
+                if (node.name.toLowerCase().includes(keyword.toLowerCase())) {
+                    const ancestors = getAncestorsIds(treeData, node.id);
+                    if (ancestors) for (const aid of ancestors) { const a = findNodeById(treeData, aid); if (a) a.expanded = true; }
+                }
+            }
+        }
+
+        const html = renderNode(treeData, 0, keyword, matchingIds);
+        rootEl.innerHTML = html;
+
+        if (keyword) {
+            const matchCountValue = matchingIds.size;
+            matchCount.textContent = matchCountValue;
+            searchInfo.style.display = 'flex';
+            if (matchCountValue === 0) document.getElementById('searchResultText').innerHTML = '😕 未找到匹配的节点';
+            else document.getElementById('searchResultText').innerHTML = `找到 <strong>${matchCountValue}</strong> 个匹配节点`;
+        } else {
+            searchInfo.style.display = 'none';
+        }
+
+        bindTreeEvents();
+    }
+
+    function renderNode(node, depth, keyword, matchingIds) {
+        const hasChildren = node.children && node.children.length > 0;
+        const isExpanded = node.expanded !== false;
+        const isMatch = matchingIds.has(node.id);
+        const showNode = !keyword || matchesKeyword(node, keyword);
+        if (keyword && !showNode) return '';
+
+        let displayName = node.name;
+        if (keyword) {
+            const lower = keyword.toLowerCase();
+            const idx = displayName.toLowerCase().indexOf(lower);
+            if (idx !== -1) {
+                const before = displayName.slice(0, idx);
+                const match = displayName.slice(idx, idx + keyword.length);
+                const after = displayName.slice(idx + keyword.length);
+                displayName = `${before}<span class="highlight">${match}</span>${after}`;
+            }
+        }
+
+        const childCount = hasChildren ? node.children.length : 0;
+        const badge = hasChildren ? `<span class="node-badge">${childCount}</span>` : '';
+
+        let childrenHtml = '';
+        if (hasChildren) {
+            for (const child of node.children) {
+                childrenHtml += renderNode(child, depth + 1, keyword, matchingIds);
+            }
+        }
+        if (keyword && hasChildren && !childrenHtml.trim() && isMatch) {
+            childrenHtml = `<div style="padding:6px 0 6px 28px;font-size:13px;color:#b0c0ce;">— 无匹配子节点 —</div>`;
+        }
+
+        const toggleClass = hasChildren ? '' : 'leaf';
+        const arrowClass = isExpanded ? 'open' : '';
+        const childrenClass = isExpanded ? 'open' : '';
+        const selectedClass = isMatch && keyword ? 'selected' : '';
+
+        return `
+            <li class="tree-node" data-id="${node.id}">
+                <div class="node-wrapper ${selectedClass}">
+                    <button class="toggle-btn ${toggleClass}" data-toggle="${node.id}" title="${hasChildren ? (isExpanded ? '折叠' : '展开') : '无子节点'}">
+                        <span class="arrow ${arrowClass}">▶</span>
+                    </button>
+                    <span class="node-name" data-id="${node.id}">${displayName}</span>
+                    ${badge}
+                    <div class="node-actions">
+                        <button class="btn-icon success" data-action="add" data-id="${node.id}" title="添加子节点">➕</button>
+                        <button class="btn-icon warning" data-action="edit" data-id="${node.id}" title="编辑名称">✏️</button>
+                        <button class="btn-icon danger" data-action="delete" data-id="${node.id}" title="删除节点">🗑️</button>
+                    </div>
+                </div>
+                ${hasChildren ? `<ul class="children-container ${childrenClass}" data-parent="${node.id}">${childrenHtml}</ul>` : ''}
+            </li>
+        `;
+    }
+
+    function bindTreeEvents() {
+        const root = document.getElementById('treeRoot');
+        root.onclick = function(e) {
+            const target = e.target.closest('button, .node-name');
+            if (!target) return;
+
+            if (target.classList.contains('toggle-btn')) {
+                const id = parseInt(target.dataset.toggle);
+                const node = findNodeById(treeData, id);
+                if (node && node.children && node.children.length > 0) {
+                    node.expanded = !node.expanded;
+                    renderTree();
+                }
+                return;
+            }
+
+            if (target.classList.contains('node-name')) {
+                const id = parseInt(target.dataset.id);
+                const node = findNodeById(treeData, id);
+                if (node && node.children && node.children.length > 0) {
+                    node.expanded = !node.expanded;
+                    renderTree();
+                }
+                return;
+            }
+
+            const action = target.dataset.action;
+            const id = parseInt(target.dataset.id);
+            if (!action || isNaN(id)) return;
+            const node = findNodeById(treeData, id);
+            if (!node) return;
+
+            switch (action) {
+                case 'add': handleAddChild(node); break;
+                case 'edit': handleEdit(node); break;
+                case 'delete': handleDelete(node); break;
+            }
+        };
+    }
+
+    function handleAddChild(node) {
+        const name = prompt('请输入新部门名称：', '新部门');
+        if (name === null) return;
+        const trimmed = name.trim();
+        if (!trimmed) { alert('名称不能为空！'); return; }
+        if (!node.children) node.children = [];
+        node.children.push({ id: generateId(), name: trimmed, expanded: true, children: [] });
+        node.expanded = true;
+        renderTree();
+    }
+
+    function handleEdit(node) {
+        const name = prompt('修改部门名称：', node.name);
+        if (name === null) return;
+        const trimmed = name.trim();
+        if (!trimmed) { alert('名称不能为空！'); return; }
+        node.name = trimmed;
+        renderTree();
+    }
+
+    function handleDelete(node) {
+        if (node.id === treeData.id) { alert('不能删除根节点！'); return; }
+        const childCount = node.children ? node.children.length : 0;
+        const msg = childCount > 0 ? `确定要删除「${node.name}」及其所有子节点（共 ${countNodes(node)} 个节点）吗？` : `确定要删除「${node.name}」吗？`;
+        if (!confirm(msg)) return;
+        const parent = findParent(treeData, node.id);
+        if (!parent) { alert('删除失败：找不到父节点'); return; }
+        if (deleteNodeById(parent, node.id)) renderTree(); else alert('删除失败，请重试');
+    }
+
+    function handleAddRoot() {
+        const name = prompt('请输入根部门名称：', '新部门');
+        if (name === null) return;
+        const trimmed = name.trim();
+        if (!trimmed) { alert('名称不能为空！'); return; }
+        if (!treeData.children) treeData.children = [];
+        treeData.children.push({ id: generateId(), name: trimmed, expanded: true, children: [] });
+        treeData.expanded = true;
+        renderTree();
+    }
+
+    function handleSearch(keyword) {
+        searchKeyword = keyword.trim();
+        renderTree();
+        const clearBtn = document.getElementById('clearSearchBtn');
+        if (searchKeyword) clearBtn.classList.add('visible');
+        else clearBtn.classList.remove('visible');
+    }
+
+    function exportJSON() {
+        const jsonStr = JSON.stringify(treeData, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `组织架构_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    function importJSON(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!data || typeof data !== 'object' || !data.id || !data.name) {
+                    alert('无效的JSON结构：缺少根节点的 id 或 name');
+                    return;
+                }
+                ensureExpanded(data);
+                treeData = data;
+                refreshNextId(treeData);
+                document.getElementById('searchInput').value = '';
+                searchKeyword = '';
+                renderTree();
+                alert('导入成功！');
+            } catch (err) {
+                alert('导入失败：文件格式错误或不是有效的JSON。\n' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function init() {
+        document.getElementById('searchInput').addEventListener('input', function() { handleSearch(this.value); });
+        document.getElementById('clearSearchBtn').addEventListener('click', function() {
+            document.getElementById('searchInput').value = '';
+            handleSearch('');
+            document.getElementById('searchInput').focus();
+        });
+        document.getElementById('addRootBtn').addEventListener('click', handleAddRoot);
+        document.getElementById('exportBtn').addEventListener('click', exportJSON);
+        document.getElementById('importBtn').addEventListener('click', function() { document.getElementById('fileInput').click(); });
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            if (this.files && this.files.length > 0) {
+                importJSON(this.files[0]);
+            }
+            this.value = '';
+        });
+        renderTree();
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
