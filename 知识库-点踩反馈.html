@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>药企AI知识库 · 反馈组件</title>
+    <!-- Font Awesome 图标库 (免费) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* 全局样式 & 重置 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f6f9fc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 720px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.03);
+            padding: 32px 28px;
+            transition: all 0.2s ease;
+        }
+
+        /* 头部 */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e9edf2;
+        }
+
+        .header i {
+            font-size: 22px;
+            color: #2563eb;
+            background: #eef3ff;
+            padding: 8px;
+            border-radius: 12px;
+        }
+
+        .header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: #0a1e3c;
+        }
+
+        .header .badge {
+            margin-left: auto;
+            background: #e9edf2;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        /* 问题 & 答案卡片 */
+        .qa-block {
+            background: #fafcff;
+            border-radius: 16px;
+            padding: 20px 20px 16px;
+            margin-bottom: 24px;
+            border: 1px solid #eef2f6;
+        }
+
+        .question {
+            font-weight: 600;
+            font-size: 16px;
+            color: #0f1e3c;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .question .q-label {
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        .answer {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #1e293b;
+            background: #ffffff;
+            padding: 16px 18px;
+            border-radius: 12px;
+            border-left: 4px solid #2563eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .answer .citation {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .answer .citation i {
+            margin-right: 6px;
+            font-size: 12px;
+        }
+
+        /* 反馈区域 */
+        .feedback-section {
+            margin-top: 8px;
+        }
+
+        .feedback-prompt {
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .feedback-prompt i {
+            color: #94a3b8;
+        }
+
+        .feedback-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-feedback {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            border-radius: 40px;
+            border: 1px solid #dce1e9;
+            background: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            font-family: inherit;
+        }
+
+        .btn-feedback:hover {
+            background: #f8fafc;
+            border-color: #b9c2d0;
+        }
+
+        .btn-feedback:active {
+            transform: scale(0.96);
+        }
+
+        .btn-feedback i {
+            font-size: 16px;
+        }
+
+        .btn-feedback.like i {
+            color: #22c55e;
+        }
+        .btn-feedback.dislike i {
+            color: #ef4444;
+        }
+
+        .btn-feedback.active-like {
+            background: #dcfce7;
+            border-color: #86efac;
+            color: #166534;
+        }
+
+        .btn-feedback.active-dislike {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+
+        /* 点踩详情面板 (扩展) */
+        .dislike-details {
+            margin-top: 18px;
+            padding: 20px 18px 18px;
+            background: #fefcfb;
+            border-radius: 16px;
+            border: 1px solid #f1e9e8;
+            display: none; /* 默认隐藏，点击踩后显示 */
+            animation: fadeSlideIn 0.2s ease;
+        }
+
+        .dislike-details.open {
+            display: block;
+        }
+
+        @keyframes fadeSlideIn {
+            0% { opacity: 0; transform: translateY(-6px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .dislike-details .sub-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dislike-details .sub-title i {
+            color: #ef4444;
+        }
+
+        /* 原因选项 (多选) */
+        .reason-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .reason-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 30px;
+            background: #f1f5f9;
+            border: 1px solid transparent;
+            font-size: 13px;
+            font-weight: 500;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            user-select: none;
+        }
+
+        .reason-tag:hover {
+            background: #e9edf2;
+        }
+
+        .reason-tag.selected {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1e3a8a;
+        }
+
+        .reason-tag input[type="checkbox"] {
+            display: none;
+        }
+
+        .reason-tag i {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        .reason-tag.selected i {
+            color: #2563eb;
+        }
+
+        /* 评论框 */
+        .comment-area {
+            margin-top: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .comment-area label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .comment-area textarea {
+            width: 100%;
+            border: 1px solid #dce1e9;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 64px;
+            background: #ffffff;
+            transition: border 0.2s;
+        }
+
+        .comment-area textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+
+        .comment-area .char-count {
+            font-size: 12px;
+            color: #94a3b8;
+            text-align: right;
+        }
+
+        /* 提交按钮 + 状态 */
+        .feedback-actions-bottom {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 16px;
+            align-items: center;
+        }
+
+        .btn-submit {
+            background: #2563eb;
+            border: none;
+            color: white;
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            box-shadow: 0 2px 6px rgba(37,99,235,0.2);
+            font-family: inherit;
+        }
+
+        .btn-submit:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.96);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 8px 12px;
+            font-weight: 500;
+        }
+
+        .btn-cancel:hover {
+            color: #1e293b;
+        }
+
+        .toast-message {
+            margin-top: 12px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            font-size: 14px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast-message.show {
+            display: flex;
+        }
+
+        .toast-message i {
+            color: #10b981;
+        }
+
+        /* 模拟用户信息（仅展示） */
+        .meta-info {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 12px;
+            border-top: 1px dashed #e9edf2;
+            padding-top: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* 响应式 */
+        @media (max-width: 500px) {
+            .container {
+                padding: 20px 16px;
+            }
+            .feedback-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .btn-feedback {
+                justify-content: center;
+            }
+            .reason-grid {
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- 头部 -->
+    <div class="header">
+        <i class="fas fa-flask"></i>
+        <h2>AI 知识库 · 反馈</h2>
+        <span class="badge">v2.3 · 药学</span>
+    </div>
+
+    <!-- 问题 & 答案展示区 -->
+    <div class="qa-block">
+        <div class="question">
+            <span class="q-label">Q:</span>
+            <span>对于接受阿哌沙班治疗的患者，若出现严重出血，应如何逆转抗凝作用？</span>
+        </div>
+        <div class="answer">
+            <p>目前尚无特异性逆转剂。对于严重出血，应立即停用阿哌沙班，并采取支持性措施，如压迫止血、手术干预、容量置换和血液制品输注。可考虑使用凝血酶原复合物浓缩物（PCC）或活化PCC（aPCC），但获益证据有限。请参照当地指南与药品说明书。</p>
+            <div class="citation">
+                <i class="fas fa-book-open"></i>
+                来源：阿哌沙班 FDA 说明书 (2024版) · 章节 8.2
+            </div>
+        </div>
+    </div>
+
+    <!-- 反馈模块 -->
+    <div class="feedback-section">
+        <div class="feedback-prompt">
+            <i class="fas fa-comment-dots"></i> 这个回答对您有帮助吗？
+        </div>
+
+        <div class="feedback-actions" id="feedbackActions">
+            <!-- 点赞按钮 -->
+            <button class="btn-feedback like" id="likeBtn" aria-label="点赞">
+                <i class="fas fa-thumbs-up"></i> 有帮助
+            </button>
+            <!-- 点踩按钮 -->
+            <button class="btn-feedback dislike" id="dislikeBtn" aria-label="点踩">
+                <i class="fas fa-thumbs-down"></i> 需改进
+            </button>
+            <span style="font-size:13px; color:#94a3b8; margin-left:4px;">反馈将帮助我们优化</span>
+        </div>
+
+        <!-- 点踩详情 (扩展) -->
+        <div class="dislike-details" id="dislikeDetails">
+            <div class="sub-title">
+                <i class="fas fa-exclamation-triangle"></i> 请告诉我们具体原因（可多选）
+            </div>
+
+            <!-- 原因选项（通过checkbox实现多选） -->
+            <div class="reason-grid" id="reasonGrid">
+                <label class="reason-tag" data-value="wrong_answer">
+                    <input type="checkbox" value="wrong_answer"> <i class="fas fa-times-circle"></i> 答案错误
+                </label>
+                <label class="reason-tag" data-value="missing_info">
+                    <input type="checkbox" value="missing_info"> <i class="fas fa-ellipsis-h"></i> 信息不完整
+                </label>
+                <label class="reason-tag" data-value="bad_citation">
+                    <input type="checkbox" value="bad_citation"> <i class="fas fa-quote-right"></i> 引用不准确
+                </label>
+                <label class="reason-tag" data-value="outdated_doc">
+                    <input type="checkbox" value="outdated_doc"> <i class="fas fa-clock"></i> 资料过时
+                </label>
+                <label class="reason-tag" data-value="not_relevant">
+                    <input type="checkbox" value="not_relevant"> <i class="fas fa-random"></i> 答非所问
+                </label>
+                <label class="reason-tag" data-value="too_vague">
+                    <input type="checkbox" value="too_vague"> <i class="fas fa-font"></i> 表述模糊
+                </label>
+            </div>
+
+            <!-- 补充评论 -->
+            <div class="comment-area">
+                <label for="commentInput">补充说明 <span style="font-weight:400;color:#94a3b8;">（选填）</span></label>
+                <textarea id="commentInput" placeholder="请描述您期望的答案或遇到的问题……" maxlength="300"></textarea>
+                <div class="char-count"><span id="charCount">0</span> / 300</div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="feedback-actions-bottom">
+                <button class="btn-cancel" id="cancelFeedback">取消</button>
+                <button class="btn-submit" id="submitFeedback">提交反馈</button>
+            </div>
+
+            <!-- 提交成功提示（隐藏） -->
+            <div class="toast-message" id="toastMessage">
+                <i class="fas fa-check-circle"></i>
+                <span>感谢您的反馈！我们将据此优化知识库。</span>
+            </div>
+        </div>
+
+        <!-- 元信息（模拟上下文） -->
+        <div class="meta-info">
+            <span><i class="far fa-clock"></i> 2026-07-15 · 回答生成耗时 1.2s</span>
+            <span><i class="fas fa-id-badge"></i> trace-id: f8a3b1c2-9d4e-4f7b-8a1c-2e3d4f5a6b7c</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // DOM 引用
+        const likeBtn = document.getElementById('likeBtn');
+        const dislikeBtn = document.getElementById('dislikeBtn');
+        const dislikeDetails = document.getElementById('dislikeDetails');
+        const reasonTags = document.querySelectorAll('.reason-tag');
+        const commentInput = document.getElementById('commentInput');
+        const charCount = document.getElementById('charCount');
+        const submitBtn = document.getElementById('submitFeedback');
+        const cancelBtn = document.getElementById('cancelFeedback');
+        const toast = document.getElementById('toastMessage');
+
+        // 状态
+        let currentFeedback = null; // 'like' or 'dislike'
+        let selectedReasons = new Set();
+
+        // ----- 辅助函数 -----
+        function updateCharCount() {
+            const len = commentInput.value.length;
+            charCount.textContent = len;
+            // 若接近上限，提示
+            if (len > 280) {
+                charCount.style.color = '#dc2626';
+            } else {
+                charCount.style.color = '#94a3b8';
+            }
+        }
+
+        // 重置点踩面板 (保留文本)
+        function resetDislikePanel(keepText = false) {
+            // 取消选中状态
+            reasonTags.forEach(tag => {
+                const cb = tag.querySelector('input[type="checkbox"]');
+                cb.checked = false;
+                tag.classList.remove('selected');
+            });
+            selectedReasons.clear();
+            if (!keepText) {
+                commentInput.value = '';
+                updateCharCount();
+            }
+            toast.classList.remove('show');
+            toast.style.display = 'none';
+        }
+
+        // 关闭面板并重置
+        function closeDislikePanel() {
+            dislikeDetails.classList.remove('open');
+            resetDislikePanel(false);
+            // 移除按钮active状态
+            dislikeBtn.classList.remove('active-dislike');
+            // 如果当前没有点赞，且我们关闭了，则清除反馈状态
+            if (currentFeedback === 'dislike') {
+                currentFeedback = null;
+                likeBtn.classList.remove('active-like');
+            }
+            // 启用提交按钮
+            submitBtn.disabled = false;
+        }
+
+        // 显示toast
+        function showToast(message) {
+            toast.querySelector('span').textContent = message || '感谢您的反馈！我们将据此优化知识库。';
+            toast.style.display = 'flex';
+            toast.classList.add('show');
+            // 4秒后自动隐藏
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.style.display = 'none';
+            }, 4000);
+        }
+
+        // 收集反馈数据 (模拟提交)
+        function submitFeedbackData() {
+            // 构建数据对象
+            const reasons = Array.from(selectedReasons);
+            const comment = commentInput.value.trim();
+
+            // 模拟上下文数据 (实际项目中这些会由系统自动附加)
+            const payload = {
+                feedback: 'dislike',
+                reasons: reasons,
+                comment: comment,
+                timestamp: new Date().toISOString(),
+                traceId: 'f8a3b1c2-9d4e-4f7b-8a1c-2e3d4f5a6b7c',
+                question: '对于接受阿哌沙班治疗的患者，若出现严重出血，应如何逆转抗凝作用？',
+                answer: '目前尚无特异性逆转剂。对于严重出血，应立即停用阿哌沙班...',
+                // 模拟用户角色 (可从全局获取)
+                userRole: 'MSL (医学顾问)'
+            };
+
+            console.log('📦 提交的反馈数据包:', JSON.stringify(payload, null, 2));
+
+            // 模拟网络请求
+            submitBtn.disabled = true;
+            submitBtn.textContent = '提交中...';
+
+            setTimeout(() => {
+                // 成功
+                submitBtn.disabled = false;
+                submitBtn.textContent = '提交反馈';
+                showToast('反馈已收到，感谢您的参与！');
+                // 关闭面板（保持toast显示）
+                closeDislikePanel();
+                // 清除点赞/踩状态
+                likeBtn.classList.remove('active-like');
+                dislikeBtn.classList.remove('active-dislike');
+                currentFeedback = null;
+                // 重置面板已由closeDislikePanel执行
+            }, 600);
+        }
+
+        // ----- 事件绑定 -----
+
+        // 1. 点赞
+        likeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // 如果已经点赞，取消点赞
+            if (currentFeedback === 'like') {
+                this.classList.remove('active-like');
+                currentFeedback = null;
+                // 如果有踩面板打开，关闭
+                if (dislikeDetails.classList.contains('open')) {
+                    closeDislikePanel();
+                }
+                return;
+            }
+
+            // 切换为点赞状态
+            // 先清除其他状态
+            dislikeBtn.classList.remove('active-dislike');
+            if (dislikeDetails.classList.contains('open')) {
+                closeDislikePanel();
+            }
+            this.classList.add('active-like');
+            currentFeedback = 'like';
+            // 可显示轻提示
+            showToast('感谢您的点赞！');
+            // 自动消失
+        });
+
+        // 2. 点踩
+        dislikeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // 如果已经踩，且面板打开，不做额外操作？或者关闭面板？
+            if (currentFeedback === 'dislike' && dislikeDetails.classList.contains('open')) {
+                // 如果用户再次点击踩，可以关闭面板（取消反馈）
+                closeDislikePanel();
+                this.classList.remove('active-dislike');
+                currentFeedback = null;
+                return;
+            }
+
+            // 切换为踩状态，打开面板
+            // 清除点赞状态
+            likeBtn.classList.remove('active-like');
+
+            // 标记为踩
+            this.classList.add('active-dislike');
+            currentFeedback = 'dislike';
+
+            // 重置面板内容 (保留可能之前填写的？我们决定重置，因为每次打开都是新的)
+            resetDislikePanel(false);
+            // 打开面板
+            dislikeDetails.classList.add('open');
+            // 聚焦到第一个原因（自动）
+            const firstCheckbox = document.querySelector('.reason-tag input[type="checkbox"]');
+            if (firstCheckbox) firstCheckbox.focus();
+
+            // 隐藏toast
+            toast.classList.remove('show');
+            toast.style.display = 'none';
+        });
+
+        // 3. 原因标签点击 (多选)
+        reasonTags.forEach(tag => {
+            tag.addEventListener('click', function(e) {
+                // 防止点击内部checkbox触发两次
+                const cb = this.querySelector('input[type="checkbox"]');
+                // 切换checkbox状态
+                cb.checked = !cb.checked;
+                // 更新UI
+                if (cb.checked) {
+                    this.classList.add('selected');
+                    selectedReasons.add(cb.value);
+                } else {
+                    this.classList.remove('selected');
+                    selectedReasons.delete(cb.value);
+                }
+                // 可选：通知状态
+            });
+
+            // 阻止checkbox默认事件冒泡 (由label处理)
+            const cb = tag.querySelector('input[type="checkbox"]');
+            cb.addEventListener('change', function(e) {
+                e.stopPropagation();
+                // 但已经由click处理，这里只做同步
+            });
+        });
+
+        // 4. 评论字数统计
+        commentInput.addEventListener('input', updateCharCount);
+
+        // 5. 取消按钮
+        cancelBtn.addEventListener('click', function() {
+            closeDislikePanel();
+            dislikeBtn.classList.remove('active-dislike');
+            if (currentFeedback === 'dislike') currentFeedback = null;
+        });
+
+        // 6. 提交按钮
+        submitBtn.addEventListener('click', function() {
+            // 至少选择一个原因
+            if (selectedReasons.size === 0) {
+                // 简单提醒
+                const firstTag = document.querySelector('.reason-tag');
+                if (firstTag) {
+                    firstTag.style.outline = '2px solid #ef4444';
+                    setTimeout(() => { firstTag.style.outline = ''; }, 1500);
+                }
+                // 使用alert或自定义提示，这里用简单alert
+                alert('请至少选择一个原因，以便我们改进。');
+                return;
+            }
+            submitFeedbackData();
+        });
+
+        // 7. 点击外部关闭面板? (可选) 不实现以免干扰
+
+        // 初始化字数
+        updateCharCount();
+
+        // 模拟: 如果用户关闭了面板但未提交，我们清理状态
+
+        console.log('✅ 反馈组件已加载');
+    })();
+</script>
+</body>
+</html>
