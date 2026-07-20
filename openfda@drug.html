@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FDA 药品信息多字段联合检索</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        /* ------------------ 全局重置 & 布局 ------------------ */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            background: #f5f7fb;
+            color: #1e293b;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            max-width: 1600px;
+            width: 100%;
+        }
+
+        /* 头部 */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+            background: white;
+            padding: 18px 28px;
+            border-radius: 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 i {
+            color: #0d6efd;
+        }
+
+        .header .badge {
+            background: #eef2ff;
+            color: #0d6efd;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* ------------------ 搜索面板（多条件） ------------------ */
+        .search-panel {
+            background: white;
+            padding: 20px 24px;
+            border-radius: 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            margin-bottom: 28px;
+        }
+
+        .condition-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .condition-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 12px;
+            background: #fafbfc;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #eef2f6;
+            transition: 0.15s;
+        }
+
+        .condition-row:hover {
+            background: #f8faff;
+            border-color: #d0d8e3;
+        }
+
+        .condition-row .logic-select {
+            min-width: 70px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 1.5px solid #e2e8f0;
+            background: white;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .condition-row .field-select {
+            min-width: 200px;
+            flex: 2 1 180px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1.5px solid #e2e8f0;
+            background: white;
+            font-size: 13px;
+        }
+
+        .condition-row .operator-select {
+            min-width: 80px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1.5px solid #e2e8f0;
+            background: white;
+            font-size: 13px;
+        }
+
+        .condition-row .value-input {
+            flex: 3 1 200px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1.5px solid #e2e8f0;
+            background: white;
+            font-size: 13px;
+            min-width: 120px;
+        }
+
+        .condition-row .value-input:focus,
+        .condition-row select:focus {
+            outline: none;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.08);
+        }
+
+        .condition-row .btn-remove {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 6px;
+            transition: 0.2s;
+        }
+
+        .condition-row .btn-remove:hover {
+            color: #dc2626;
+        }
+
+        .search-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #e9edf2;
+            color: #1e293b;
+        }
+
+        .btn-primary {
+            background: #0d6efd;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0b5ed7;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(13, 110, 253, 0.25);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid #d0d8e3;
+        }
+        .btn-outline:hover {
+            background: #f1f4f9;
+        }
+
+        .btn-success {
+            background: #0d9488;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #0f766e;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* 信息栏 */
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .info-bar .meta {
+            font-size: 14px;
+            color: #475569;
+            background: white;
+            padding: 8px 18px;
+            border-radius: 40px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .info-bar .meta strong {
+            color: #0f172a;
+        }
+
+        .info-bar .query-string {
+            font-size: 13px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 6px 16px;
+            border-radius: 30px;
+            max-width: 500px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: monospace;
+        }
+
+        /* 视图切换 */
+        .view-toggle {
+            display: flex;
+            gap: 6px;
+            background: white;
+            padding: 4px;
+            border-radius: 40px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .view-toggle button {
+            border: none;
+            background: transparent;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            color: #64748b;
+            transition: 0.15s;
+        }
+
+        .view-toggle button.active {
+            background: #0d6efd;
+            color: white;
+        }
+        .view-toggle button:not(.active):hover {
+            background: #eef2ff;
+            color: #0d6efd;
+        }
+
+        /* 主内容双栏 */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 24px;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 28px;
+            }
+        }
+
+        /* 卡片 */
+        .card {
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #f0f2f5;
+        }
+
+        .card-header {
+            padding: 16px 22px;
+            background: #fafbfc;
+            border-bottom: 1px solid #edf0f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .card-header i {
+            margin-right: 8px;
+            color: #0d6efd;
+        }
+
+        .card-body {
+            padding: 18px 22px 22px;
+            flex: 1;
+            overflow: auto;
+            max-height: 620px;
+        }
+
+        .card-body pre {
+            margin: 0;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 12.5px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: #0f172a;
+        }
+
+        /* 表格 */
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 560px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        table th {
+            background: #f1f5f9;
+            color: #1e293b;
+            font-weight: 600;
+            padding: 12px 12px;
+            text-align: left;
+            border-bottom: 2px solid #dce2ec;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 11;
+        }
+
+        table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eef2f6;
+            vertical-align: top;
+            word-break: break-word;
+            max-width: 280px;
+        }
+
+        table tr:hover td {
+            background: #fafbff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-state i {
+            font-size: 42px;
+            margin-bottom: 16px;
+            display: block;
+            color: #cbd5e1;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 0;
+            gap: 12px;
+            color: #0d6efd;
+        }
+
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #0d6efd;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .text-muted {
+            color: #64748b;
+        }
+
+        /* 辅助 */
+        .flex {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .mt-2 {
+            margin-top: 12px;
+        }
+
+        /* 自定义滚动 */
+        .card-body::-webkit-scrollbar,
+        .table-wrapper::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        .card-body::-webkit-scrollbar-track,
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .card-body::-webkit-scrollbar-thumb,
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- 头部 -->
+    <header class="header">
+        <h1><i class="fas fa-prescription-bottle-alt"></i> FDA 药品信息 · 多字段检索</h1>
+        <span class="badge"><i class="fas fa-database"></i> Drugs@FDA · openFDA</span>
+    </header>
+
+    <!-- 搜索面板：多条件 -->
+    <section class="search-panel">
+        <div class="condition-group" id="conditionGroup">
+            <!-- 条件行由 JS 动态生成，至少保留一行 -->
+        </div>
+        <div class="search-actions">
+            <button class="btn btn-outline" id="addConditionBtn"><i class="fas fa-plus"></i> 添加条件</button>
+            <button class="btn btn-primary" id="searchBtn"><i class="fas fa-play"></i> 查询</button>
+            <button class="btn btn-outline" id="resetBtn"><i class="fas fa-undo-alt"></i> 重置所有</button>
+            <span style="font-size:13px; color:#64748b; margin-left:8px;">
+                <i class="fas fa-info-circle"></i> 条件间默认为 AND，可调整每行的逻辑
+            </span>
+        </div>
+    </section>
+
+    <!-- 信息栏 -->
+    <div class="info-bar">
+        <div class="meta">
+            <i class="fas fa-circle-info"></i>
+            共 <strong id="resultCount">0</strong> 条记录
+            <span class="text-muted" style="margin-left:12px;" id="queryInfo">等待查询…</span>
+        </div>
+        <div class="query-string" id="queryStringDisplay">查询语句：—</div>
+        <div class="view-toggle">
+            <button class="active" data-view="both"><i class="fas fa-columns"></i> 并排</button>
+            <button data-view="table"><i class="fas fa-table"></i> 仅表格</button>
+            <button data-view="json"><i class="fas fa-code"></i> 仅JSON</button>
+        </div>
+    </div>
+
+    <!-- 主内容 -->
+    <div class="content-grid" id="contentGrid">
+        <!-- JSON 卡片 -->
+        <div class="card" id="jsonCard">
+            <div class="card-header">
+                <span><i class="fas fa-brackets-curly"></i> JSON 响应</span>
+                <button class="btn btn-outline" style="padding:4px 14px; font-size:12px;" id="copyJsonBtn"><i class="far fa-copy"></i> 复制</button>
+            </div>
+            <div class="card-body" id="jsonBody">
+                <div class="empty-state">
+                    <i class="fas fa-code"></i>
+                    <p>添加搜索条件后点击「查询」<br />将显示来自 openFDA 的原始 JSON</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表格卡片 -->
+        <div class="card" id="tableCard">
+            <div class="card-header">
+                <span><i class="fas fa-table"></i> 药品信息表格（动态列）</span>
+                <span style="font-weight:400; font-size:13px; color:#64748b;" id="tableMeta"></span>
+            </div>
+            <div class="card-body" id="tableBody">
+                <div class="empty-state">
+                    <i class="fas fa-table"></i>
+                    <p>查询结果将在此处以表格呈现</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部 -->
+    <div style="margin-top:32px; text-align:center; font-size:13px; color:#94a3b8; border-top:1px solid #e9edf2; padding-top:22px;">
+        <i class="fas fa-flask"></i> 数据来源于 <a href="https://open.fda.gov/apis/drug/drugsfda/" target="_blank" style="color:#0d6efd; text-decoration:none;">openFDA Drugs@FDA</a>
+        · 本工具支持多字段联合检索，涵盖PDF中所有字段
+    </div>
+</div>
+
+<script>
+    (function() {
+        "use strict";
+
+        // ---------- 全量字段列表（基于PDF） ----------
+        const ALL_FIELDS = [
+            // 顶层
+            'application_number',
+            // openfda 子字段
+            'openfda.application_number',
+            'openfda.brand_name',
+            'openfda.generic_name',
+            'openfda.manufacturer_name',
+            'openfda.nui',
+            'openfda.package_ndc',
+            'openfda.pharm_class_cs',
+            'openfda.pharm_class_epc',
+            'openfda.pharm_class_pe',
+            'openfda.pharm_class_moa',
+            'openfda.product_ndc',
+            'openfda.route',
+            'openfda.rxcui',
+            'openfda.spl_id',
+            'openfda.spl_set_id',
+            'openfda.substance_name',
+            'openfda.unii',
+            // products 子字段
+            'products.dosage_form',
+            'products.marketing_status',
+            'products.product_number',
+            'products.reference_drug',
+            'products.reference_standard',
+            'products.route',
+            'products.te_code',
+            // submissions 子字段
+            'submissions.submission_number',
+            'submissions.submission_type',
+            'submissions.submission_status',
+            'submissions.submission_status_date',
+            'submissions.review_priority',
+            'submissions.submission_class_code',
+            'submissions.submission_class_code_description',
+            'submissions.submission_public_notes',
+            'submissions.submission_property_type.code',
+            'submissions.application_docs.applications_doc_id',
+            'submissions.application_docs.applications_doc_date',
+            'submissions.application_docs.application_docs_title',
+            'submissions.application_docs.applications_doc_type',
+            'submissions.application_docs.applications_doc_url'
+        ];
+
+        // ---------- DOM 引用 ----------
+        const conditionGroup = document.getElementById('conditionGroup');
+        const addConditionBtn = document.getElementById('addConditionBtn');
+        const searchBtn = document.getElementById('searchBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const resultCount = document.getElementById('resultCount');
+        const queryInfo = document.getElementById('queryInfo');
+        const queryStringDisplay = document.getElementById('queryStringDisplay');
+        const jsonBody = document.getElementById('jsonBody');
+        const tableBody = document.getElementById('tableBody');
+        const tableMeta = document.getElementById('tableMeta');
+        const copyJsonBtn = document.getElementById('copyJsonBtn');
+        const contentGrid = document.getElementById('contentGrid');
+        const viewBtns = document.querySelectorAll('.view-toggle button');
+
+        // ---------- 状态 ----------
+        let currentData = null;
+        let currentResults = [];
+        let currentView = 'both';
+
+        // ---------- 辅助函数 ----------
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 从对象中按点号路径取值
+        function getNestedValue(obj, path) {
+            if (!obj || !path) return undefined;
+            const parts = path.split('.');
+            let current = obj;
+            for (const part of parts) {
+                if (current === null || current === undefined || typeof current !== 'object') return undefined;
+                // 如果当前是数组，尝试取第一个元素（适用于 products 等）
+                if (Array.isArray(current) && current.length > 0) {
+                    // 如果 part 是数字，直接取索引；否则取第一个元素的该属性
+                    if (!isNaN(part)) {
+                        current = current[parseInt(part)];
+                    } else {
+                        // 遍历数组，取每个元素的该属性？但这里我们简化，只取第一个
+                        // 但为了通用，我们取第一个非空值
+                        let found = undefined;
+                        for (let item of current) {
+                            const val = getNestedValue(item, part);
+                            if (val !== undefined && val !== null) {
+                                found = val;
+                                break;
+                            }
+                        }
+                        current = found;
+                    }
+                } else {
+                    current = current[part];
+                }
+            }
+            return current;
+        }
+
+        // 展平对象的所有叶子路径（用于动态列）
+        function flattenKeys(obj, prefix = '') {
+            if (!obj || typeof obj !== 'object') return [];
+            let keys = [];
+            for (let key of Object.keys(obj)) {
+                const val = obj[key];
+                const newPrefix = prefix ? `${prefix}.${key}` : key;
+                if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
+                    // 递归进入，但如果val是数组，我们只取第一个元素作为样例
+                    keys = keys.concat(flattenKeys(val, newPrefix));
+                } else if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
+                    // 数组内是对象，递归第一个元素
+                    keys = keys.concat(flattenKeys(val[0], newPrefix));
+                } else {
+                    keys.push(newPrefix);
+                }
+            }
+            return keys;
+        }
+
+        // 从结果集中提取所有出现的字段路径
+        function extractAllFields(results) {
+            const fieldSet = new Set();
+            results.forEach(item => {
+                const flat = flattenKeys(item);
+                flat.forEach(f => fieldSet.add(f));
+            });
+            return Array.from(fieldSet).sort();
+        }
+
+        // ---------- 视图切换 ----------
+        viewBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                viewBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentView = this.dataset.view;
+                applyView();
+            });
+        });
+
+        function applyView() {
+            const jsonCard = document.getElementById('jsonCard');
+            const tableCard = document.getElementById('tableCard');
+            if (currentView === 'both') {
+                contentGrid.style.gridTemplateColumns = '1fr 1.6fr';
+                jsonCard.style.display = 'flex';
+                tableCard.style.display = 'flex';
+            } else if (currentView === 'table') {
+                contentGrid.style.gridTemplateColumns = '1fr';
+                jsonCard.style.display = 'none';
+                tableCard.style.display = 'flex';
+            } else { // json
+                contentGrid.style.gridTemplateColumns = '1fr';
+                jsonCard.style.display = 'flex';
+                tableCard.style.display = 'none';
+            }
+        }
+
+        // ---------- 条件行管理 ----------
+        let conditionCounter = 0;
+
+        function createConditionRow(logic = 'AND', field = 'openfda.brand_name', operator = 'contains', value = '') {
+            const row = document.createElement('div');
+            row.className = 'condition-row';
+            row.dataset.index = conditionCounter++;
+
+            // 逻辑选择器（第一行隐藏，但为了统一，我们保留，但通过CSS隐藏？我们用JS控制）
+            const logicSelect = document.createElement('select');
+            logicSelect.className = 'logic-select';
+            logicSelect.innerHTML = `
+                <option value="AND" ${logic === 'AND' ? 'selected' : ''}>AND</option>
+                <option value="OR" ${logic === 'OR' ? 'selected' : ''}>OR</option>
+            `;
+            // 如果是第一行，隐藏逻辑选择器（但保留占位）
+            const isFirst = document.querySelectorAll('.condition-row').length === 0;
+            if (isFirst) {
+                logicSelect.style.display = 'none';
+            }
+
+            // 字段下拉
+            const fieldSelect = document.createElement('select');
+            fieldSelect.className = 'field-select';
+            ALL_FIELDS.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f;
+                opt.textContent = f;
+                if (f === field) opt.selected = true;
+                fieldSelect.appendChild(opt);
+            });
+
+            // 操作符
+            const operatorSelect = document.createElement('select');
+            operatorSelect.className = 'operator-select';
+            operatorSelect.innerHTML = `
+                <option value="contains" ${operator === 'contains' ? 'selected' : ''}>包含</option>
+                <option value="exact" ${operator === 'exact' ? 'selected' : ''}>精确</option>
+            `;
+
+            // 值输入
+            const valueInput = document.createElement('input');
+            valueInput.type = 'text';
+            valueInput.className = 'value-input';
+            valueInput.placeholder = '输入关键词…';
+            valueInput.value = value;
+
+            // 删除按钮
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'btn-remove';
+            removeBtn.innerHTML = '<i class="fas fa-times-circle"></i>';
+            removeBtn.title = '删除此条件';
+            removeBtn.addEventListener('click', function() {
+                if (document.querySelectorAll('.condition-row').length <= 1) {
+                    alert('至少保留一个条件');
+                    return;
+                }
+                row.remove();
+                // 更新逻辑显示：第一行隐藏逻辑
+                updateLogicVisibility();
+            });
+
+            row.appendChild(logicSelect);
+            row.appendChild(fieldSelect);
+            row.appendChild(operatorSelect);
+            row.appendChild(valueInput);
+            row.appendChild(removeBtn);
+
+            return row;
+        }
+
+        function updateLogicVisibility() {
+            const rows = document.querySelectorAll('.condition-row');
+            rows.forEach((row, idx) => {
+                const logicSel = row.querySelector('.logic-select');
+                if (idx === 0) {
+                    logicSel.style.display = 'none';
+                } else {
+                    logicSel.style.display = 'inline-block';
+                }
+            });
+        }
+
+        // 初始化默认一行
+        function initDefaultConditions() {
+            conditionGroup.innerHTML = '';
+            const firstRow = createConditionRow('AND', 'openfda.brand_name', 'contains', 'Aspirin');
+            conditionGroup.appendChild(firstRow);
+            updateLogicVisibility();
+        }
+        initDefaultConditions();
+
+        // 添加条件
+        addConditionBtn.addEventListener('click', function() {
+            const rows = document.querySelectorAll('.condition-row');
+            const lastLogic = rows.length > 0 ? rows[rows.length - 1].querySelector('.logic-select').value : 'AND';
+            const newRow = createConditionRow(lastLogic, 'openfda.generic_name', 'contains', '');
+            conditionGroup.appendChild(newRow);
+            updateLogicVisibility();
+        });
+
+        // ---------- 构建查询字符串 ----------
+        function buildSearchQuery() {
+            const rows = document.querySelectorAll('.condition-row');
+            const parts = [];
+            let logic = 'AND'; // 默认第一个无逻辑
+            rows.forEach((row, idx) => {
+                const field = row.querySelector('.field-select').value;
+                const operator = row.querySelector('.operator-select').value;
+                const value = row.querySelector('.value-input').value.trim();
+                if (!value) {
+                    // 空值忽略，但可以提示
+                    return;
+                }
+                let term = '';
+                if (operator === 'exact') {
+                    term = `${field}:"${value}"`;
+                } else {
+                    // contains: 直接 field:value，openFDA 默认分词匹配
+                    term = `${field}:${value}`;
+                }
+                if (idx === 0) {
+                    parts.push(term);
+                } else {
+                    // 获取该行的逻辑（上一行？实际上是每行自己的逻辑，但openFDA需要连接符，我们用每行的逻辑连接前一条件？更合理：每行逻辑表示与前面条件的连接方式，我们采用每行的逻辑作为其与前一个条件的连接。
+                    // 所以我们用每行的logic值连接它自己
+                    const logicSel = row.querySelector('.logic-select');
+                    const rowLogic = logicSel.value; // AND or OR
+                    // 但逻辑连接符应该放在条件之前，我们这里简单处理：使用该行的逻辑连接前一个条件
+                    // 但我们用 +AND+ 或 +OR+ 拼接，注意第一个条件没有前导逻辑。
+                    // 因此，我们记录每个条件的逻辑（第一个忽略）
+                    if (idx > 0) {
+                        const prevLogic = rowLogic; // 本行逻辑作为与前一个的连词
+                        parts.push(`${prevLogic} ${term}`);
+                    } else {
+                        parts.push(term);
+                    }
+                }
+            });
+            // 现在 parts 包含了每个条件的单独表达式，但逻辑连接符没有正确插入。我们使用更直接的方法：构建条件数组，每个条件有逻辑前缀。
+            // 重新构建：遍历rows，收集每个条件的term和逻辑（第一个无）
+            const terms = [];
+            rows.forEach((row, idx) => {
+                const field = row.querySelector('.field-select').value;
+                const operator = row.querySelector('.operator-select').value;
+                const value = row.querySelector('.value-input').value.trim();
+                if (!value) return;
+                let term = '';
+                if (operator === 'exact') {
+                    term = `${field}:"${value}"`;
+                } else {
+                    term = `${field}:${value}`;
+                }
+                if (idx === 0) {
+                    terms.push(term);
+                } else {
+                    const logicSel = row.querySelector('.logic-select');
+                    const rowLogic = logicSel.value;
+                    terms.push(`${rowLogic} ${term}`);
+                }
+            });
+            // 用 + 连接，但openFDA要求用 +AND+ 或 +OR+ 且前后有空格？实际上URL编码后是 + 表示空格，但查询语法用 +AND+ 表示逻辑。
+            // 官方示例：search=brand_name:"Tylenol"+AND+generic_name:"acetaminophen"
+            // 所以我们将每个term用 + 连接，但注意term已经包含逻辑词（除第一个），所以最终串为：term1 + term2...
+            // 但term2包含 "AND term" 或 "OR term"，所以直接 join('+') 即可，因为空格会被编码为+。
+            // 但我们需要确保逻辑词前后有空格，如 "AND term"，但当我们join('+')时，空格被编码为+，所以 "AND term" 变成 "AND+term"？不对。
+            // 更好的做法：每个term包含逻辑时已经包含空格，如 "AND term"，我们直接使用 + 连接，但空格在URL中变成+，所以 "AND term" 变成 "AND+term"？但这样会导致 "AND+term" 被解析为 "AND term"？实际上openFDA解析时，+表示空格，所以 "AND term" 会被解析为 AND term，正确。
+            // 因此我们直接使用 join('+')，其中每个元素如 "AND term" 会变成 "AND+term"，但我们需要的是 "AND term"，所以空格保留为+。
+            // 让我们构造每个元素为 "AND term" 形式，然后 join('+')，得到 "term1+AND+term2"？但term1是 "field:value" 没有逻辑，第二个是 "AND term2"，join后为 "field:value+AND+term2"，这正符合要求：+ 表示空格，所以是 "field:value AND term2"。
+            // 好，我们就用这种方法。
+            // 但注意，如果terms只有一项，直接返回该项。
+            if (terms.length === 0) return '';
+            if (terms.length === 1) return terms[0];
+            // 否则用 + 连接，但第一个元素无逻辑，第二个及之后含逻辑。
+            return terms.join('+');
+        }
+
+        // ---------- 执行查询 ----------
+        async function performSearch() {
+            const query = buildSearchQuery();
+            if (!query) {
+                alert('请至少填写一个有效的搜索条件');
+                return;
+            }
+
+            const limit = 10; // 固定10条，或可加控件，简单起见固定10
+            const url = `https://api.fda.gov/drug/drugsfda.json?search=${encodeURIComponent(query)}&limit=${limit}`;
+            queryStringDisplay.textContent = `查询语句：${query}`;
+
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 查询中';
+
+            jsonBody.innerHTML = `<div class="loading-spinner"><div class="spinner"></div> 加载中...</div>`;
+            tableBody.innerHTML = `<div class="loading-spinner"><div class="spinner"></div> 加载中...</div>`;
+            resultCount.textContent = '…';
+            queryInfo.textContent = '请求发送中…';
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errText.substring(0, 120)}`);
+                }
+                const data = await response.json();
+                currentData = data;
+                currentResults = data.results || [];
+
+                const total = data.meta?.results?.total || currentResults.length;
+                resultCount.textContent = total;
+                queryInfo.textContent = `条件数: ${document.querySelectorAll('.condition-row').length}`;
+
+                // 渲染 JSON
+                renderJSON(data);
+                // 渲染表格
+                renderTable(currentResults);
+                applyView();
+            } catch (err) {
+                console.error('查询失败:', err);
+                jsonBody.innerHTML = `
+                    <div class="empty-state" style="color:#dc2626;">
+                        <i class="fas fa-circle-exclamation"></i>
+                        <p><strong>请求失败</strong><br />${escapeHtml(err.message)}</p>
+                        <p style="font-size:13px; margin-top:8px;">请检查网络或查询条件后重试</p>
+                    </div>
+                `;
+                tableBody.innerHTML = `
+                    <div class="empty-state" style="color:#dc2626;">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <p>查询出错，请查看JSON面板了解详情</p>
+                    </div>
+                `;
+                resultCount.textContent = '0';
+                queryInfo.textContent = '查询失败';
+                currentData = null;
+                currentResults = [];
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.innerHTML = '<i class="fas fa-play"></i> 查询';
+            }
+        }
+
+        // ---------- 渲染 JSON ----------
+        function renderJSON(data) {
+            if (!data) {
+                jsonBody.innerHTML = `<div class="empty-state"><i class="fas fa-code"></i><p>暂无数据</p></div>`;
+                return;
+            }
+            const pretty = JSON.stringify(data, null, 2);
+            jsonBody.innerHTML = `<pre>${escapeHtml(pretty)}</pre>`;
+        }
+
+        // ---------- 渲染表格（动态列） ----------
+        function renderTable(results) {
+            if (!results || results.length === 0) {
+                tableBody.innerHTML = `<div class="empty-state"><i class="fas fa-table"></i><p>未查询到药品信息</p></div>`;
+                tableMeta.textContent = '';
+                return;
+            }
+
+            // 提取所有字段
+            const allFields = extractAllFields(results);
+            if (allFields.length === 0) {
+                tableBody.innerHTML = `<div class="empty-state"><i class="fas fa-table"></i><p>无字段可显示</p></div>`;
+                tableMeta.textContent = '';
+                return;
+            }
+
+            // 构建表格
+            let html = `<div class="table-wrapper"><table><thead><tr>`;
+            allFields.forEach(f => {
+                html += `<th>${escapeHtml(f)}</th>`;
+            });
+            html += `</tr></thead><tbody>`;
+
+            results.forEach(item => {
+                html += `<tr>`;
+                allFields.forEach(f => {
+                    let val = getNestedValue(item, f);
+                    if (val === undefined || val === null) val = '';
+                    if (Array.isArray(val)) val = val.join('; ');
+                    if (typeof val === 'object') val = JSON.stringify(val);
+                    html += `<td>${escapeHtml(String(val))}</td>`;
+                });
+                html += `</tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            tableBody.innerHTML = html;
+            tableMeta.textContent = `共 ${results.length} 条，${allFields.length} 列`;
+        }
+
+        // ---------- 重置 ----------
+        function resetAll() {
+            conditionGroup.innerHTML = '';
+            const firstRow = createConditionRow('AND', 'openfda.brand_name', 'contains', '');
+            conditionGroup.appendChild(firstRow);
+            updateLogicVisibility();
+            currentData = null;
+            currentResults = [];
+            resultCount.textContent = '0';
+            queryInfo.textContent = '已重置';
+            queryStringDisplay.textContent = '查询语句：—';
+            jsonBody.innerHTML = `<div class="empty-state"><i class="fas fa-code"></i><p>添加搜索条件后点击「查询」</p></div>`;
+            tableBody.innerHTML = `<div class="empty-state"><i class="fas fa-table"></i><p>查询结果将在此处以表格呈现</p></div>`;
+            tableMeta.textContent = '';
+            applyView();
+        }
+
+        // ---------- 复制 JSON ----------
+        copyJsonBtn.addEventListener('click', function() {
+            if (!currentData) {
+                alert('暂无JSON数据可复制');
+                return;
+            }
+            const text = JSON.stringify(currentData, null, 2);
+            navigator.clipboard.writeText(text).then(() => {
+                const original = copyJsonBtn.innerHTML;
+                copyJsonBtn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => { copyJsonBtn.innerHTML = original; }, 1800);
+            }).catch(() => alert('复制失败，请手动选择复制'));
+        });
+
+        // ---------- 事件绑定 ----------
+        searchBtn.addEventListener('click', performSearch);
+        resetBtn.addEventListener('click', resetAll);
+
+        // 回车触发查询（监听值输入框回车）
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.closest('.value-input')) {
+                performSearch();
+            }
+        });
+
+        // 默认自动查询一次（展示效果）
+        window.addEventListener('DOMContentLoaded', function() {
+            // 初始已有条件 "Aspirin"，自动查询
+            performSearch();
+        });
+
+    })();
+</script>
+</body>
+</html>
