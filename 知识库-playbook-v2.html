@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>药企知识库 Playbook 演示 (含 HR 模块)</title>
+  <style>
+    :root {
+      --bg-color: #f8fafc;
+      --sidebar-width: 240px;
+      --primary-color: #2563eb;
+      --primary-light: #eff6ff;
+      --border-color: #e2e8f0;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --card-hover-border: #93c5fd;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      display: flex;
+      height: 100vh;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+    }
+
+    /* 侧边栏布局 */
+    .sidebar {
+      width: var(--sidebar-width);
+      background-color: #ffffff;
+      border-right: 1px solid var(--border-color);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .history-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-item {
+      padding: 8px 12px;
+      font-size: 14px;
+      color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item:hover {
+      background-color: #f1f5f9;
+      color: var(--text-main);
+    }
+
+    /* 主内容区布局 */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* 对话输入框区域 */
+    .input-box-wrapper {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-box-wrapper:focus-within {
+      border-color: var(--primary-color);
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
+    }
+
+    .chat-textarea {
+      width: 100%;
+      height: 80px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 15px;
+      color: var(--text-main);
+    }
+
+    .input-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .send-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .send-btn:hover {
+      background-color: #1d4ed8;
+    }
+
+    /* Playbook 区域 */
+    .playbook-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Tab 切换 */
+    .playbook-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab-btn {
+      padding: 6px 16px;
+      border: 1px solid var(--border-color);
+      background-color: #ffffff;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab-btn:hover {
+      border-color: #cbd5e1;
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      background-color: var(--primary-light);
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    /* Playbook 卡片网格 */
+    .playbook-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .playbook-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .playbook-card:hover {
+      border-color: var(--card-hover-border);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .card-tag {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--primary-color);
+      background-color: var(--primary-light);
+      padding: 2px 6px;
+      border-radius: 4px;
+      width: fit-content;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: flex-end;
+      font-size: 12px;
+      color: var(--primary-color);
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .playbook-card:hover .card-footer {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 左侧边栏 -->
+  <aside class="sidebar">
+    <div class="sidebar-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+      药企智能知识库
+    </div>
+    <ul class="history-list">
+      <li class="history-item">阿司匹林溶出度标准查询</li>
+      <li class="history-item">GMP 变更分类评估参考</li>
+      <li class="history-item">差旅标准及报销流程</li>
+    </ul>
+  </aside>
+
+  <!-- 右侧主界面 -->
+  <main class="main-content">
+    <div class="chat-container">
+      
+      <!-- 输入框区域 -->
+      <div class="input-box-wrapper">
+        <textarea id="userInput" class="chat-textarea" placeholder="输入药品标准、法规条款、HR 制度进行智能检索..."></textarea>
+        <div class="input-actions">
+          <button class="send-btn">发送提问</button>
+        </div>
+      </div>
+
+      <!-- Playbook 区域 -->
+      <div class="playbook-container">
+        
+        <!-- Tab 切换按钮 -->
+        <div class="playbook-tabs">
+          <button class="tab-btn active" onclick="switchTab('yaodian')">
+            📘 药典 Playbook
+          </button>
+          <button class="tab-btn" onclick="switchTab('fagui')">
+            ⚖️ 法规 Playbook
+          </button>
+          <button class="tab-btn" onclick="switchTab('hr')">
+            👥 HR制度 Playbook
+          </button>
+        </div>
+
+        <!-- 1. 药典 Playbook 卡片列表 -->
+        <div id="yaodian-cards" class="playbook-grid">
+          <div class="playbook-card" onclick="fillPrompt('查找阿司匹林在《中国药典》中的有关物质检测方法及杂质限度要求。')">
+            <span class="card-tag">质量标准</span>
+            <div class="card-title">阿司匹林有关物质与限度</div>
+            <div class="card-desc">查询《中国药典》中对阿司匹林原料药及制剂的杂质控制与色谱条件。</div>
+            <div class="card-footer">使用此提示词 →</div>
+          </div>
+
+          <div class="playbook-card" onclick="fillPrompt('对比 ChP 2020 与 USP 43 中对阿司匹林片溶出度测定法的标准差异。')">
+            <span class="card-tag">中美药典对比</span>
+            <div class="card-title">ChP 与 USP 溶出度标准对比</div>
+            <div class="card-desc">快速比对中国药典与美国药典在介质、转速及限度上的具体差异。</div>
+            <div class="card-footer">使用此提示词 →</div>
+          </div>
+
+          <div class="playbook-card" onclick="fillPrompt('查询注射用大豆油的标准及在灭菌制剂中的应用规范。')">
+            <span class="card-tag">药用辅料</span>
+            <div class="card-title">注射用大豆油辅料标准</div>
+            <div class="card-desc">检索辅料通则、酸值、过氧化值等关键质量控制指标。</div>
+            <div class="card-footer">使用此提示词 →</div>
+          </div>
+        </div>
+
+        <!-- 2. 法规 Playbook 卡片列表 (默认隐藏) -->
+        <div id="fagui-cards" class="playbook-grid" style="display: none;">
+          <div class="playbook-card" onclick="fillPrompt('生产工艺中关键辅料供应商变更，属于几类变更？需要提交哪些评估资料？')">
+            <span class="card-tag">注册变更</span>
+            <div class="card-title">关键辅料供应商变更评估</div>
+            <div class="card-desc">依据《已上市化学药品变更事项及申报资料要求》进行变更分类判定。</div>
+            <div class="card-footer">使用此提示词 →</div>
+          </div>
+
+          <div class="playbook-card" onclick="fillPrompt('新版 GMP 对数据可靠性（ALCOA+ 原则）在电子批记录中的具体要求是什么？')">
+            <span class="card-tag">GMP 质量合规</span>
+            <div class="card-title">电子批记录与数据可靠性</div>
+            <div class="card-desc">检索数据可靠性指导原则及审计追踪（Audit Trail）的合规要点。</div>
+            <div class="card-footer">使用此提示词 →</div>
+          </div>
+
+          <div class="playbook-card" onclick="fillPrompt('针对二级药品召回，法规规定的通知时限和报告流程是什么？')">
+            <span class="card-tag">药品召回</span>
+            <div class="card-title">二级药品召回时限与流程</div>
+            <div class="card-desc">查询《药品召回管理办法》中对二级召回的时间窗口与监管报备要求。</div>
+            <div class="card-footer">使用此提示词 →</div>
+          </div>
+        </div>
+
+        <!-- 3. HR Playbook 卡片列表 (默认隐藏) -->
+        <div id="hr-cards" class="playbook-grid" style="display: none;">
+          <div class="playbook-card" onclick="fillPrompt('公司最新的考勤打卡规则、迟到早退扣罚标准，以及带薪年假的申请与扣减规定是什么？')">
+            <span class="card-tag">考勤休假</span>
+            <div class="card-title">考勤与带薪休假规定</div>
+            <div class="card-desc">查询上下班打卡补卡规则、年假抵扣比例及病假工资标准。</div>
+            <div class="card-footer">使用此提示词 →</div>
+          </div>
+
+          <div class="playbook-card" onclick="fillPrompt('销售及研发人员出差的住宿、交通工具选择标准是什么？差旅报销流程和审批节点有哪些？')">
+            <span class="card-tag">差旅报销</span>
+            <div class="card-title">差旅标准与报销流程</div>
+            <div class="card-desc">检索各职级机票/高铁舱位、酒店补贴限额及发票抬头报销规则。</div>
+            <div class="card-footer">使用此提示词 →</div>
+          </div>
+
+          <div class="playbook-card" onclick="fillPrompt('员工入职/转正/离职的手续办理流程是什么？如何在 HR 系统中申请在职证明和收入证明？')">
+            <span class="card-tag">办事流程</span>
+            <div class="card-title">员工办事与流程指引</div>
+            <div class="card-desc">了解转正答辩流程、离职交接清单以及各类人事证明开具路径。</div>
+            <div class="card-footer">使用此提示词 →</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // Tab 切换逻辑
+    function switchTab(type) {
+      const tabs = document.querySelectorAll('.tab-btn');
+      tabs.forEach(tab => tab.classList.remove('active'));
+
+      const yaodianGrid = document.getElementById('yaodian-cards');
+      const faguiGrid = document.getElementById('fagui-cards');
+      const hrGrid = document.getElementById('hr-cards');
+
+      // 隐藏所有卡片网格
+      yaodianGrid.style.display = 'none';
+      faguiGrid.style.display = 'none';
+      hrGrid.style.display = 'none';
+
+      // 根据选中的 type 激活对应的 Tab 并展示网格
+      if (type === 'yaodian') {
+        tabs[0].classList.add('active');
+        yaodianGrid.style.display = 'grid';
+      } else if (type === 'fagui') {
+        tabs[1].classList.add('active');
+        faguiGrid.style.display = 'grid';
+      } else if (type === 'hr') {
+        tabs[2].classList.add('active');
+        hrGrid.style.display = 'grid';
+      }
+    }
+
+    // 点击卡片填充输入框
+    function fillPrompt(text) {
+      const textarea = document.getElementById('userInput');
+      textarea.value = text;
+      textarea.focus();
+    }
+  </script>
+</body>
+</html>
