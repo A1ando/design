@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>药企 AI 知识库 - 同问模式对比 Demo</title>
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --bg-color: #f8fafc;
+      --border-color: #e2e8f0;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      display: flex;
+      justify-content: center;
+      padding: 30px 20px;
+      margin: 0;
+      color: var(--text-main);
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* 消息流区域 */
+    .chat-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 120px;
+    }
+
+    /* 用户问题气泡 */
+    .user-msg {
+      align-self: flex-end;
+      background: var(--primary-color);
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 12px 12px 2px 12px;
+      font-size: 14px;
+      max-width: 85%;
+      line-height: 1.5;
+    }
+
+    /* AI 回答卡片 */
+    .ai-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 模式卡片 Header */
+    .ai-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-hybrid { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
+    .badge-local { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
+
+    .status-info { font-size: 12px; color: var(--text-muted); }
+
+    .ai-content { font-size: 14px; line-height: 1.6; }
+    .section-title { font-size: 13px; font-weight: bold; margin: 12px 0 6px 0; }
+    .kb-title { color: #0f766e; }
+    .llm-title { color: #4338ca; }
+
+    .doc-link {
+      display: inline-block;
+      background: #f1f5f9;
+      color: var(--primary-color);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      text-decoration: none;
+      margin-top: 4px;
+    }
+
+    /* 整合式输入框 */
+    .input-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .input-card:focus-within { border-color: var(--primary-color); }
+
+    .chat-textarea {
+      width: 100%;
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 14px;
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 48px;
+      box-sizing: border-box;
+      background: transparent;
+    }
+
+    .input-bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    /* 内嵌平铺模式选择 */
+    .mode-pills-group {
+      display: inline-flex;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 8px;
+      gap: 2px;
+    }
+
+    .pill-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .pill-btn.active {
+      background: #ffffff;
+      color: var(--primary-color);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .send-btn {
+      background: var(--primary-color);
+      color: #ffffff;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* 加载中提示 */
+    .loading-card {
+      display: none;
+      padding: 14px;
+      color: var(--text-muted);
+      font-size: 13px;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chat-container">
+    
+    <!-- 对话展示区 -->
+    <div class="chat-stream" id="chat-stream">
+      <!-- 初始空状态提示 -->
+      <div class="ai-card" id="welcome-card">
+        <div class="ai-header">
+          <span class="badge badge-hybrid">🤖 模式对比演示</span>
+        </div>
+        <div class="ai-content">
+          请输入同一个问题，先选择 <b>✨ 混合模式</b> 提问，再选择 <b>🔒 仅内部知识</b> 提问，观察回答差异。
+        </div>
+      </div>
+    </div>
+
+    <!-- 加载状态 -->
+    <div class="loading-card" id="loading">
+      ⏳ 正在思考并检索知识库...
+    </div>
+
+    <!-- 整合式输入框组件 -->
+    <div class="input-card">
+      <textarea 
+        id="user-input" 
+        class="chat-textarea" 
+        placeholder="请输入提问内容..."
+      >阿司匹林的作用机制是什么？冷链 SOP 要求是怎样的？</textarea>
+      
+      <div class="input-bottom-bar">
+        <!-- 内嵌模式平铺选择器 -->
+        <div class="mode-pills-group">
+          <button class="pill-btn active" id="btn-hybrid" onclick="setMode('hybrid')">
+            ✨ 混合模式
+          </button>
+          <button class="pill-btn" id="btn-local" onclick="setMode('local')">
+            🔒 仅内部知识
+          </button>
+        </div>
+
+        <button class="send-btn" id="send-btn" onclick="handleSend()">发送提问</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let activeMode = 'hybrid';
+
+    function setMode(mode) {
+      activeMode = mode;
+      document.getElementById('btn-hybrid').classList.toggle('active', mode === 'hybrid');
+      document.getElementById('btn-local').classList.toggle('active', mode === 'local');
+    }
+
+    function handleSend() {
+      const inputEl = document.getElementById('user-input');
+      const sendBtn = document.getElementById('send-btn');
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      const welcomeCard = document.getElementById('welcome-card');
+      if (welcomeCard) welcomeCard.remove();
+
+      const stream = document.getElementById('chat-stream');
+      const loading = document.getElementById('loading');
+
+      // 1. 渲染用户提问气泡（带上发送时选择的模式提示）
+      const userNode = document.createElement('div');
+      userNode.className = 'user-msg';
+      userNode.innerHTML = `${text} <br><small style="opacity:0.8; font-size:11px;">[模式：${activeMode === 'hybrid' ? '✨ 混合模式' : '🔒 仅内部知识'}]</small>`;
+      stream.appendChild(userNode);
+
+      loading.style.display = 'block';
+      sendBtn.disabled = true;
+      window.scrollTo(0, document.body.scrollHeight);
+
+      // 2. 模拟根据相同问题在两种不同模式下的处理
+      setTimeout(() => {
+        loading.style.display = 'none';
+        sendBtn.disabled = false;
+
+        const aiNode = document.createElement('div');
+        aiNode.className = 'ai-card';
+
+        // 模拟同一个问题在两种模式下的逻辑差异：
+        if (activeMode === 'hybrid') {
+          // 混合模式：内部 SOP 解答冷链，通识解答作用机制
+          aiNode.innerHTML = `
+            <div class="ai-header">
+              <span class="badge badge-hybrid">✨ 混合模式回答</span>
+              <span class="status-info">检索范围：内部知识库 + 大模型通识</span>
+            </div>
+            <div class="ai-content">
+              <div class="section-title kb-title">🏢 内部 SOP 匹配解答</div>
+              关于冷链运输要求：<br>
+              根据公司规范，冷链药品须全程储存于 <strong>2~8°C 恒温箱</strong>，且温湿度监测数据须实时上传系统保存 3 年。<br>
+              <a href="#" class="doc-link">📄 关联文件：《冷链物流管理规范-SOP-QA-089.pdf》</a>
+
+              <div class="section-title llm-title">💡 大模型通识补充</div>
+              关于阿司匹林作用机制：<br>
+              阿司匹林（乙酰水杨酸）主要通过<strong>不可逆地抑制环氧合酶-1（COX-1）</strong>，减少血栓素 A2（TXA2）生成，从而发挥解热镇痛及抗血小板聚集（抗血栓）的功效。
+            </div>
+          `;
+        } else {
+          // 仅内部知识模式：仅展示查到的冷链 SOP，对未在内部库记载的作用机制做出合规拦截提示
+          aiNode.innerHTML = `
+            <div class="ai-header">
+              <span class="badge badge-local">🔒 仅内部知识模式回答</span>
+              <span class="status-info">检索范围：仅内部文档库</span>
+            </div>
+            <div class="ai-content">
+              <div class="section-title kb-title">🏢 内部 SOP 匹配解答</div>
+              关于冷链运输要求：<br>
+              根据公司规范，冷链药品须全程储存于 <strong>2~8°C 恒温箱</strong>，且温湿度监测数据须实时上传系统保存 3 年。<br>
+              <a href="#" class="doc-link">📄 关联文件：《冷链物流管理规范-SOP-QA-089.pdf》</a>
+
+              <div class="section-title" style="color: #c2410c;">⚠️ 提示</div>
+              <small style="color:var(--text-muted)">关于“阿司匹林作用机制”，内部 SOP 数据库中未检索到相关记载。当前处于【仅内部知识】模式，已拦截大模型通识补充。</small>
+            </div>
+          `;
+        }
+
+        stream.appendChild(aiNode);
+        window.scrollTo(0, document.body.scrollHeight);
+      }, 600);
+    }
+  </script>
+
+</body>
+</html>
