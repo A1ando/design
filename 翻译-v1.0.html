@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PharmaTrans · 药企内部翻译平台</title>
+    <style>
+        /* ===== CSS Variables ===== */
+        :root {
+            --primary: #0a3d6b;
+            --primary-light: #1a5a8a;
+            --primary-lighter: #e8f0fe;
+            --primary-gradient: linear-gradient(135deg, #0a3d6b 0%, #1a7a9e 100%);
+            --accent: #2d8fc5;
+            --accent-light: #e3f0fa;
+            --success: #1a8a4a;
+            --gray-50: #f8f9fc;
+            --gray-100: #f0f2f6;
+            --gray-200: #e2e6ee;
+            --gray-300: #c8ced8;
+            --gray-400: #a0a8b8;
+            --gray-500: #6c7a8a;
+            --gray-600: #4a5a6a;
+            --gray-700: #2d3a4a;
+            --gray-800: #1a2533;
+            --shadow-sm: 0 1px 3px rgba(10, 61, 107, 0.08);
+            --shadow-md: 0 4px 16px rgba(10, 61, 107, 0.12);
+            --shadow-lg: 0 8px 32px rgba(10, 61, 107, 0.16);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ===== Reset & Base ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== Scrollbar ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--gray-100);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-400);
+        }
+
+        /* ===== Header ===== */
+        .header {
+            background: var(--primary-gradient);
+            color: #fff;
+            padding: 0 32px;
+            height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            box-shadow: 0 2px 12px rgba(10, 61, 107, 0.25);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-logo {
+            width: 38px;
+            height: 38px;
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.5px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .header-title span {
+            font-weight: 300;
+            opacity: 0.8;
+            font-size: 14px;
+            margin-left: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-badge {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(4px);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+            opacity: 0.85;
+        }
+        .header-right .user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-right .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* ===== Navigation Tabs ===== */
+        .nav-tabs {
+            background: #fff;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 68px;
+            z-index: 99;
+        }
+
+        .nav-tab {
+            padding: 16px 24px;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--gray-500);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            border-bottom: 3px solid transparent;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            font-family: inherit;
+        }
+        .nav-tab:hover {
+            color: var(--primary);
+            background: var(--gray-50);
+        }
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            font-weight: 600;
+        }
+        .nav-tab .icon {
+            font-size: 18px;
+            line-height: 1;
+        }
+        .nav-tab .badge {
+            background: var(--gray-200);
+            color: var(--gray-600);
+            font-size: 10px;
+            padding: 1px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+            margin-left: 2px;
+        }
+        .nav-tab.active .badge {
+            background: var(--primary-lighter);
+            color: var(--primary);
+        }
+
+        /* ===== Main Layout ===== */
+        .main {
+            flex: 1;
+            padding: 24px 32px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* ===== Language Bar ===== */
+        .lang-bar {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            margin-bottom: 20px;
+        }
+
+        .lang-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 180px;
+        }
+        .lang-group label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-600);
+            white-space: nowrap;
+        }
+        .lang-group select {
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            background: #fff;
+            font-size: 14px;
+            color: var(--gray-700);
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition);
+            flex: 1;
+            min-width: 120px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c7a8a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+        .lang-group select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(45, 143, 197, 0.15);
+        }
+
+        .lang-swap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--gray-200);
+            background: #fff;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 18px;
+            color: var(--gray-500);
+            flex-shrink: 0;
+        }
+        .lang-swap:hover {
+            background: var(--primary-lighter);
+            border-color: var(--accent);
+            color: var(--primary);
+            transform: rotate(180deg);
+        }
+
+        /* ===== Tab Content ===== */
+        .tab-content {
+            display: none;
+            animation: fadeSlideIn 0.35s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeSlideIn {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== Text Translation ===== */
+        .translate-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .translate-panel {
+            background: #fff;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+        .translate-panel:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .panel-header {
+            padding: 14px 20px;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--gray-500);
+            font-weight: 500;
+        }
+        .panel-header .lang-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel-header .lang-label .flag {
+            font-size: 18px;
+        }
+        .panel-header .actions {
+            display: flex;
+            gap: 6px;
+        }
+        .panel-header .actions button {
+            background: transparent;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        .panel-header .actions button:hover {
+            background: var(--gray-200);
+            color: var(--gray-600);
+        }
+
+        .panel-body {
+            flex: 1;
+            padding: 16px 20px;
+            min-height: 280px;
+        }
+        .panel-body textarea {
+            width: 100%;
+            height: 100%;
+            min-height: 240px;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--gray-700);
+            font-family: inherit;
+            background: transparent;
+        }
+        .panel-body textarea::placeholder {
+            color: var(--gray-400);
+        }
+        .panel-body .result-content {
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--gray-700);
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 240px;
+        }
+        .panel-body .result-content .placeholder {
+            color: var(--gray-400);
+            font-style: italic;
+        }
+        .panel-body .result-content .highlight-term {
+            background: var(--accent-light);
+            color: var(--primary);
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .panel-footer {
+            padding: 12px 20px;
+            border-top: 1px solid var(--gray-200);
+            background: var(--gray-50);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--gray-400);
+        }
+        .panel-footer .char-count {
+            color: var(--gray-400);
+        }
+        .panel-footer .char-count .num {
+            font-weight: 600;
+            color: var(--gray-600);
+        }
+
+        /* ===== Translate Button ===== */
+        .translate-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 12px 40px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-family: inherit;
+        }
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(10, 61, 107, 0.25);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(10, 61, 107, 0.35);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+        .btn-success {
+            background: var(--success);
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #0f7a3e;
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* ===== Document Translation ===== */
+        .doc-upload-area {
+            background: #fff;
+            border-radius: var(--radius);
+            border: 2px dashed var(--gray-300);
+            padding: 48px 32px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+        .doc-upload-area:hover {
+            border-color: var(--accent);
+            background: var(--gray-50);
+        }
+        .doc-upload-area.dragover {
+            border-color: var(--accent);
+            background: var(--primary-lighter);
+            transform: scale(1.01);
+        }
+        .doc-upload-area .icon-big {
+            font-size: 52px;
+            margin-bottom: 12px;
+            display: block;
+        }
+        .doc-upload-area h4 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 6px;
+        }
+        .doc-upload-area p {
+            color: var(--gray-500);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .doc-upload-area .formats {
+            color: var(--gray-400);
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        .doc-upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .doc-file-list {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .doc-file-item {
+            background: #fff;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-sm);
+        }
+        .doc-file-item .file-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .doc-file-item .file-info .name {
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+        .doc-file-item .file-info .size {
+            font-size: 13px;
+            color: var(--gray-400);
+        }
+        .doc-file-item .file-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .doc-file-item .file-status .progress {
+            width: 120px;
+            height: 4px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .doc-file-item .file-status .progress .bar {
+            height: 100%;
+            background: var(--primary-gradient);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        .doc-file-item .file-status .status-text {
+            font-size: 13px;
+            color: var(--gray-500);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .doc-result {
+            margin-top: 20px;
+            background: #fff;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            padding: 20px 24px;
+            box-shadow: var(--shadow-sm);
+        }
+        .doc-result .result-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--gray-700);
+            margin-bottom: 12px;
+        }
+        .doc-result .result-preview {
+            background: var(--gray-50);
+            padding: 16px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--gray-600);
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--gray-200);
+        }
+        .doc-result .result-actions {
+            margin-top: 14px;
+            display: flex;
+            gap: 12px;
+        }
+
+        /* ===== Image Translation ===== */
+        .img-upload-area {
+            background: #fff;
+            border-radius: var(--radius);
+            border: 2px dashed var(--gray-300);
+            padding: 40px 32px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+        .img-upload-area:hover {
+            border-color: var(--accent);
+            background: var(--gray-50);
+        }
+        .img-upload-area.dragover {
+            border-color: var(--accent);
+            background: var(--primary-lighter);
+        }
+        .img-upload-area .icon-big {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .img-upload-area h4 {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+        .img-upload-area p {
+            color: var(--gray-500);
+            font-size: 14px;
+        }
+        .img-upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .img-preview-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .img-preview-box {
+            background: #fff;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        .img-preview-box .box-header {
+            padding: 12px 18px;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--gray-600);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .img-preview-box .box-body {
+            padding: 16px;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gray-50);
+        }
+        .img-preview-box .box-body img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 4px;
+            object-fit: contain;
+        }
+        .img-preview-box .box-body .empty-text {
+            color: var(--gray-400);
+            font-size: 14px;
+        }
+        .img-preview-box .box-body .ocr-text {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--gray-700);
+            width: 100%;
+            max-height: 260px;
+            overflow-y: auto;
+            padding: 4px;
+            white-space: pre-wrap;
+        }
+        .img-preview-box .box-body .ocr-text .highlight {
+            background: #fef9e7;
+            padding: 1px 4px;
+            border-radius: 3px;
+            border-bottom: 2px solid #f1c40f;
+        }
+
+        /* ===== Term Tips ===== */
+        .term-tips {
+            margin-top: 24px;
+            background: #fff;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            padding: 16px 24px;
+            box-shadow: var(--shadow-sm);
+        }
+        .term-tips .term-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-600);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .term-tips .term-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .term-tips .term-tag {
+            background: var(--primary-lighter);
+            color: var(--primary);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid rgba(10, 61, 107, 0.08);
+            transition: var(--transition);
+            cursor: default;
+        }
+        .term-tips .term-tag:hover {
+            background: var(--primary);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        .term-tips .term-tag .en {
+            font-weight: 400;
+            opacity: 0.7;
+            margin-left: 4px;
+        }
+
+        /* ===== Toast ===== */
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: var(--gray-800);
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            animation: slideUpToast 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+            max-width: 400px;
+        }
+        .toast.success {
+            background: var(--success);
+        }
+        .toast.info {
+            background: var(--primary);
+        }
+        @keyframes slideUpToast {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.96);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* ===== Loading Spinner ===== */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .spinner-sm {
+            width: 16px;
+            height: 16px;
+            border-width: 2px;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 1024px) {
+            .translate-grid {
+                grid-template-columns: 1fr;
+            }
+            .img-preview-wrapper {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                padding: 0 20px;
+            }
+            .nav-tabs {
+                padding: 0 16px;
+                overflow-x: auto;
+                gap: 0;
+            }
+            .nav-tab {
+                padding: 14px 16px;
+                font-size: 14px;
+                white-space: nowrap;
+            }
+            .main {
+                padding: 16px;
+            }
+            .lang-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .lang-group {
+                min-width: unset;
+            }
+            .lang-swap {
+                align-self: center;
+                transform: rotate(90deg);
+            }
+            .lang-swap:hover {
+                transform: rotate(270deg);
+            }
+            .header-title span {
+                display: none;
+            }
+            .header-badge {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                height: 58px;
+                padding: 0 14px;
+            }
+            .header-title {
+                font-size: 16px;
+            }
+            .header-logo {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+            .header-right .user span {
+                display: none;
+            }
+            .nav-tab {
+                font-size: 13px;
+                padding: 12px 12px;
+            }
+            .nav-tab .badge {
+                display: none;
+            }
+            .panel-body {
+                min-height: 180px;
+                padding: 12px 16px;
+            }
+            .panel-body textarea {
+                min-height: 150px;
+                font-size: 14px;
+            }
+            .panel-body .result-content {
+                min-height: 150px;
+                font-size: 14px;
+            }
+            .btn {
+                padding: 10px 24px;
+                font-size: 14px;
+            }
+            .doc-upload-area {
+                padding: 30px 16px;
+            }
+            .doc-upload-area .icon-big {
+                font-size: 36px;
+            }
+            .img-upload-area {
+                padding: 28px 16px;
+            }
+            .img-upload-area .icon-big {
+                font-size: 36px;
+            }
+            .term-tips .term-tag {
+                font-size: 12px;
+                padding: 3px 10px;
+            }
+            .toast-container {
+                bottom: 16px;
+                right: 16px;
+                left: 16px;
+            }
+            .toast {
+                font-size: 13px;
+                padding: 12px 16px;
+                min-width: unset;
+                max-width: 100%;
+            }
+            .doc-file-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .doc-file-item .file-status {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header class="header">
+        <div class="header-left">
+            <div class="header-logo">🧬</div>
+            <div class="header-title">
+                PharmaTrans
+                <span>· 药企智能翻译平台</span>
+            </div>
+            <span class="header-badge">🔒 内部专用</span>
+        </div>
+        <div class="header-right">
+            <div class="user">
+                <span>张博士</span>
+                <div class="avatar">张</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== NAVIGATION ===== -->
+    <nav class="nav-tabs" id="navTabs">
+        <button class="nav-tab active" data-tab="text">
+            <span class="icon">📝</span> 文本翻译
+            <span class="badge">专业术语</span>
+        </button>
+        <button class="nav-tab" data-tab="document">
+            <span class="icon">📄</span> 文档翻译
+            <span class="badge">PDF/Word</span>
+        </button>
+        <button class="nav-tab" data-tab="image">
+            <span class="icon">🖼️</span> 图片翻译
+            <span class="badge">OCR</span>
+        </button>
+    </nav>
+
+    <!-- ===== MAIN ===== -->
+    <main class="main">
+
+        <!-- ===== Language Bar ===== -->
+        <div class="lang-bar">
+            <div class="lang-group">
+                <label>🌐 源语言</label>
+                <select id="sourceLang">
+                    <option value="zh">中文</option>
+                    <option value="en">英语</option>
+                    <option value="ja">日语</option>
+                    <option value="ko">韩语</option>
+                    <option value="fr">法语</option>
+                    <option value="de">德语</option>
+                </select>
+            </div>
+            <button class="lang-swap" id="swapLang" title="交换语言">⇄</button>
+            <div class="lang-group">
+                <label>🎯 目标语言</label>
+                <select id="targetLang">
+                    <option value="en">英语</option>
+                    <option value="zh" selected>中文</option>
+                    <option value="ja">日语</option>
+                    <option value="ko">韩语</option>
+                    <option value="fr">法语</option>
+                    <option value="de">德语</option>
+                </select>
+            </div>
+            <div style="flex:1; min-width:60px;"></div>
+            <button class="btn btn-primary" id="mainTranslateBtn" style="padding: 8px 28px; font-size:14px;">
+                ⚡ 翻译
+            </button>
+        </div>
+
+        <!-- ===== TAB: 文本翻译 ===== -->
+        <div class="tab-content active" id="tabText">
+            <div class="translate-grid">
+                <!-- 原文面板 -->
+                <div class="translate-panel">
+                    <div class="panel-header">
+                        <div class="lang-label">
+                            <span class="flag" id="sourceFlag">🇨🇳</span>
+                            <span id="sourceLabel">中文</span>
+                        </div>
+                        <div class="actions">
+                            <button id="clearSource" title="清空">🗑️</button>
+                            <button id="pasteSource" title="粘贴">📋</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <textarea id="sourceText" placeholder="请输入待翻译的文本… 支持医药专业术语识别">临床试验显示，该药物在双盲安慰剂对照研究中表现出显著的药代动力学优势。</textarea>
+                    </div>
+                    <div class="panel-footer">
+                        <span class="char-count">字数 <span class="num" id="sourceCount">0</span></span>
+                        <span>⌨️ Ctrl + Enter 翻译</span>
+                    </div>
+                </div>
+
+                <!-- 译文面板 -->
+                <div class="translate-panel">
+                    <div class="panel-header">
+                        <div class="lang-label">
+                            <span class="flag" id="targetFlag">🇬🇧</span>
+                            <span id="targetLabel">英语</span>
+                        </div>
+                        <div class="actions">
+                            <button id="copyResult" title="复制">📄</button>
+                            <button id="clearResult" title="清空">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="result-content" id="resultContent">
+                            <span class="placeholder">翻译结果将在这里显示…</span>
+                        </div>
+                    </div>
+                    <div class="panel-footer">
+                        <span class="char-count">译文 <span class="num" id="resultCount">0</span> 字符</span>
+                        <span>✅ 术语高亮</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 术语提示 -->
+            <div class="term-tips">
+                <div class="term-title">🧪 医药术语库 · 快速参考</div>
+                <div class="term-tags">
+                    <span class="term-tag">临床试验 <span class="en">Clinical Trial</span></span>
+                    <span class="term-tag">双盲 <span class="en">Double-blind</span></span>
+                    <span class="term-tag">安慰剂对照 <span class="en">Placebo-controlled</span></span>
+                    <span class="term-tag">药代动力学 <span class="en">Pharmacokinetics</span></span>
+                    <span class="term-tag">生物等效性 <span class="en">Bioequivalence</span></span>
+                    <span class="term-tag">随机化 <span class="en">Randomization</span></span>
+                    <span class="term-tag">知情同意 <span class="en">Informed Consent</span></span>
+                    <span class="term-tag">伦理委员会 <span class="en">Ethics Committee</span></span>
+                    <span class="term-tag">GMP <span class="en">Good Manufacturing Practice</span></span>
+                    <span class="term-tag">药物不良反应 <span class="en">Adverse Drug Reaction</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: 文档翻译 ===== -->
+        <div class="tab-content" id="tabDocument">
+            <div class="doc-upload-area" id="docUploadArea">
+                <span class="icon-big">📂</span>
+                <h4>上传文档进行翻译</h4>
+                <p>拖拽文件到此处，或点击选择文件</p>
+                <div class="formats">支持 PDF · DOCX · XLSX · PPTX · TXT (最大 20MB)</div>
+                <input type="file" id="docFileInput" accept=".pdf,.docx,.xlsx,.pptx,.txt" />
+            </div>
+
+            <div class="doc-file-list" id="docFileList"></div>
+
+            <div class="translate-actions" style="margin-top:16px;">
+                <button class="btn btn-primary" id="docTranslateBtn" disabled>📄 开始翻译</button>
+                <button class="btn btn-secondary" id="docClearBtn">🗑️ 清空</button>
+            </div>
+
+            <div class="doc-result" id="docResult" style="display:none;">
+                <div class="result-title">📑 翻译结果</div>
+                <div class="result-preview" id="docResultPreview">
+                    翻译后的文档内容将在此显示…
+                </div>
+                <div class="result-actions">
+                    <button class="btn btn-success" id="docDownloadBtn">⬇️ 下载译文</button>
+                    <button class="btn btn-secondary" id="docCopyBtn">📄 复制文本</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: 图片翻译 ===== -->
+        <div class="tab-content" id="tabImage">
+            <div class="img-upload-area" id="imgUploadArea">
+                <span class="icon-big">🖼️</span>
+                <h4>上传图片提取并翻译文字</h4>
+                <p>拖拽图片到此处，或点击选择文件</p>
+                <div class="formats">支持 JPG · PNG · BMP · WEBP (最大 10MB)</div>
+                <input type="file" id="imgFileInput" accept="image/*" />
+            </div>
+
+            <div class="img-preview-wrapper" id="imgPreviewWrapper" style="display:none;">
+                <div class="img-preview-box">
+                    <div class="box-header">
+                        <span>📷 原始图片</span>
+                        <span id="imgFileName">-</span>
+                    </div>
+                    <div class="box-body" id="imgOriginalBox">
+                        <div class="empty-text">暂无图片</div>
+                    </div>
+                </div>
+                <div class="img-preview-box">
+                    <div class="box-header">
+                        <span>📝 OCR + 翻译结果</span>
+                        <span id="imgStatus">等待识别…</span>
+                    </div>
+                    <div class="box-body" id="imgResultBox">
+                        <div class="empty-text">上传图片后将自动识别并翻译</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="translate-actions" style="margin-top:16px;">
+                <button class="btn btn-primary" id="imgTranslateBtn" disabled>🔍 识别并翻译</button>
+                <button class="btn btn-secondary" id="imgClearBtn">🗑️ 清空</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ===== Toast Container ===== -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ===== JavaScript ===== -->
+    <script>
+        (function() {
+            'use strict';
+
+            // ============================================================
+            // 1. DOM References
+            // ============================================================
+            const $ = id => document.getElementById(id);
+            const sourceText = $('sourceText');
+            const resultContent = $('resultContent');
+            const sourceCount = $('sourceCount');
+            const resultCount = $('resultCount');
+            const sourceLang = $('sourceLang');
+            const targetLang = $('targetLang');
+            const sourceFlag = $('sourceFlag');
+            const targetFlag = $('targetFlag');
+            const sourceLabel = $('sourceLabel');
+            const targetLabel = $('targetLabel');
+            const swapBtn = $('swapLang');
+            const mainTranslateBtn = $('mainTranslateBtn');
+            const clearSource = $('clearSource');
+            const pasteSource = $('pasteSource');
+            const copyResult = $('copyResult');
+            const clearResult = $('clearResult');
+
+            // Tabs
+            const navTabs = document.querySelectorAll('.nav-tab');
+            const tabContents = {
+                text: $('tabText'),
+                document: $('tabDocument'),
+                image: $('tabImage')
+            };
+
+            // Document
+            const docUploadArea = $('docUploadArea');
+            const docFileInput = $('docFileInput');
+            const docFileList = $('docFileList');
+            const docTranslateBtn = $('docTranslateBtn');
+            const docClearBtn = $('docClearBtn');
+            const docResult = $('docResult');
+            const docResultPreview = $('docResultPreview');
+            const docDownloadBtn = $('docDownloadBtn');
+            const docCopyBtn = $('docCopyBtn');
+
+            // Image
+            const imgUploadArea = $('imgUploadArea');
+            const imgFileInput = $('imgFileInput');
+            const imgPreviewWrapper = $('imgPreviewWrapper');
+            const imgOriginalBox = $('imgOriginalBox');
+            const imgResultBox = $('imgResultBox');
+            const imgFileName = $('imgFileName');
+            const imgStatus = $('imgStatus');
+            const imgTranslateBtn = $('imgTranslateBtn');
+            const imgClearBtn = $('imgClearBtn');
+
+            const toastContainer = $('toastContainer');
+
+            // ============================================================
+            // 2. State
+            // ============================================================
+            let currentTab = 'text';
+            let docFile = null;
+            let imgFile = null;
+            let imgDataUrl = null;
+            let isTranslating = false;
+
+            // ============================================================
+            // 3. Language Mapping
+            // ============================================================
+            const langMap = {
+                zh: { label: '中文', flag: '🇨🇳' },
+                en: { label: '英语', flag: '🇬🇧' },
+                ja: { label: '日语', flag: '🇯🇵' },
+                ko: { label: '韩语', flag: '🇰🇷' },
+                fr: { label: '法语', flag: '🇫🇷' },
+                de: { label: '德语', flag: '🇩🇪' }
+            };
+
+            function updateLangUI() {
+                const s = langMap[sourceLang.value] || langMap.zh;
+                const t = langMap[targetLang.value] || langMap.en;
+                sourceFlag.textContent = s.flag;
+                sourceLabel.textContent = s.label;
+                targetFlag.textContent = t.flag;
+                targetLabel.textContent = t.label;
+            }
+
+            sourceLang.addEventListener('change', updateLangUI);
+            targetLang.addEventListener('change', updateLangUI);
+            updateLangUI();
+
+            // ============================================================
+            // 4. Swap Languages
+            // ============================================================
+            swapBtn.addEventListener('click', () => {
+                const tmp = sourceLang.value;
+                sourceLang.value = targetLang.value;
+                targetLang.value = tmp;
+                updateLangUI();
+                toast('语言已交换', 'info');
+            });
+
+            // ============================================================
+            // 5. Tab Switching
+            // ============================================================
+            navTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.dataset.tab;
+                    if (tabName === currentTab) return;
+                    navTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    Object.keys(tabContents).forEach(key => {
+                        tabContents[key].classList.toggle('active', key === tabName);
+                    });
+                    currentTab = tabName;
+                });
+            });
+
+            // ============================================================
+            // 6. Text Translation (Simulated with Term Highlighting)
+            // ============================================================
+            // 医药术语对照表 (中英)
+            const termDict = {
+                '临床试验': 'Clinical Trial',
+                '双盲': 'Double-blind',
+                '安慰剂对照': 'Placebo-controlled',
+                '药代动力学': 'Pharmacokinetics',
+                '生物等效性': 'Bioequivalence',
+                '随机化': 'Randomization',
+                '知情同意': 'Informed Consent',
+                '伦理委员会': 'Ethics Committee',
+                '药品生产质量管理规范': 'GMP (Good Manufacturing Practice)',
+                '药物不良反应': 'Adverse Drug Reaction',
+                '药效': 'Efficacy',
+                '安全性': 'Safety',
+                '耐受性': 'Tolerability',
+                '半衰期': 'Half-life',
+                '生物利用度': 'Bioavailability',
+                '剂量': 'Dosage',
+                '给药途径': 'Route of Administration',
+                '适应症': 'Indication',
+                '禁忌症': 'Contraindication',
+                '副作用': 'Side Effect',
+                '安慰剂': 'Placebo',
+                '活性对照': 'Active Control',
+                '开放标签': 'Open-label',
+                '交叉设计': 'Crossover Design',
+                '平行组': 'Parallel Group',
+                '统计分析': 'Statistical Analysis',
+                '显著性': 'Significance',
+                '置信区间': 'Confidence Interval',
+                '风险比': 'Risk Ratio',
+                '优势比': 'Odds Ratio',
+                '中位生存期': 'Median Survival',
+                '无进展生存期': 'Progression-Free Survival',
+                '总生存期': 'Overall Survival',
+                '客观缓解率': 'Objective Response Rate',
+                '疾病控制率': 'Disease Control Rate',
+                '生活质量': 'Quality of Life',
+                '患者报告结局': 'Patient-Reported Outcome',
+                '临床终点': 'Clinical Endpoint',
+                '替代终点': 'Surrogate Endpoint',
+                '生物标志物': 'Biomarker',
+                '伴随诊断': 'Companion Diagnostic',
+                '个体化治疗': 'Personalized Therapy',
+                '精准医学': 'Precision Medicine'
+            };
+
+            // 反向映射 (英->中)
+            const reverseTermDict = {};
+            for (const [k, v] of Object.entries(termDict)) {
+                reverseTermDict[v] = k;
+            }
+
+            function getDirection() {
+                return sourceLang.value + '->' + targetLang.value;
+            }
+
+            function simulateTranslate(text) {
+                if (!text || !text.trim()) return '';
+
+                const direction = getDirection();
+                let result = text;
+
+                // 如果是中->英
+                if (sourceLang.value === 'zh' && targetLang.value === 'en') {
+                    // 替换术语
+                    for (const [cn, en] of Object.entries(termDict)) {
+                        const regex = new RegExp(cn, 'g');
+                        if (regex.test(result)) {
+                            result = result.replace(regex, `<span class="highlight-term">${en}</span>`);
+                        }
+                    }
+                    // 添加一些基础翻译 (模拟)
+                    // 简单句法转换
+                    result = result
+                        .replace(/显示/g, 'demonstrates')
+                        .replace(/研究/g, 'study')
+                        .replace(/药物/g, 'drug')
+                        .replace(/显著/g, 'significant')
+                        .replace(/优势/g, 'advantage')
+                        .replace(/表明/g, 'indicates')
+                        .replace(/结果/g, 'results')
+                        .replace(/患者/g, 'patients')
+                        .replace(/治疗/g, 'treatment')
+                        .replace(/效果/g, 'effect')
+                        .replace(/数据/g, 'data')
+                        .replace(/分析/g, 'analysis')
+                        .replace(/显示/g, 'shows')
+                        .replace(/证明/g, 'proves')
+                        .replace(/发现/g, 'found')
+                        .replace(/评价/g, 'evaluation')
+                        .replace(/方法/g, 'method')
+                        .replace(/过程/g, 'process')
+                        .replace(/组/g, 'group')
+                        .replace(/期/g, 'phase')
+                        .replace(/剂量/g, 'dosage');
+
+                    // 如果完全没有术语被替换，添加一些基本转换
+                    if (!result.includes('highlight-term')) {
+                        result = text
+                            .replace(/的/g, '')
+                            .replace(/了/g, '')
+                            .replace(/，/g, ', ')
+                            .replace(/。/g, '. ')
+                            .replace(/、/g, ', ');
+                        // 加一些随机术语高亮演示
+                        const terms = Object.keys(termDict);
+                        for (const term of terms) {
+                            if (text.includes(term)) {
+                                result = result.replace(new RegExp(term, 'g'), `<span class="highlight-term">${termDict[term]}</span>`);
+                                break;
+                            }
+                        }
+                        if (!result.includes('highlight-term')) {
+                            result = text + ' (模拟翻译结果 — 请接入正式翻译引擎)';
+                        }
+                    }
+                }
+                // 如果是英->中
+                else if (sourceLang.value === 'en' && targetLang.value === 'zh') {
+                    for (const [cn, en] of Object.entries(termDict)) {
+                        const regex = new RegExp(en.replace(/[()]/g, '\\$&'), 'gi');
+                        if (regex.test(result)) {
+                            result = result.replace(regex, `<span class="highlight-term">${cn}</span>`);
+                        }
+                    }
+                    // 简单转换
+                    result = result
+                        .replace(/demonstrates/g, '显示')
+                        .replace(/study/g, '研究')
+                        .replace(/drug/g, '药物')
+                        .replace(/significant/g, '显著')
+                        .replace(/advantage/g, '优势')
+                        .replace(/indicates/g, '表明')
+                        .replace(/results/g, '结果')
+                        .replace(/patients/g, '患者')
+                        .replace(/treatment/g, '治疗')
+                        .replace(/effect/g, '效果')
+                        .replace(/data/g, '数据')
+                        .replace(/analysis/g, '分析')
+                        .replace(/shows/g, '显示')
+                        .replace(/proves/g, '证明')
+                        .replace(/found/g, '发现')
+                        .replace(/evaluation/g, '评价')
+                        .replace(/method/g, '方法')
+                        .replace(/process/g, '过程')
+                        .replace(/group/g, '组')
+                        .replace(/phase/g, '期')
+                        .replace(/dosage/g, '剂量');
+
+                    if (!result.includes('highlight-term')) {
+                        const termsEn = Object.values(termDict);
+                        for (const en of termsEn) {
+                            const clean = en.replace(/[()]/g, '');
+                            if (text.toLowerCase().includes(clean.toLowerCase())) {
+                                const cn = reverseTermDict[en] || en;
+                                result = result.replace(new RegExp(clean, 'gi'), `<span class="highlight-term">${cn}</span>`);
+                                break;
+                            }
+                        }
+                        if (!result.includes('highlight-term')) {
+                            result = text + ' (模拟翻译结果 — 请接入正式翻译引擎)';
+                        }
+                    }
+                }
+                // 其他语言对 (模拟)
+                else {
+                    result = text + ` [模拟翻译: ${sourceLang.value} → ${targetLang.value}]`;
+                }
+
+                return result;
+            }
+
+            function performTextTranslation() {
+                const text = sourceText.value;
+                if (!text || !text.trim()) {
+                    toast('请输入待翻译的文本', 'info');
+                    return;
+                }
+                if (isTranslating) return;
+                isTranslating = true;
+                mainTranslateBtn.disabled = true;
+                mainTranslateBtn.innerHTML = '<span class="spinner spinner-sm"></span> 翻译中…';
+
+                setTimeout(() => {
+                    const translated = simulateTranslate(text);
+                    resultContent.innerHTML = translated;
+                    updateResultCount();
+                    isTranslating = false;
+                    mainTranslateBtn.disabled = false;
+                    mainTranslateBtn.innerHTML = '⚡ 翻译';
+                    toast('翻译完成 ✅', 'success');
+                }, 600 + Math.random() * 400);
+            }
+
+            function updateSourceCount() {
+                const text = sourceText.value;
+                const len = text.replace(/\s/g, '').length;
+                sourceCount.textContent = len;
+            }
+
+            function updateResultCount() {
+                const text = resultContent.textContent || '';
+                const len = text.replace(/\s/g, '').length;
+                resultCount.textContent = len;
+            }
+
+            sourceText.addEventListener('input', updateSourceCount);
+            updateSourceCount();
+
+            // Ctrl+Enter 翻译
+            sourceText.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    performTextTranslation();
+                }
+            });
+
+            mainTranslateBtn.addEventListener('click', performTextTranslation);
+
+            clearSource.addEventListener('click', () => {
+                sourceText.value = '';
+                updateSourceCount();
+                sourceText.focus();
+                toast('已清空原文', 'info');
+            });
+
+            pasteSource.addEventListener('click', async () => {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    sourceText.value = text;
+                    updateSourceCount();
+                    toast('已粘贴内容', 'info');
+                } catch {
+                    toast('无法读取剪贴板，请手动粘贴', 'info');
+                }
+            });
+
+            copyResult.addEventListener('click', async () => {
+                const text = resultContent.textContent || '';
+                if (!text.trim() || text === '翻译结果将在这里显示…') {
+                    toast('没有可复制的内容', 'info');
+                    return;
+                }
+                try {
+                    await navigator.clipboard.writeText(text);
+                    toast('已复制译文 📄', 'success');
+                } catch {
+                    toast('复制失败', 'info');
+                }
+            });
+
+            clearResult.addEventListener('click', () => {
+                resultContent.innerHTML = '<span class="placeholder">翻译结果将在这里显示…</span>';
+                updateResultCount();
+                toast('已清空译文', 'info');
+            });
+
+            // ============================================================
+            // 7. Document Translation
+            // ============================================================
+            let docUploaded = false;
+
+            docFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handleDocFile(file);
+                }
+            });
+
+            docUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                docUploadArea.classList.add('dragover');
+            });
+            docUploadArea.addEventListener('dragleave', () => {
+                docUploadArea.classList.remove('dragover');
+            });
+            docUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                docUploadArea.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file) {
+                    handleDocFile(file);
+                    // 同步 input
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    docFileInput.files = dt;
+                }
+            });
+
+            function handleDocFile(file) {
+                const validTypes = [
+                    'application/pdf',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                    'text/plain'
+                ];
+                const ext = file.name.split('.').pop().toLowerCase();
+                const validExts = ['pdf', 'docx', 'xlsx', 'pptx', 'txt'];
+                if (!validExts.includes(ext) && !validTypes.includes(file.type)) {
+                    toast('不支持的文件格式，请上传 PDF, DOCX, XLSX, PPTX 或 TXT', 'info');
+                    return;
+                }
+                if (file.size > 20 * 1024 * 1024) {
+                    toast('文件大小超过 20MB 限制', 'info');
+                    return;
+                }
+                docFile = file;
+                docUploaded = true;
+                renderDocFileList();
+                docTranslateBtn.disabled = false;
+                toast(`已上传: ${file.name}`, 'success');
+            }
+
+            function renderDocFileList() {
+                if (!docFile) {
+                    docFileList.innerHTML = '';
+                    return;
+                }
+                const size = (docFile.size / 1024).toFixed(1);
+                docFileList.innerHTML = `
+                    <div class="doc-file-item">
+                        <div class="file-info">
+                            <span style="font-size:28px;">📄</span>
+                            <div>
+                                <div class="name">${docFile.name}</div>
+                                <div class="size">${size} KB</div>
+                            </div>
+                        </div>
+                        <div class="file-status">
+                            <span style="color:var(--success);font-weight:500;">✅ 已就绪</span>
+                            <button class="btn btn-secondary" style="padding:4px 14px;font-size:13px;" id="docRemoveBtn">移除</button>
+                        </div>
+                    </div>
+                `;
+                const removeBtn = document.getElementById('docRemoveBtn');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', () => {
+                        docFile = null;
+                        docUploaded = false;
+                        docFileList.innerHTML = '';
+                        docTranslateBtn.disabled = true;
+                        docResult.style.display = 'none';
+                        docFileInput.value = '';
+                        toast('已移除文件', 'info');
+                    });
+                }
+            }
+
+            docTranslateBtn.addEventListener('click', () => {
+                if (!docFile) {
+                    toast('请先上传文档', 'info');
+                    return;
+                }
+                if (isTranslating) return;
+                isTranslating = true;
+                docTranslateBtn.disabled = true;
+                docTranslateBtn.innerHTML = '<span class="spinner spinner-sm"></span> 翻译中…';
+
+                // 模拟进度
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 5 + Math.random() * 8;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        // 完成
+                        const fileName = docFile.name.replace(/\.[^.]+$/, '');
+                        const resultText = `[文档翻译模拟结果]\n\n文件: ${docFile.name}\n源语言: ${sourceLang.value} → 目标语言: ${targetLang.value}\n\n翻译内容预览:\n\n临床试验数据显示，该药物在双盲安慰剂对照研究中展现出显著的药代动力学优势。安全性评价表明，患者耐受性良好，未观察到严重不良反应。后续将进行三期临床研究以进一步验证疗效。\n\n（此为模拟翻译结果，实际部署将接入正式翻译引擎）`;
+                        docResultPreview.textContent = resultText;
+                        docResult.style.display = 'block';
+                        docTranslateBtn.innerHTML = '✅ 已完成';
+                        docTranslateBtn.disabled = true;
+                        isTranslating = false;
+                        toast('文档翻译完成 📄', 'success');
+                    }
+                    // 更新进度显示
+                    const items = docFileList.querySelectorAll('.doc-file-item');
+                    if (items.length > 0) {
+                        const statusText = items[0].querySelector('.status-text');
+                        if (statusText) {
+                            statusText.textContent = Math.round(progress) + '%';
+                        }
+                        const bar = items[0].querySelector('.bar');
+                        if (bar) {
+                            bar.style.width = progress + '%';
+                        }
+                    }
+                }, 300);
+            });
+
+            docClearBtn.addEventListener('click', () => {
+                docFile = null;
+                docUploaded = false;
+                docFileList.innerHTML = '';
+                docTranslateBtn.disabled = true;
+                docTranslateBtn.innerHTML = '📄 开始翻译';
+                docResult.style.display = 'none';
+                docFileInput.value = '';
+                toast('已清空', 'info');
+            });
+
+            docDownloadBtn.addEventListener('click', () => {
+                const text = docResultPreview.textContent || '';
+                if (!text.trim()) {
+                    toast('没有可下载的内容', 'info');
+                    return;
+                }
+                const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const name = docFile ? docFile.name.replace(/\.[^.]+$/, '') : 'translated';
+                a.download = `${name}_translated.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+                toast('下载已开始 ⬇️', 'success');
+            });
+
+            docCopyBtn.addEventListener('click', async () => {
+                const text = docResultPreview.textContent || '';
+                if (!text.trim()) {
+                    toast('没有可复制的内容', 'info');
+                    return;
+                }
+                try {
+                    await navigator.clipboard.writeText(text);
+                    toast('已复制文档译文 📄', 'success');
+                } catch {
+                    toast('复制失败', 'info');
+                }
+            });
+
+            // ============================================================
+            // 8. Image Translation
+            // ============================================================
+            imgFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handleImgFile(file);
+                }
+            });
+
+            imgUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                imgUploadArea.classList.add('dragover');
+            });
+            imgUploadArea.addEventListener('dragleave', () => {
+                imgUploadArea.classList.remove('dragover');
+            });
+            imgUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                imgUploadArea.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    handleImgFile(file);
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    imgFileInput.files = dt;
+                } else {
+                    toast('请上传图片文件', 'info');
+                }
+            });
+
+            function handleImgFile(file) {
+                if (!file.type.startsWith('image/')) {
+                    toast('请上传图片文件', 'info');
+                    return;
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                    toast('图片大小超过 10MB 限制', 'info');
+                    return;
+                }
+                imgFile = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imgDataUrl = e.target.result;
+                    imgPreviewWrapper.style.display = 'grid';
+                    imgOriginalBox.innerHTML =
+                        `<img src="${imgDataUrl}" alt="上传的图片" style="max-width:100%;max-height:300px;border-radius:4px;object-fit:contain;" />`;
+                    imgFileName.textContent = file.name;
+                    imgResultBox.innerHTML = `<div class="empty-text">点击 "识别并翻译" 开始处理</div>`;
+                    imgStatus.textContent = '已上传，待识别';
+                    imgTranslateBtn.disabled = false;
+                    toast(`已上传图片: ${file.name}`, 'success');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            imgTranslateBtn.addEventListener('click', () => {
+                if (!imgFile || !imgDataUrl) {
+                    toast('请先上传图片', 'info');
+                    return;
+                }
+                if (isTranslating) return;
+                isTranslating = true;
+                imgTranslateBtn.disabled = true;
+                imgTranslateBtn.innerHTML = '<span class="spinner spinner-sm"></span> 识别中…';
+                imgStatus.textContent = '🔄 OCR 识别中…';
+
+                setTimeout(() => {
+                    // 模拟 OCR 结果
+                    const ocrText = `临床试验 (Clinical Trial)\n双盲安慰剂对照研究 (Double-blind Placebo-controlled Study)\n药代动力学优势 (Pharmacokinetic Advantage)\n安全性良好 (Good Safety Profile)`;
+                    imgStatus.textContent = '✅ 识别完成';
+
+                    // 模拟翻译
+                    imgTranslateBtn.innerHTML = '<span class="spinner spinner-sm"></span> 翻译中…';
+                    imgStatus.textContent = '🔄 翻译中…';
+
+                    setTimeout(() => {
+                        const translated = `Clinical Trial\nDouble-blind Placebo-controlled Study\nPharmacokinetic Advantage\nGood Safety Profile`;
+                        imgResultBox.innerHTML = `
+                            <div class="ocr-text">
+                                <strong>📖 识别文本 (原文):</strong><br>
+                                ${ocrText.replace(/\n/g, '<br>')}
+                                <br><br>
+                                <strong>🌐 翻译结果:</strong><br>
+                                ${translated.replace(/\n/g, '<br>')}
+                            </div>
+                        `;
+                        imgStatus.textContent = '✅ 翻译完成';
+                        imgTranslateBtn.innerHTML = '✅ 已完成';
+                        imgTranslateBtn.disabled = true;
+                        isTranslating = false;
+                        toast('图片翻译完成 🖼️', 'success');
+                    }, 500 + Math.random() * 400);
+                }, 700 + Math.random() * 500);
+            });
+
+            imgClearBtn.addEventListener('click', () => {
+                imgFile = null;
+                imgDataUrl = null;
+                imgPreviewWrapper.style.display = 'none';
+                imgOriginalBox.innerHTML = '<div class="empty-text">暂无图片</div>';
+                imgResultBox.innerHTML = '<div class="empty-text">上传图片后将自动识别并翻译</div>';
+                imgFileName.textContent = '-';
+                imgStatus.textContent = '等待识别…';
+                imgTranslateBtn.disabled = true;
+                imgTranslateBtn.innerHTML = '🔍 识别并翻译';
+                imgFileInput.value = '';
+                toast('已清空', 'info');
+            });
+
+            // ============================================================
+            // 9. Toast System
+            // ============================================================
+            function toast(message, type = 'info') {
+                const container = toastContainer;
+                const el = document.createElement('div');
+                el.className = `toast ${type}`;
+                const icons = {
+                    success: '✅',
+                    info: 'ℹ️',
+                    warning: '⚠️'
+                };
+                el.innerHTML = `${icons[type] || 'ℹ️'} ${message}`;
+                container.appendChild(el);
+                setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(10px)';
+                    el.style.transition = '0.3s ease';
+                    setTimeout(() => el.remove(), 300);
+                }, 2500);
+            }
+
+            // ============================================================
+            // 10. Init: 默认触发一次翻译展示
+            // ============================================================
+            setTimeout(() => {
+                performTextTranslation();
+            }, 300);
+
+            // 暴露一些全局方便调试
+            window.__pharmaTrans = { toast, performTextTranslation };
+
+        })();
+    </script>
+
+</body>
+</html>
