@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>两列对齐国家选择框</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; }
+        
+        .custom-select-container {
+            position: relative;
+            width: 300px;
+            user-select: none;
+        }
+
+        /* 选中框样式 */
+        .select-trigger {
+            padding: 10px 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 下拉菜单面板 */
+        .select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 280px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            margin-top: 4px;
+            z-index: 1000;
+        }
+
+        .select-dropdown.open { display: block; }
+
+        .group-label {
+            padding: 8px 12px;
+            background: #f5f5f5;
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        /* 核心两列布局：第一列为字母，第二列为国家名称 */
+        .option-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .option-item:hover { background-color: #f0f7ff; }
+
+        /* 固定的第一列：字母 */
+        .letter-col {
+            width: 28px; /* 固定宽度保证对齐 */
+            font-weight: bold;
+            color: #0066cc;
+            flex-shrink: 0;
+        }
+
+        /* 固定的第二列：国家名称 */
+        .name-col { flex-grow: 1; }
+    </style>
+</head>
+<body>
+
+    <h2>选择国家/地区</h2>
+
+    <div class="custom-select-container">
+        <div class="select-trigger" id="trigger">
+            <span id="selected-text">请选择国家/地区</span>
+            <span>▾</span>
+        </div>
+
+        <div class="select-dropdown" id="dropdown">
+            <div class="group-label">常用国家/地区</div>
+            <div class="option-item" data-value="CN"><span class="letter-col"></span><span class="name-col">中国 (China)</span></div>
+            <div class="option-item" data-value="US"><span class="letter-col"></span><span class="name-col">美国 (United States)</span></div>
+            <div class="option-item" data-value="JP"><span class="letter-col"></span><span class="name-col">日本 (Japan)</span></div>
+
+            <div class="group-label">所有国家/地区</div>
+            <!-- 两列结构 -->
+            <div class="option-item" data-value="AL"><span class="letter-col">A</span><span class="name-col">阿尔巴尼亚 (Albania)</span></div>
+            <div class="option-item" data-value="DZ"><span class="letter-col"></span><span class="name-col">阿尔及利亚 (Algeria)</span></div>
+            <div class="option-item" data-value="AF"><span class="letter-col"></span><span class="name-col">阿富汗 (Afghanistan)</span></div>
+
+            <div class="option-item" data-value="PK"><span class="letter-col">B</span><span class="name-col">巴基斯坦 (Pakistan)</span></div>
+            <div class="option-item" data-value="BR"><span class="letter-col"></span><span class="name-col">巴西 (Brazil)</span></div>
+
+            <div class="option-item" data-value="DK"><span class="letter-col">D</span><span class="name-col">丹麦 (Denmark)</span></div>
+            <div class="option-item" data-value="DE"><span class="letter-col"></span><span class="name-col">德国 (Germany)</span></div>
+
+            <div class="option-item" data-value="FR"><span class="letter-col">F</span><span class="name-col">法国 (France)</span></div>
+
+            <div class="option-item" data-value="GB"><span class="letter-col">Y</span><span class="name-col">英国 (United Kingdom)</span></div>
+
+            <div class="option-item" data-value="CN"><span class="letter-col">Z</span><span class="name-col">中国 (China)</span></div>
+        </div>
+    </div>
+
+    <script>
+        const trigger = document.getElementById('trigger');
+        const dropdown = document.getElementById('dropdown');
+        const selectedText = document.getElementById('selected-text');
+
+        // 开关下拉列表
+        trigger.addEventListener('click', () => dropdown.classList.toggle('open'));
+
+        // 选择选项
+        dropdown.addEventListener('click', (e) => {
+            const item = e.target.closest('.option-item');
+            if (item) {
+                selectedText.innerText = item.querySelector('.name-col').innerText;
+                dropdown.classList.remove('open');
+            }
+        });
+
+        // 点击外部关闭
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.custom-select-container')) {
+                dropdown.classList.remove('open');
+            }
+        });
+    </script>
+</body>
+</html>
