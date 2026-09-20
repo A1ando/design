@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T型结构实体卡片示例</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        /* 主页面卡片容器 */
+        .card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            width: 700px;
+            padding: 24px 32px;
+            border-left: 5px solid #1890ff;
+            box-sizing: border-box;
+        }
+
+        /* 标题和标签 */
+        .card-header h2 {
+            margin: 0 0 12px 0;
+            font-size: 20px;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            background-color: #f0f0f0;
+            color: #595959;
+        }
+
+        .tag.fda {
+            background-color: #fff1f0;
+            color: #cf1322;
+        }
+
+        .tag.category {
+            background-color: #f9f0ff;
+            color: #722ed1;
+        }
+
+        .description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* 信息列表 */
+        .info-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .info-list li {
+            position: relative;
+            padding-left: 16px;
+            margin-bottom: 6px;
+        }
+
+        .info-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* -------------------------------------- */
+        /* 标准实体及 T 型 Hover 浮动卡片 */
+        /* -------------------------------------- */
+        .entity-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* 标准实体超链接样式 */
+        .entity-link {
+            color: #1890ff;
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px dashed #1890ff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .entity-link:hover {
+            color: #40a9ff;
+            background-color: #e6f7ff;
+            border-bottom-style: solid;
+        }
+
+        /* 悬浮弹出 T 型卡片容器 */
+        .t-entity-card {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: 125%; /* 位于文字上方 */
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            width: 380px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            border: 1px solid #e8e8e8;
+            padding: 0;
+            z-index: 100;
+            transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        /* 小三角指示器 */
+        .t-entity-card::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -6px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: #ffffff transparent transparent transparent;
+        }
+
+        /* Hover 激活卡片显示 */
+        .entity-wrapper:hover .t-entity-card {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+
+        /* T 型结构：1. 头部标准名称 (横向顶部) */
+        .t-card-header {
+            background-color: #fafafa;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .t-card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1890ff;
+            margin: 0;
+        }
+
+        /* T 型结构：2. 列表详细区域 (下部两列左右布局) */
+        .t-card-body {
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .t-row {
+            display: flex;
+            align-items: flex-start;
+            line-height: 1.5;
+        }
+
+        /* 左侧 Field Title */
+        .t-label {
+            width: 72px;
+            flex-shrink: 0;
+            color: #8c8c8c;
+            font-weight: 500;
+        }
+
+        /* 右侧 Value */
+        .t-value {
+            flex-grow: 1;
+            color: #262626;
+            word-break: break-word;
+        }
+
+        .footer-source {
+            font-size: 12px;
+            color: #8c8c8c;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <!-- 标题区域 -->
+        <div class="card-header">
+            <h2>Aqneursa (levacetylleucine) 获批，全球首个共济失调性毛细血管扩张症疗法</h2>
+            <div class="tags">
+                <span class="tag">注册审批</span>
+                <span class="tag fda">FDA</span>
+                <span class="tag category">神经</span>
+                <span class="tag">2026-09-18</span>
+            </div>
+        </div>
+
+        <div class="description">
+            该适应症此前无获批药物，属从零到一。
+        </div>
+
+        <!-- 信息列表 -->
+        <ul class="info-list">
+            <li><span class="label">监管机构：</span>美国 FDA</li>
+            
+            <!-- 替换后的标准实体（包含 T型 Hover 悬浮卡片） -->
+            <li>
+                <span class="label">药品：</span>
+                <div class="entity-wrapper">
+                    <a href="#" class="entity-link">Levacetylleucine (Aqneursa)</a>
+                    
+                    <!-- T 型实体卡片 -->
+                    <div class="t-entity-card">
+                        <!-- T型 顶部：实体标准名称 -->
+                        <div class="t-card-header">
+                            <span class="t-card-title">Levacetylleucine</span>
+                        </div>
+                        
+                        <!-- T型 下部：左侧字段 Title，右侧属性 Value -->
+                        <div class="t-card-body">
+                            <div class="t-row">
+                                <div class="t-label">别名</div>
+                                <div class="t-value">Aqneursa、IB-1001、IB1001、L-Acetylleucine、L-乙酰亮氨酸、N-Acetyl-L-leucine</div>
+                            </div>
+                            <div class="t-row">
+                                <div class="t-label">靶点</div>
+                                <div class="t-value">calcium channel</div>
+                            </div>
+                            <div class="t-row">
+                                <div class="t-label">药物类型</div>
+                                <div class="t-value">小分子化药</div>
+                            </div>
+                            <div class="t-row">
+                                <div class="t-label">原研机构</div>
+                                <div class="t-value">IntraBio, Inc.</div>
+                            </div>
+                            <div class="t-row">
+                                <div class="t-label">研发机构</div>
+                                <div class="t-value">IntraBio, Inc.、Intrabio Ireland Ltd.、IntraBio Ltd.、Medexus Pharma, Inc.、皮尔法伯</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </li>
+
+            <li><span class="label">适应症：</span>共济失调性毛细血管扩张症（A-T）</li>
+            <li><span class="label">申请类型：</span>新药上市申请</li>
+            <li><span class="label">决定 / 受理日：</span>2026-09-18</li>
+            <li><span class="label">审评依据：</span>III 期 SARA 评分治疗差 -1.9 分</li>
+        </ul>
+
+        <div class="footer-source">
+            来源：FDA 公开信息 / 2026-09-18
+        </div>
+    </div>
+
+</body>
+</html>
