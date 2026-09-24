@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>催化剂日历 · Deep Pharma</title>
+<style>
+  :root {
+    --brand: #2563eb;
+    --text: #16161d;
+    --text-2: #5c5c6e;
+    --text-3: #8a8a9c;
+    --line: #e8e8ef;
+    --line-strong: #dcdce6;
+    --hover: #f2f1f9;
+    --radius-lg: 12px;
+    --radius-md: 8px;
+    --radius-sm: 5px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    font-size: 13.5px;
+    color: var(--text);
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button { font-family: inherit; }
+  svg { display: block; }
+
+  .app { display: flex; height: 100dvh; overflow: hidden; }
+
+  /* ---------------- Sidebar ---------------- */
+  .sidebar {
+    width: 248px;
+    flex: 0 0 248px;
+    background: linear-gradient(180deg, #f7f6fd 0%, #fbfaff 100%);
+    border-right: 1px solid #ecebf5;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 12px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 4px 6px 16px;
+  }
+  .brand-mark {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #4f46e5, #2563eb);
+    display: grid; place-items: center;
+    flex: 0 0 auto;
+  }
+  .brand-name {
+    font-size: 14.5px; font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+    color: #16162a;
+  }
+  .brand-sub {
+    font-size: 9.5px;
+    color: #9a9ab0;
+    letter-spacing: 0.06em;
+    margin-top: 1px;
+  }
+  .sidebar-collapse {
+    margin-left: auto;
+    width: 24px; height: 24px;
+    border: none; background: transparent;
+    border-radius: 6px;
+    display: grid; place-items: center;
+    color: #9a9ab0;
+    cursor: pointer;
+  }
+  .sidebar-collapse:hover { background: var(--hover); color: var(--text-2); }
+
+  .nav { display: flex; flex-direction: column; gap: 2px; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    font-size: 13.5px;
+    color: var(--text-2);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    transition: background .12s ease, color .12s ease;
+  }
+  .nav-item:hover { background: var(--hover); color: var(--text); }
+  .nav-item.active {
+    background: #ece9fa;
+    color: #2b2560;
+    font-weight: 600;
+  }
+  .nav-item svg { flex: 0 0 auto; }
+  .nav-badge {
+    margin-left: auto;
+    background: #ef4444;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 20px;
+    height: 18px;
+    border-radius: 9px;
+    display: grid; place-items: center;
+    padding: 0 6px;
+    letter-spacing: 0;
+  }
+  .nav-sep {
+    height: 1px;
+    background: #e8e6f2;
+    margin: 10px 10px;
+  }
+
+  /* ---------------- Main ---------------- */
+  .main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .topbar {
+    height: 60px;
+    flex: 0 0 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .page-title {
+    font-size: 15px;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    color: #16162a;
+  }
+  .topbar-divider {
+    width: 1px; height: 14px;
+    background: var(--line-strong);
+    margin: 0 3px;
+  }
+  .page-desc {
+    font-size: 12.5px;
+    color: var(--text-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .account {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px 4px 4px;
+    border-radius: 999px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: background .12s ease;
+  }
+  .account:hover { background: var(--hover); }
+  .avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #2563eb);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 650;
+    display: grid; place-items: center;
+    flex: 0 0 auto;
+  }
+  .account-email { font-size: 12.5px; color: var(--text-2); }
+
+  /* ---------------- Language switch ---------------- */
+  .lang-switch {
+    display: flex;
+    align-items: center;
+    background: #f4f4f8;
+    border-radius: 7px;
+    padding: 2px;
+    gap: 1px;
+    flex: 0 0 auto;
+  }
+  .lang-switch button {
+    border: none;
+    background: transparent;
+    font-size: 11.5px;
+    padding: 0 9px;
+    height: 22px;
+    border-radius: 5px;
+    color: var(--text-2);
+    cursor: pointer;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: background-color .12s ease, color .12s ease;
+  }
+  .lang-switch button[aria-pressed="true"] {
+    background: #fff;
+    color: var(--text);
+    font-weight: 650;
+    box-shadow: 0 1px 2px rgba(16, 16, 30, .1);
+  }
+
+  /* ---------------- Toolbar ---------------- */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px 10px;
+    flex-wrap: wrap;
+  }
+  .month-nav {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-md);
+    padding: 2px;
+    background: #fff;
+  }
+  .month-nav button {
+    width: 26px; height: 26px;
+    border: none; background: transparent;
+    border-radius: 6px;
+    display: grid; place-items: center;
+    cursor: pointer;
+    color: var(--text-2);
+    transition: background .12s ease, color .12s ease;
+  }
+  .month-nav button:hover { background: var(--hover); color: var(--text); }
+  .month-label {
+    font-size: 14px;
+    font-weight: 650;
+    padding: 0 10px;
+    min-width: 116px;
+    text-align: center;
+    letter-spacing: -0.02em;
+  }
+  .btn-ghost {
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--line-strong);
+    background: #fff;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    color: var(--text-2);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background .12s ease, border-color .12s ease, color .12s ease;
+  }
+  .btn-ghost:hover { background: #fafafc; color: var(--text); border-color: #cfcfdc; }
+  .btn-ghost:active { transform: translateY(1px); }
+
+  .spacer { flex: 1; }
+
+  /* ---------------- Category filters ---------------- */
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 20px 14px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    --a: #64748b;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: #fff;
+    font-size: 12.5px;
+    color: var(--text-3);
+    cursor: pointer;
+    transition: opacity .12s ease, background .12s ease,
+      border-color .12s ease, color .12s ease;
+  }
+  .chip .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--a);
+    flex: 0 0 auto;
+  }
+  .chip[aria-pressed="true"] {
+    border-color: color-mix(in srgb, var(--a) 32%, #fff);
+    background: color-mix(in srgb, var(--a) 7%, #fff);
+    color: var(--a);
+    font-weight: 550;
+  }
+  .chip[aria-pressed="false"] { opacity: 0.45; }
+
+  /* ---------------- Body ---------------- */
+  .body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 16px;
+    padding: 0 20px 20px;
+    overflow: hidden;
+  }
+
+  .cal-grid {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-rows: 34px;
+    grid-auto-rows: 104px;
+    gap: 1px;
+    background: #e9e9f0;
+    border: 1px solid #e9e9f0;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    align-content: start;
+  }
+  .dow {
+    background: #fafafc;
+    display: grid;
+    place-items: center;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-3);
+    letter-spacing: 0.02em;
+  }
+  .cell {
+    background: #fff;
+    padding: 6px 7px 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    overflow: hidden;
+    transition: background-color .16s ease;
+  }
+  .cell:hover { background: #fbfbff; }
+  .cell.out { background: #fbfbfd; }
+  .cell.out .day-num { color: #bcbccb; }
+  .cell-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 22px;
+    margin-bottom: 1px;
+  }
+  .day-num {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    letter-spacing: -0.01em;
+    transition: color .16s ease, background-color .16s ease;
+  }
+  .cell:not(.today):hover .day-num { color: var(--brand); }
+  .cell.today .day-num { background: var(--brand); color: #fff; }
+  .cell.today { background: #fbfcff; }
+
+  /* -------- Event chip (hover 强化) -------- */
+  .ev {
+    --a: #64748b;
+    --bg: #f8fafc;
+    --fg: #475569;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    padding: 3px 6px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--fg);
+    font-size: 11.5px;
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+    min-width: 0;
+    position: relative;
+    transition: background-color .16s ease, color .16s ease,
+                border-color .16s ease, box-shadow .16s ease,
+                transform .16s ease;
+  }
+  .ev::before {
+    content: "";
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--a);
+    flex: 0 0 auto;
+    transition: transform .16s ease;
+  }
+  .ev:hover {
+    background: color-mix(in srgb, var(--a) 15%, #fff);
+    border-color: color-mix(in srgb, var(--a) 42%, #fff);
+    color: color-mix(in srgb, var(--a) 72%, #000);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px -3px color-mix(in srgb, var(--a) 50%, transparent);
+  }
+  .ev:hover::before { transform: scale(1.35); }
+  .ev:active {
+    transform: translateY(0);
+    box-shadow: none;
+    background: color-mix(in srgb, var(--a) 24%, #fff);
+  }
+  .ev-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1;
+  }
+  .ev-more {
+    font-size: 11px;
+    color: var(--text-3);
+    padding: 2px 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    border-radius: var(--radius-sm);
+    transition: background-color .16s ease, color .16s ease, border-color .16s ease;
+  }
+  .ev-more:hover {
+    background: #f4f4f9;
+    color: var(--text);
+    border-color: var(--line-strong);
+  }
+
+  /* ---------------- Right panel ---------------- */
+  .panel {
+    width: 320px;
+    flex: 0 0 320px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+  }
+  .panel-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 14px 16px 11px;
+    border-bottom: 1px solid #f1f1f6;
+  }
+  .panel-head h2 {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+  .panel-sub { font-size: 11.5px; color: var(--text-3); }
+  .panel-count {
+    margin-left: auto;
+    font-size: 11.5px;
+    color: var(--text-3);
+  }
+  .cat-list { overflow-y: auto; flex: 1; }
+
+  .cat-item {
+    display: flex;
+    gap: 11px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f4f4f8;
+    cursor: pointer;
+    transition: background .12s ease;
+    border-left: 2px solid transparent;
+  }
+  .cat-item:hover { background: #fbfbfd; }
+  .cat-item.is-today {
+    background: #fbfcff;
+    border-left-color: var(--brand);
+  }
+  .cat-date { flex: 0 0 36px; text-align: center; }
+  .cat-date .d {
+    display: block;
+    font-size: 17px;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+  .cat-date .m {
+    display: block;
+    font-size: 10.5px;
+    color: var(--text-3);
+    margin-top: 2px;
+  }
+  .cat-body { min-width: 0; flex: 1; }
+  .cat-title {
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.42;
+    color: var(--text);
+  }
+  .cat-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 11.5px;
+    color: var(--text-3);
+    min-width: 0;
+  }
+  .cat-org {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cat-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex: 0 0 auto;
+  }
+  .cat-type::before {
+    content: "";
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--a);
+  }
+  .cat-type span { color: var(--a); }
+  .panel-empty {
+    padding: 32px 16px;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--text-3);
+  }
+
+  /* ---------------- Responsive ---------------- */
+  @media (max-width: 1320px) {
+    .panel { display: none; }
+  }
+  @media (max-width: 1100px) {
+    .page-desc { display: none; }
+    .topbar-divider { display: none; }
+  }
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .body { padding: 0 12px 12px; }
+    .toolbar, .filters, .topbar { padding-left: 12px; padding-right: 12px; }
+    .cal-grid { grid-auto-rows: 88px; }
+    .ev-text { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= Sidebar ================= -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <rect x="3.5" y="3.5" width="17" height="17" rx="5" stroke="#fff" stroke-width="2.2"/>
+          <circle cx="12" cy="12" r="3" fill="#fff"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Deep Pharma</div>
+        <div class="brand-sub">by Sinohealth</div>
+      </div>
+      <button class="sidebar-collapse" aria-label="Collapse sidebar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="16" rx="3"/>
+          <path d="M9 4v16"/>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        <span data-i18n="navNewChat">新建对话</span>
+      </button>
+
+      <button class="nav-item">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M3 12h18"/>
+          <path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/>
+        </svg>
+        <span data-i18n="navGlobalIntel">全球新药情报</span>
+      </button>
+
+      <button class="nav-item">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 20h18"/>
+          <path d="M6.5 20v-6"/>
+          <path d="M12 20V8"/>
+          <path d="M17.5 20v-9.5"/>
+        </svg>
+        <span data-i18n="navIndustry">行业监控</span>
+        <span class="nav-badge">18</span>
+      </button>
+
+      <button class="nav-item active">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="16" rx="2.5"/>
+          <path d="M3 10h18M8 3v4M16 3v4"/>
+        </svg>
+        <span data-i18n="navCalendar">催化剂日历</span>
+      </button>
+
+      <div class="nav-sep"></div>
+
+      <button class="nav-item">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 7v5l3 2"/>
+        </svg>
+        <span data-i18n="navRecent">最近对话</span>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- ================= Main ================= -->
+  <main class="main">
+
+    <header class="topbar">
+      <span class="page-title" data-i18n="pageTitle">催化剂日历</span>
+      <span class="topbar-divider"></span>
+      <span class="page-desc" data-i18n="pageDesc">追踪临床数据读出、监管审批、学术会议与试验里程碑</span>
+
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button data-lang="zh" aria-pressed="true">中</button>
+        <button data-lang="en" aria-pressed="false">EN</button>
+      </div>
+
+      <button class="account">
+        <span class="avatar">W</span>
+        <span class="account-email">wangao1@sinohealth.cn</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a9c"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+    </header>
+
+    <div class="toolbar">
+      <div class="month-nav">
+        <button id="prevMonth" aria-label="Previous month">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 6l-6 6 6 6"/>
+          </svg>
+        </button>
+        <span class="month-label" id="monthLabel">2026年3月</span>
+        <button id="nextMonth" aria-label="Next month">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 6l6 6-6 6"/>
+          </svg>
+        </button>
+      </div>
+
+      <button class="btn-ghost" id="todayBtn" data-i18n="btnToday">回到今天</button>
+
+      <span class="spacer"></span>
+
+      <button class="btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 4v12M7 11l5 5 5-5M4 20h16"/>
+        </svg>
+        <span data-i18n="btnExport">导出</span>
+      </button>
+    </div>
+
+    <div class="filters" id="filters"></div>
+
+    <div class="body">
+      <div class="cal-grid" id="calGrid"></div>
+
+      <aside class="panel">
+        <div class="panel-head">
+          <h2 data-i18n="panelTitle">近期催化剂</h2>
+          <span class="panel-sub" id="panelSub">2026年3月</span>
+          <span class="panel-count" id="panelCount"></span>
+        </div>
+        <div class="cat-list" id="catList"></div>
+      </aside>
+    </div>
+
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   国际化字典
+   ============================================================ */
+const MONTHS_FULL_EN = ['January','February','March','April','May','June',
+                        'July','August','September','October','November','December'];
+const MONTHS_SHORT_EN = ['Jan','Feb','Mar','Apr','May','Jun',
+                         'Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const I18N = {
+  zh: {
+    lang: 'zh-CN',
+    pageTitle: '催化剂日历',
+    pageDesc: '追踪临床数据读出、监管审批、学术会议与试验里程碑',
+    navNewChat: '新建对话',
+    navGlobalIntel: '全球新药情报',
+    navIndustry: '行业监控',
+    navCalendar: '催化剂日历',
+    navRecent: '最近对话',
+    btnToday: '回到今天',
+    btnExport: '导出',
+    panelTitle: '近期催化剂',
+    panelEmpty: '当前筛选条件下暂无催化剂',
+    totalCount: n => `共 ${n} 项`,
+    moreCount: n => `+${n} 项`,
+    dow: ['周一','周二','周三','周四','周五','周六','周日'],
+    formatMonthLabel: (y, m) => `${y}年${m + 1}月`,
+    formatPanelDate: (d, m) => ({ day: String(d).padStart(2, '0'), month: `${m + 1}月` }),
+    cats: {
+      clinical:   '临床数据',
+      regulatory: '监管审批',
+      conference: '学术会议',
+      trial:      '试验里程碑',
+      earnings:   '业绩发布'
+    }
+  },
+  en: {
+    lang: 'en',
+    pageTitle: 'Catalyst Calendar',
+    pageDesc: 'Track clinical readouts, regulatory decisions, conferences and trial milestones',
+    navNewChat: 'New chat',
+    navGlobalIntel: 'Global Drug Intel',
+    navIndustry: 'Industry Monitor',
+    navCalendar: 'Catalyst Calendar',
+    navRecent: 'Recent chats',
+    btnToday: 'Today',
+    btnExport: 'Export',
+    panelTitle: 'Upcoming Catalysts',
+    panelEmpty: 'No catalysts match the current filters',
+    totalCount: n => `${n} ${n === 1 ? 'event' : 'events'}`,
+    moreCount: n => `+${n} more`,
+    dow: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    formatMonthLabel: (y, m) => `${MONTHS_FULL_EN[m]} ${y}`,
+    formatPanelDate: (d, m) => ({ day: String(d).padStart(2, '0'), month: MONTHS_SHORT_EN[m] }),
+    cats: {
+      clinical:   'Clinical data',
+      regulatory: 'Regulatory',
+      conference: 'Conference',
+      trial:      'Trial milestone',
+      earnings:   'Earnings'
+    }
+  }
+};
+
+/* ============================================================
+   类别配置（颜色不随语言变化）
+   ============================================================ */
+const CATS = {
+  clinical:   { a: '#2563eb', bg: '#eff6ff', fg: '#1d4ed8' },
+  regulatory: { a: '#d97706', bg: '#fffaeb', fg: '#b45309' },
+  conference: { a: '#0d9488', bg: '#f0fdfa', fg: '#0f766e' },
+  trial:      { a: '#4f46e5', bg: '#eef2ff', fg: '#4338ca' },
+  earnings:   { a: '#64748b', bg: '#f8fafc', fg: '#475569' }
+};
+
+/* ============================================================
+   事件数据（title / org 支持多语言对象或纯字符串）
+   ============================================================ */
+const EVENTS = [
+  { date: '2026-03-02', type: 'trial',
+    title: { zh: 'REX-4671 I 期首例受试者给药', en: 'REX-4671 Phase I first patient dosed' },
+    org: 'RecluDix Pharma' },
+  { date: '2026-03-04', type: 'conference',
+    title: { zh: 'AACR 2026 年会（3/4 - 3/8）', en: 'AACR 2026 Annual Meeting (Mar 4-8)' },
+    org: 'AACR' },
+  { date: '2026-03-06', type: 'clinical',
+    title: { zh: 'Gedatolisib 联合方案 III 期顶线数据', en: 'Gedatolisib combo Phase III topline data' },
+    org: 'Celcuity' },
+  { date: '2026-03-10', type: 'clinical',
+    title: { zh: 'REX-4671 I 期剂量爬坡数据读出', en: 'REX-4671 Phase I dose-escalation readout' },
+    org: 'RecluDix Pharma' },
+  { date: '2026-03-10', type: 'earnings',
+    title: { zh: '2025 全年业绩电话会', en: 'FY2025 earnings call' },
+    org: 'Hengrui Pharma' },
+  { date: '2026-03-12', type: 'regulatory',
+    title: { zh: 'Zongertinib NDA PDUFA 决议日', en: 'Zongertinib NDA PDUFA date' },
+    org: 'Boehringer Ingelheim' },
+  { date: '2026-03-16', type: 'trial',
+    title: { zh: 'III 期研究完成全部受试者入组', en: 'Phase III completes full enrollment' },
+    org: 'Cephalon' },
+  { date: '2026-03-18', type: 'earnings',
+    title: { zh: '2025 年度业绩发布', en: 'FY2025 annual results' },
+    org: 'BeOne Medicines' },
+  { date: '2026-03-20', type: 'regulatory',
+    title: { zh: 'FDA 肿瘤药物咨询委员会会议', en: 'FDA Oncologic Drugs Advisory Committee' },
+    org: 'FDA ODAC' },
+  { date: '2026-03-24', type: 'regulatory',
+    title: { zh: 'Sotorasib 联合方案 EU MAA 提交', en: 'Sotorasib combo EU MAA submission' },
+    org: 'Amgen' },
+  { date: '2026-03-26', type: 'conference',
+    title: { zh: 'ELCC 2026 年会（3/26 - 3/29）', en: 'ELCC 2026 Annual Meeting (Mar 26-29)' },
+    org: 'ESMO' },
+  { date: '2026-03-30', type: 'clinical',
+    title: { zh: 'STAT6 通路抑制剂 Ib 期扩展队列启动', en: 'STAT6 inhibitor Phase Ib expansion cohort' },
+    org: 'RecluDix Pharma' },
+  { date: '2026-03-31', type: 'regulatory',
+    title: { zh: 'NMPA 优先审评资格公示', en: 'NMPA Priority Review designation' },
+    org: 'NMPA' }
+];
+
+/* 演示基准日（截图中的"今天"） */
+const TODAY = new Date(2026, 2, 10);
+
+/* ============================================================
+   状态
+   ============================================================ */
+const state = {
+  lang: 'zh',
+  year: 2026,
+  month: 2,                                 // 0-indexed → 3 月
+  active: new Set(Object.keys(CATS))
+};
+
+const pad = n => String(n).padStart(2, '0');
+const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+/* 事件按日期索引 */
+const eventsByDate = EVENTS.reduce((acc, ev) => {
+  (acc[ev.date] = acc[ev.date] || []).push(ev);
+  return acc;
+}, {});
+
+/* 多语言字段取值 */
+function pick(v) {
+  if (typeof v === 'string') return v;
+  return v[state.lang] || v.zh || v.en || '';
+}
+
+/* ============================================================
+   DOM 引用
+   ============================================================ */
+const calGrid   = document.getElementById('calGrid');
+const monthLabel = document.getElementById('monthLabel');
+const catList   = document.getElementById('catList');
+const panelSub  = document.getElementById('panelSub');
+const panelCount = document.getElementById('panelCount');
+const filtersEl = document.getElementById('filters');
+
+/* ============================================================
+   通用 UI 文案（data-i18n）
+   ============================================================ */
+function applyChrome() {
+  const L = I18N[state.lang];
+  document.documentElement.lang = L.lang;
+  document.title = `${L.pageTitle} · Deep Pharma`;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const val = L[el.dataset.i18n];
+    if (typeof val === 'string') el.textContent = val;
+  });
+}
+
+/* ============================================================
+   类别筛选条（语言切换时重建，保留选中状态）
+   ============================================================ */
+function renderFilters() {
+  const L = I18N[state.lang];
+  filtersEl.innerHTML = '';
+  Object.keys(CATS).forEach(key => {
+    const cat = CATS[key];
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.dataset.cat = key;
+    btn.style.setProperty('--a', cat.a);
+    btn.setAttribute('aria-pressed', state.active.has(key) ? 'true' : 'false');
+    btn.innerHTML = `<span class="dot"></span>${L.cats[key]}`;
+    btn.addEventListener('click', () => {
+      if (state.active.has(key)) state.active.delete(key);
+      else state.active.add(key);
+      btn.setAttribute('aria-pressed', state.active.has(key) ? 'true' : 'false');
+      renderCalendar();
+      renderPanel();
+    });
+    filtersEl.appendChild(btn);
+  });
+}
+
+/* ============================================================
+   月视图渲染
+   ============================================================ */
+function visibleEvents(list) {
+  return list.filter(ev => state.active.has(ev.type));
+}
+
+function renderCalendar() {
+  const L = I18N[state.lang];
+  const { year, month } = state;
+
+  monthLabel.textContent = L.formatMonthLabel(year, month);
+  panelSub.textContent = L.formatMonthLabel(year, month);
+
+  const first = new Date(year, month, 1);
+  const offset = (first.getDay() + 6) % 7;        // 周一为一周起点
+  const gridStart = new Date(year, month, 1 - offset);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells = Math.ceil((offset + daysInMonth) / 7) * 7;
+
+  calGrid.innerHTML = '';
+
+  /* 星期表头 */
+  L.dow.forEach(d => {
+    const head = document.createElement('div');
+    head.className = 'dow';
+    head.textContent = d;
+    calGrid.appendChild(head);
+  });
+
+  /* 日期单元格 */
+  for (let i = 0; i < cells; i++) {
+    const d = new Date(gridStart);
+    d.setDate(gridStart.getDate() + i);
+    const k = keyOf(d);
+    const inMonth = d.getMonth() === month;
+
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (inMonth ? '' : ' out');
+    if (k === keyOf(TODAY)) cell.classList.add('today');
+
+    const head = document.createElement('div');
+    head.className = 'cell-head';
+    head.innerHTML = `<span class="day-num">${d.getDate()}</span>`;
+    cell.appendChild(head);
+
+    const list = visibleEvents(eventsByDate[k] || []);
+    list.slice(0, 3).forEach(ev => {
+      const cat = CATS[ev.type];
+      const chip = document.createElement('button');
+      chip.className = 'ev';
+      chip.style.setProperty('--a', cat.a);
+      chip.style.setProperty('--bg', cat.bg);
+      chip.style.setProperty('--fg', cat.fg);
+      chip.title = `${pick(ev.title)} · ${pick(ev.org)}`;
+      chip.innerHTML = `<span class="ev-text">${pick(ev.title)}</span>`;
+      cell.appendChild(chip);
+    });
+
+    if (list.length > 3) {
+      const more = document.createElement('button');
+      more.className = 'ev-more';
+      more.textContent = L.moreCount(list.length - 3);
+      cell.appendChild(more);
+    }
+
+    calGrid.appendChild(cell);
+  }
+}
+
+/* ============================================================
+   右侧「近期催化剂」列表
+   ============================================================ */
+function renderPanel() {
+  const L = I18N[state.lang];
+  const { year, month } = state;
+
+  const monthStart = new Date(year, month, 1);
+  const monthEnd = new Date(year, month + 1, 0, 23, 59, 59);
+
+  const items = EVENTS
+    .filter(ev => {
+      const d = new Date(ev.date + 'T00:00:00');
+      return d >= monthStart && d <= monthEnd && state.active.has(ev.type);
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  panelCount.textContent = L.totalCount(items.length);
+
+  if (!items.length) {
+    catList.innerHTML = `<div class="panel-empty">${L.panelEmpty}</div>`;
+    return;
+  }
+
+  catList.innerHTML = items.map(ev => {
+    const d = new Date(ev.date + 'T00:00:00');
+    const cat = CATS[ev.type];
+    const isToday = ev.date === keyOf(TODAY);
+    const dd = L.formatPanelDate(d.getDate(), d.getMonth());
+    return `
+      <article class="cat-item${isToday ? ' is-today' : ''}">
+        <div class="cat-date">
+          <span class="d">${dd.day}</span>
+          <span class="m">${dd.month}</span>
+        </div>
+        <div class="cat-body">
+          <div class="cat-title">${pick(ev.title)}</div>
+          <div class="cat-meta">
+            <span class="cat-org">${pick(ev.org)}</span>
+            <span class="cat-type" style="--a:${cat.a}"><span>${L.cats[ev.type]}</span></span>
+          </div>
+        </div>
+      </article>`;
+  }).join('');
+}
+
+/* ============================================================
+   汇总渲染
+   ============================================================ */
+function renderAll() {
+  applyChrome();
+  renderFilters();
+  renderCalendar();
+  renderPanel();
+}
+
+/* ============================================================
+   交互
+   ============================================================ */
+document.getElementById('prevMonth').addEventListener('click', () => {
+  state.month--;
+  if (state.month < 0) { state.month = 11; state.year--; }
+  renderAll();
+});
+
+document.getElementById('nextMonth').addEventListener('click', () => {
+  state.month++;
+  if (state.month > 11) { state.month = 0; state.year++; }
+  renderAll();
+});
+
+document.getElementById('todayBtn').addEventListener('click', () => {
+  state.year = TODAY.getFullYear();
+  state.month = TODAY.getMonth();
+  renderAll();
+});
+
+/* 语言切换 */
+document.querySelectorAll('.lang-switch button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const lang = btn.dataset.lang;
+    if (lang === state.lang) return;
+    state.lang = lang;
+    document.querySelectorAll('.lang-switch button').forEach(b => {
+      b.setAttribute('aria-pressed', b.dataset.lang === lang ? 'true' : 'false');
+    });
+    renderAll();
+  });
+});
+
+/* 首次渲染 */
+renderAll();
+</script>
+</body>
+</html>
