@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>催化剂日历 · Deep Pharma</title>
+<style>
+  :root {
+    --brand: #2563eb;
+    --brand-dark: #1d4ed8;
+    --text: #16161d;
+    --text-2: #5c5c6e;
+    --text-3: #8a8a9c;
+    --line: #e8e8ef;
+    --line-strong: #dcdce6;
+    --hover: #f2f1f9;
+    --radius-lg: 12px;
+    --radius-md: 8px;
+    --radius-sm: 5px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    font-size: 13.5px;
+    color: var(--text);
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button { font-family: inherit; }
+  svg { display: block; }
+
+  .app { display: flex; height: 100dvh; overflow: hidden; }
+
+  /* ---------------- Sidebar ---------------- */
+  .sidebar {
+    width: 248px;
+    flex: 0 0 248px;
+    background: linear-gradient(180deg, #f7f6fd 0%, #fbfaff 100%);
+    border-right: 1px solid #ecebf5;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 12px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 4px 6px 16px;
+  }
+  .brand-mark {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #4f46e5, #2563eb);
+    display: grid; place-items: center;
+    flex: 0 0 auto;
+  }
+  .brand-name {
+    font-size: 14.5px; font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+    color: #16162a;
+  }
+  .brand-sub {
+    font-size: 9.5px;
+    color: #9a9ab0;
+    letter-spacing: 0.06em;
+    margin-top: 1px;
+  }
+  .sidebar-collapse {
+    margin-left: auto;
+    width: 24px; height: 24px;
+    border: none; background: transparent;
+    border-radius: 6px;
+    display: grid; place-items: center;
+    color: #9a9ab0;
+    cursor: pointer;
+  }
+  .sidebar-collapse:hover { background: var(--hover); color: var(--text-2); }
+
+  .nav { display: flex; flex-direction: column; gap: 2px; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    font-size: 13.5px;
+    color: var(--text-2);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    transition: background .12s ease, color .12s ease;
+  }
+  .nav-item:hover { background: var(--hover); color: var(--text); }
+  .nav-item.active {
+    background: #ece9fa;
+    color: #2b2560;
+    font-weight: 600;
+  }
+  .nav-item svg { flex: 0 0 auto; }
+  .nav-badge {
+    margin-left: auto;
+    background: #ef4444;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 20px;
+    height: 18px;
+    border-radius: 9px;
+    display: grid; place-items: center;
+    padding: 0 6px;
+    letter-spacing: 0;
+  }
+  .nav-sep {
+    height: 1px;
+    background: #e8e6f2;
+    margin: 10px 10px;
+  }
+
+  /* ---------------- Main ---------------- */
+  .main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .topbar {
+    height: 60px;
+    flex: 0 0 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .page-title {
+    font-size: 15px;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    color: #16162a;
+  }
+  .topbar-divider {
+    width: 1px; height: 14px;
+    background: var(--line-strong);
+    margin: 0 3px;
+  }
+  .page-desc {
+    font-size: 12.5px;
+    color: var(--text-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .account {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px 4px 4px;
+    border-radius: 999px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: background .12s ease;
+  }
+  .account:hover { background: var(--hover); }
+  .avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #2563eb);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 650;
+    display: grid; place-items: center;
+    flex: 0 0 auto;
+  }
+  .account-email { font-size: 12.5px; color: var(--text-2); }
+
+  /* ---------------- Toolbar ---------------- */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px 10px;
+    flex-wrap: wrap;
+  }
+  .month-nav {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-md);
+    padding: 2px;
+    background: #fff;
+  }
+  .month-nav button {
+    width: 26px; height: 26px;
+    border: none; background: transparent;
+    border-radius: 6px;
+    display: grid; place-items: center;
+    cursor: pointer;
+    color: var(--text-2);
+    transition: background .12s ease;
+  }
+  .month-nav button:hover { background: var(--hover); color: var(--text); }
+  .month-label {
+    font-size: 14px;
+    font-weight: 650;
+    padding: 0 10px;
+    min-width: 104px;
+    text-align: center;
+    letter-spacing: -0.02em;
+  }
+  .btn-ghost {
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--line-strong);
+    background: #fff;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    color: var(--text-2);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background .12s ease, border-color .12s ease, color .12s ease;
+  }
+  .btn-ghost:hover { background: #fafafc; color: var(--text); border-color: #cfcfdc; }
+  .btn-ghost:active { transform: translateY(1px); }
+
+  .spacer { flex: 1; }
+
+  .segmented {
+    display: flex;
+    background: #f4f4f8;
+    border-radius: var(--radius-md);
+    padding: 3px;
+    gap: 2px;
+  }
+  .segmented button {
+    border: none;
+    background: transparent;
+    padding: 0 12px;
+    height: 26px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    color: var(--text-2);
+    cursor: pointer;
+    transition: background .12s ease, color .12s ease;
+  }
+  .segmented button[aria-pressed="true"] {
+    background: #fff;
+    color: var(--text);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(16, 16, 30, 0.09);
+  }
+
+  /* ---------------- Category filters ---------------- */
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 20px 14px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    --a: #64748b;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: #fff;
+    font-size: 12.5px;
+    color: var(--text-3);
+    cursor: pointer;
+    transition: opacity .12s ease, background .12s ease,
+      border-color .12s ease, color .12s ease;
+  }
+  .chip .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--a);
+    flex: 0 0 auto;
+  }
+  .chip[aria-pressed="true"] {
+    border-color: color-mix(in srgb, var(--a) 32%, #fff);
+    background: color-mix(in srgb, var(--a) 7%, #fff);
+    color: var(--a);
+    font-weight: 550;
+  }
+  .chip[aria-pressed="false"] { opacity: 0.45; }
+
+  /* ---------------- Body ---------------- */
+  .body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 16px;
+    padding: 0 20px 20px;
+    overflow: hidden;
+  }
+
+  .cal-grid {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-rows: 34px;
+    grid-auto-rows: 104px;
+    gap: 1px;
+    background: #e9e9f0;
+    border: 1px solid #e9e9f0;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    align-content: start;
+  }
+  .dow {
+    background: #fafafc;
+    display: grid;
+    place-items: center;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-3);
+    letter-spacing: 0.02em;
+  }
+  .cell {
+    background: #fff;
+    padding: 6px 7px 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .cell.out { background: #fbfbfd; }
+  .cell.out .day-num { color: #bcbccb; }
+  .cell-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 22px;
+    margin-bottom: 1px;
+  }
+  .day-num {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    letter-spacing: -0.01em;
+  }
+  .cell.today .day-num { background: var(--brand); color: #fff; }
+  .cell.today { background: #fbfcff; }
+
+  .ev {
+    --a: #64748b;
+    --bg: #f8fafc;
+    --fg: #475569;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    padding: 3px 6px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--fg);
+    font-size: 11.5px;
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+    min-width: 0;
+    transition: filter .12s ease;
+  }
+  .ev::before {
+    content: "";
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--a);
+    flex: 0 0 auto;
+  }
+  .ev:hover { filter: brightness(0.955); }
+  .ev-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1;
+  }
+  .ev-more {
+    font-size: 11px;
+    color: var(--text-3);
+    padding: 2px 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    border-radius: var(--radius-sm);
+    transition: background .12s ease, color .12s ease;
+  }
+  .ev-more:hover { background: var(--hover); color: var(--text-2); }
+
+  /* ---------------- Right panel ---------------- */
+  .panel {
+    width: 320px;
+    flex: 0 0 320px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+  }
+  .panel-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 14px 16px 11px;
+    border-bottom: 1px solid #f1f1f6;
+  }
+  .panel-head h2 {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+  .panel-sub { font-size: 11.5px; color: var(--text-3); }
+  .panel-count {
+    margin-left: auto;
+    font-size: 11.5px;
+    color: var(--text-3);
+  }
+  .cat-list { overflow-y: auto; flex: 1; }
+
+  .cat-item {
+    display: flex;
+    gap: 11px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f4f4f8;
+    cursor: pointer;
+    transition: background .12s ease;
+    border-left: 2px solid transparent;
+  }
+  .cat-item:hover { background: #fbfbfd; }
+  .cat-item.is-today {
+    background: #fbfcff;
+    border-left-color: var(--brand);
+  }
+  .cat-date { flex: 0 0 32px; text-align: center; }
+  .cat-date .d {
+    display: block;
+    font-size: 17px;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+  .cat-date .m {
+    display: block;
+    font-size: 10.5px;
+    color: var(--text-3);
+    margin-top: 2px;
+  }
+  .cat-body { min-width: 0; flex: 1; }
+  .cat-title {
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.42;
+    color: var(--text);
+  }
+  .cat-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 11.5px;
+    color: var(--text-3);
+    min-width: 0;
+  }
+  .cat-org {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cat-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex: 0 0 auto;
+  }
+  .cat-type::before {
+    content: "";
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--a);
+  }
+  .cat-type span { color: var(--a); }
+  .panel-empty {
+    padding: 32px 16px;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--text-3);
+  }
+
+  /* ---------------- Responsive ---------------- */
+  @media (max-width: 1320px) {
+    .panel { display: none; }
+  }
+  @media (max-width: 1100px) {
+    .page-desc { display: none; }
+    .topbar-divider { display: none; }
+  }
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .body { padding: 0 12px 12px; }
+    .toolbar, .filters, .topbar { padding-left: 12px; padding-right: 12px; }
+    .cal-grid { grid-auto-rows: 88px; }
+    .ev-text { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= Sidebar ================= -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <rect x="3.5" y="3.5" width="17" height="17" rx="5" stroke="#fff" stroke-width="2.2"/>
+          <circle cx="12" cy="12" r="3" fill="#fff"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Deep Pharma</div>
+        <div class="brand-sub">by Sinohealth</div>
+      </div>
+      <button class="sidebar-collapse" aria-label="收起侧边栏">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="16" rx="3"/>
+          <path d="M9 4v16"/>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        新建对话
+      </button>
+
+      <button class="nav-item">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M3 12h18"/>
+          <path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/>
+        </svg>
+        全球新药情报
+      </button>
+
+      <button class="nav-item">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 20h18"/>
+          <path d="M6.5 20v-6"/>
+          <path d="M12 20V8"/>
+          <path d="M17.5 20v-9.5"/>
+        </svg>
+        行业监控
+        <span class="nav-badge">18</span>
+      </button>
+
+      <button class="nav-item active">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="16" rx="2.5"/>
+          <path d="M3 10h18M8 3v4M16 3v4"/>
+        </svg>
+        催化剂日历
+      </button>
+
+      <div class="nav-sep"></div>
+
+      <button class="nav-item">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 7v5l3 2"/>
+        </svg>
+        最近对话
+      </button>
+    </nav>
+  </aside>
+
+  <!-- ================= Main ================= -->
+  <main class="main">
+
+    <header class="topbar">
+      <span class="page-title">催化剂日历</span>
+      <span class="topbar-divider"></span>
+      <span class="page-desc">追踪临床数据读出、监管审批、学术会议与试验里程碑</span>
+
+      <button class="account">
+        <span class="avatar">W</span>
+        <span class="account-email">wangao1@sinohealth.cn</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a9c"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+    </header>
+
+    <div class="toolbar">
+      <div class="month-nav">
+        <button id="prevMonth" aria-label="上一个月">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 6l-6 6 6 6"/>
+          </svg>
+        </button>
+        <span class="month-label" id="monthLabel">2026年3月</span>
+        <button id="nextMonth" aria-label="下一个月">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 6l6 6-6 6"/>
+          </svg>
+        </button>
+      </div>
+
+      <button class="btn-ghost" id="todayBtn">回到今天</button>
+
+      <span class="spacer"></span>
+
+      <div class="segmented" role="group" aria-label="视图切换">
+        <button aria-pressed="true" data-view="month">月视图</button>
+        <button aria-pressed="false" data-view="list">列表</button>
+      </div>
+
+      <button class="btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 4v12M7 11l5 5 5-5M4 20h16"/>
+        </svg>
+        导出
+      </button>
+    </div>
+
+    <div class="filters" id="filters"></div>
+
+    <div class="body">
+      <div class="cal-grid" id="calGrid"></div>
+
+      <aside class="panel">
+        <div class="panel-head">
+          <h2>近期催化剂</h2>
+          <span class="panel-sub" id="panelSub">2026年3月</span>
+          <span class="panel-count" id="panelCount"></span>
+        </div>
+        <div class="cat-list" id="catList"></div>
+      </aside>
+    </div>
+
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   数据层
+   ============================================================ */
+const CATS = {
+  clinical:   { label: '临床数据',  a: '#2563eb', bg: '#eff6ff', fg: '#1d4ed8' },
+  regulatory: { label: '监管审批',  a: '#d97706', bg: '#fffaeb', fg: '#b45309' },
+  conference: { label: '学术会议',  a: '#0d9488', bg: '#f0fdfa', fg: '#0f766e' },
+  trial:      { label: '试验里程碑', a: '#4f46e5', bg: '#eef2ff', fg: '#4338ca' },
+  earnings:   { label: '业绩发布',  a: '#64748b', bg: '#f8fafc', fg: '#475569' }
+};
+
+/* 演示数据：2026 年 3 月 */
+const EVENTS = [
+  { date: '2026-03-02', type: 'trial',      title: 'REX-4671 I 期首例受试者给药',      org: 'RecluDix Pharma' },
+  { date: '2026-03-04', type: 'conference', title: 'AACR 2026 年会（3/4 - 3/8）',       org: 'AACR' },
+  { date: '2026-03-06', type: 'clinical',   title: 'Gedatolisib 联合方案 III 期顶线数据', org: 'Celcuity' },
+  { date: '2026-03-10', type: 'clinical',   title: 'REX-4671 I 期剂量爬坡数据读出',    org: 'RecluDix Pharma' },
+  { date: '2026-03-10', type: 'earnings',   title: '2025 全年业绩电话会',              org: 'Hengrui Pharma' },
+  { date: '2026-03-12', type: 'regulatory', title: 'Zongertinib NDA PDUFA 决议日',     org: 'Boehringer Ingelheim' },
+  { date: '2026-03-16', type: 'trial',      title: 'III 期研究完成全部受试者入组',      org: 'Cephalon' },
+  { date: '2026-03-18', type: 'earnings',   title: '2025 年度业绩发布',                org: 'BeOne Medicines' },
+  { date: '2026-03-20', type: 'regulatory', title: 'FDA 肿瘤药物咨询委员会会议',        org: 'FDA ODAC' },
+  { date: '2026-03-24', type: 'regulatory', title: 'Sotorasib 联合方案 EU MAA 提交',   org: 'Amgen' },
+  { date: '2026-03-26', type: 'conference', title: 'ELCC 2026 年会（3/26 - 3/29）',    org: 'ESMO' },
+  { date: '2026-03-30', type: 'clinical',   title: 'STAT6 通路抑制剂 Ib 期扩展队列启动', org: 'RecluDix Pharma' },
+  { date: '2026-03-31', type: 'regulatory', title: 'NMPA 优先审评资格公示',            org: 'NMPA' }
+];
+
+/* 演示基准日（截图中的"今天"） */
+const TODAY = new Date(2026, 2, 10);
+
+/* ============================================================
+   状态
+   ============================================================ */
+const state = {
+  year: 2026,
+  month: 2,                                   // 0-indexed → 3 月
+  active: new Set(Object.keys(CATS)),
+  view: 'month'
+};
+
+const pad = n => String(n).padStart(2, '0');
+const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+const eventsByDate = EVENTS.reduce((acc, ev) => {
+  (acc[ev.date] = acc[ev.date] || []).push(ev);
+  return acc;
+}, {});
+
+/* ============================================================
+   类别筛选条
+   ============================================================ */
+const filtersEl = document.getElementById('filters');
+Object.entries(CATS).forEach(([key, cat]) => {
+  const btn = document.createElement('button');
+  btn.className = 'chip';
+  btn.dataset.cat = key;
+  btn.style.setProperty('--a', cat.a);
+  btn.setAttribute('aria-pressed', 'true');
+  btn.innerHTML = `<span class="dot"></span>${cat.label}`;
+  btn.addEventListener('click', () => {
+    if (state.active.has(key)) state.active.delete(key);
+    else state.active.add(key);
+    btn.setAttribute('aria-pressed', state.active.has(key) ? 'true' : 'false');
+    renderAll();
+  });
+  filtersEl.appendChild(btn);
+});
+
+/* ============================================================
+   日历渲染
+   ============================================================ */
+const calGrid = document.getElementById('calGrid');
+const monthLabel = document.getElementById('monthLabel');
+const catList = document.getElementById('catList');
+const panelSub = document.getElementById('panelSub');
+const panelCount = document.getElementById('panelCount');
+const DOW = ['一', '二', '三', '四', '五', '六', '日'];
+
+function visibleEvents(list) {
+  return list.filter(ev => state.active.has(ev.type));
+}
+
+function renderMonth() {
+  const { year, month } = state;
+  monthLabel.textContent = `${year}年${month + 1}月`;
+  panelSub.textContent = `${year}年${month + 1}月`;
+
+  const first = new Date(year, month, 1);
+  const offset = (first.getDay() + 6) % 7;      // 周一为一周起点
+  const gridStart = new Date(year, month, 1 - offset);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells = Math.ceil((offset + daysInMonth) / 7) * 7;
+
+  calGrid.innerHTML = '';
+
+  DOW.forEach(d => {
+    const head = document.createElement('div');
+    head.className = 'dow';
+    head.textContent = '周' + d;
+    calGrid.appendChild(head);
+  });
+
+  for (let i = 0; i < cells; i++) {
+    const d = new Date(gridStart);
+    d.setDate(gridStart.getDate() + i);
+    const k = keyOf(d);
+    const inMonth = d.getMonth() === month;
+
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (inMonth ? '' : ' out');
+    if (k === keyOf(TODAY)) cell.classList.add('today');
+
+    const head = document.createElement('div');
+    head.className = 'cell-head';
+    head.innerHTML = `<span class="day-num">${d.getDate()}</span>`;
+    cell.appendChild(head);
+
+    const list = visibleEvents(eventsByDate[k] || []);
+    list.slice(0, 3).forEach(ev => {
+      const cat = CATS[ev.type];
+      const chip = document.createElement('button');
+      chip.className = 'ev';
+      chip.style.setProperty('--a', cat.a);
+      chip.style.setProperty('--bg', cat.bg);
+      chip.style.setProperty('--fg', cat.fg);
+      chip.title = `${ev.title} · ${ev.org}`;
+      chip.innerHTML = `<span class="ev-text">${ev.title}</span>`;
+      cell.appendChild(chip);
+    });
+
+    if (list.length > 3) {
+      const more = document.createElement('button');
+      more.className = 'ev-more';
+      more.textContent = `+${list.length - 3} 项`;
+      cell.appendChild(more);
+    }
+
+    calGrid.appendChild(cell);
+  }
+}
+
+/* ============================================================
+   右侧「近期催化剂」列表
+   ============================================================ */
+function renderPanel() {
+  const { year, month } = state;
+  const monthStart = new Date(year, month, 1);
+  const monthEnd = new Date(year, month + 1, 0, 23, 59, 59);
+
+  const items = EVENTS
+    .filter(ev => {
+      const d = new Date(ev.date + 'T00:00:00');
+      return d >= monthStart && d <= monthEnd && state.active.has(ev.type);
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  panelCount.textContent = `共 ${items.length} 项`;
+
+  if (!items.length) {
+    catList.innerHTML = '<div class="panel-empty">当前筛选条件下暂无催化剂</div>';
+    return;
+  }
+
+  catList.innerHTML = items.map(ev => {
+    const d = new Date(ev.date + 'T00:00:00');
+    const cat = CATS[ev.type];
+    const isToday = ev.date === keyOf(TODAY);
+    return `
+      <article class="cat-item${isToday ? ' is-today' : ''}">
+        <div class="cat-date">
+          <span class="d">${pad(d.getDate())}</span>
+          <span class="m">${d.getMonth() + 1}月</span>
+        </div>
+        <div class="cat-body">
+          <div class="cat-title">${ev.title}</div>
+          <div class="cat-meta">
+            <span class="cat-org">${ev.org}</span>
+            <span class="cat-type" style="--a:${cat.a}"><span>${cat.label}</span></span>
+          </div>
+        </div>
+      </article>`;
+  }).join('');
+}
+
+/* ============================================================
+   列表视图（整月事件平铺）
+   ============================================================ */
+function renderList() {
+  const { year, month } = state;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const rows = [];
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const k = `${year}-${pad(month + 1)}-${pad(day)}`;
+    const list = visibleEvents(eventsByDate[k] || []);
+    list.forEach(ev => {
+      const cat = CATS[ev.type];
+      rows.push(`
+        <div class="cat-item">
+          <div class="cat-date">
+            <span class="d">${pad(day)}</span>
+            <span class="m">${month + 1}月</span>
+          </div>
+          <div class="cat-body">
+            <div class="cat-title">${ev.title}</div>
+            <div class="cat-meta">
+              <span class="cat-org">${ev.org}</span>
+              <span class="cat-type" style="--a:${cat.a}"><span>${cat.label}</span></span>
+            </div>
+          </div>
+        </div>`);
+    });
+  }
+
+  calGrid.style.display = 'block';
+  calGrid.style.gridTemplateColumns = 'none';
+  calGrid.style.gridAutoRows = 'auto';
+  calGrid.style.background = 'transparent';
+  calGrid.style.border = '1px solid var(--line)';
+  calGrid.innerHTML = rows.length
+    ? rows.join('')
+    : '<div class="panel-empty">当前筛选条件下暂无催化剂</div>';
+}
+
+function renderCalendar() {
+  if (state.view === 'list') {
+    renderList();
+  } else {
+    calGrid.style.display = 'grid';
+    calGrid.style.gridTemplateColumns = 'repeat(7, minmax(0, 1fr))';
+    calGrid.style.gridTemplateRows = '34px';
+    calGrid.style.gridAutoRows = '104px';
+    calGrid.style.background = '#e9e9f0';
+    calGrid.style.border = '1px solid #e9e9f0';
+    renderMonth();
+  }
+}
+
+function renderAll() {
+  renderCalendar();
+  renderPanel();
+}
+
+/* ============================================================
+   交互
+   ============================================================ */
+document.getElementById('prevMonth').addEventListener('click', () => {
+  state.month--;
+  if (state.month < 0) { state.month = 11; state.year--; }
+  renderAll();
+});
+
+document.getElementById('nextMonth').addEventListener('click', () => {
+  state.month++;
+  if (state.month > 11) { state.month = 0; state.year++; }
+  renderAll();
+});
+
+document.getElementById('todayBtn').addEventListener('click', () => {
+  state.year = TODAY.getFullYear();
+  state.month = TODAY.getMonth();
+  renderAll();
+});
+
+document.querySelectorAll('.segmented button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.segmented button')
+      .forEach(b => b.setAttribute('aria-pressed', 'false'));
+    btn.setAttribute('aria-pressed', 'true');
+    state.view = btn.dataset.view;
+    renderCalendar();
+  });
+});
+
+renderAll();
+</script>
+</body>
+</html>
