@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能监控设定 - 交互设计 Demo</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定义滚动条样式 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+    </style>
+</head>
+<body class="bg-slate-900/50 flex items-center justify-center min-h-screen font-sans">
+
+    <!-- 弹窗容器 -->
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[680px] border border-slate-100">
+        
+        <!-- 顶部导航栏 -->
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+            <div class="flex items-center space-x-2">
+                <h2 class="text-lg font-semibold text-slate-800">新增监控</h2>
+                <span class="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-medium">可部署监控: 17/20</span>
+            </div>
+            <button class="text-slate-400 hover:text-slate-600 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <!-- 主体内容区：分两步/双态切换 -->
+        <div class="flex-1 overflow-hidden relative flex flex-col">
+            
+            <!-- 状态一：纯粹的对话聚焦区 (Step 1) -->
+            <div id="chat-stage" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/50">
+                <!-- 引导标签推荐 -->
+                <div class="flex justify-end">
+                    <div class="bg-indigo-50 text-indigo-700 text-xs px-3 py-1.5 rounded-lg inline-block font-medium cursor-pointer hover:bg-indigo-100 transition-colors">
+                        监控靶点 STAT6 的相关专利
+                    </div>
+                </div>
+
+                <!-- AI 助手对话气泡 -->
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white shrink-0 font-bold text-sm shadow-sm">AI</div>
+                    <div class="bg-white p-4 rounded-2xl rounded-tl-sm shadow-sm border border-slate-100 max-w-[85%] text-slate-700 text-sm leading-relaxed">
+                        你好！我是行业监控助手。我已经了解你想追踪 <span class="font-semibold text-slate-900">STAT6 靶点专利</span>。目前的监控核心已初步为您梳理。如果你觉得可以，请点击下方按钮确认并进入最终配置；如果有调整，请直接告诉我。
+                    </div>
+                </div>
+
+                <!-- 历史对话示例 -->
+                <div class="flex justify-end">
+                    <div class="bg-indigo-600 text-white p-3.5 rounded-2xl rounded-tr-sm shadow-sm max-w-[85%] text-sm leading-relaxed">
+                        需要重点关注中国和全球的最新专利申请、授权进展以及专利族变动。
+                    </div>
+                </div>
+
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white shrink-0 font-bold text-sm shadow-sm">AI</div>
+                    <div class="bg-white p-4 rounded-2xl rounded-tl-sm shadow-sm border border-slate-100 max-w-[85%] text-sm leading-relaxed">
+                        明白！我已经将监控需求收敛为：追踪全球及中国的 STAT6 最新专利申请、授权进展、专利族变动及重大 IP 交易与诉讼。如无异议，可直接点击下方按钮进入下一步。
+                    </div>
+                </div>
+            </div>
+
+            <!-- 状态二：确认后的配置面板 (Step 2 - 默认隐藏，点击确认后滑出/切换) -->
+            <div id="config-stage" class="absolute inset-0 bg-white z-10 p-6 overflow-y-auto hidden flex flex-col space-y-6">
+                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl text-sm flex items-center justify-between">
+                    <span class="flex items-center space-x-2">
+                        <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>监控内容已通过对话成功总结！请完善以下最终发布设置。</span>
+                    </span>
+                    <button onclick="backToChat()" class="text-xs text-emerald-700 underline hover:text-emerald-900 font-medium">返回对话微调</button>
+                </div>
+
+                <!-- 1. 监控标题 (可直接修改) -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                        监控标题 <span class="text-indigo-600 font-normal normal-case ml-1">(可直接点击修改)</span>
+                    </label>
+                    <input type="text" value="STAT6靶点专利动态" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all">
+                </div>
+
+                <!-- 2. 监控内容摘要 (不可直接编辑，通过对话总结) -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                        监控内容摘要 <span class="text-slate-400 font-normal normal-case ml-1">(由对话智能总结，不可直接编辑)</span>
+                    </label>
+                    <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-slate-600 text-sm leading-relaxed select-none">
+                        追踪境内与 STAT6 靶点相关的最新公开专利申请、授权进展及专利族变动，优先提示关键专利布局变化及重大 IP 交易与诉讼。
+                    </div>
+                </div>
+
+                <!-- 3. 更新频率 -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">更新频率</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <label class="border border-indigo-600 bg-indigo-50/50 text-indigo-700 py-2.5 rounded-xl text-center text-sm font-medium cursor-pointer transition-all flex items-center justify-center space-x-2">
+                            <input type="radio" name="freq" checked class="text-indigo-600 focus:ring-indigo-500">
+                            <span>每天</span>
+                        </label>
+                        <label class="border border-slate-200 hover:border-slate-300 text-slate-700 py-2.5 rounded-xl text-center text-sm font-medium cursor-pointer transition-all flex items-center justify-center space-x-2">
+                            <input type="radio" name="freq" class="text-indigo-600 focus:ring-indigo-500">
+                            <span>每 7 天</span>
+                        </label>
+                        <label class="border border-slate-200 hover:border-slate-300 text-slate-700 py-2.5 rounded-xl text-center text-sm font-medium cursor-pointer transition-all flex items-center justify-center space-x-2">
+                            <input type="radio" name="freq" class="text-indigo-600 focus:ring-indigo-500">
+                            <span>每 30 天</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 4. 输出语言选择 (带小i提示) -->
+                <div>
+                    <div class="flex items-center space-x-1.5 mb-2">
+                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">输出语言</label>
+                        <!-- 小 i 提示图标 -->
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-4 h-4 text-slate-400 hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <!-- Tooltip -->
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 bg-slate-800 text-white text-xs rounded-lg p-2 shadow-lg text-center z-20">
+                                监控报告的输出语言
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <select class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all">
+                        <option value="zh" selected>简体中文 (Simplified Chinese)</option>
+                        <option value="en">英文 (English)</option>
+                        <option value="ja">日文 (Japanese)</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 底部输入框或操作栏 -->
+        <div class="p-4 border-t border-slate-100 bg-white shrink-0">
+            <!-- 聊天状态下的输入框 -->
+            <div id="chat-input-area" class="flex items-center space-x-3">
+                <div class="flex-1 relative">
+                    <input type="text" placeholder="描述你想持续关注的内容..." class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all">
+                    <button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                    </button>
+                </div>
+                <button onclick="goToConfig()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-xl font-medium text-sm transition-colors shadow-sm flex items-center space-x-1.5 shrink-0">
+                    <span>确认监控内容</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+
+            <!-- 配置状态下的底部按钮 -->
+            <div id="config-footer" class="hidden flex items-center justify-end space-x-3">
+                <button onclick="backToChat()" class="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-medium text-sm hover:bg-slate-50 transition-colors">取消</button>
+                <button onclick="alert('监控创建成功！')" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-sm shadow-sm transition-colors">确认并添加</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 简单的交互切换脚本 -->
+    <script>
+        function goToConfig() {
+            document.getElementById('config-stage').classList.remove('hidden');
+            document.getElementById('chat-input-area').classList.add('hidden');
+            document.getElementById('config-footer').classList.remove('hidden');
+        }
+
+        function backToChat() {
+            document.getElementById('config-stage').classList.add('hidden');
+            document.getElementById('chat-input-area').classList.remove('hidden');
+            document.getElementById('config-footer').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
