@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToolResponse → Pretty JSON</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #eef0f3;
+    color: #1f2328;
+    font-size: 14px;
+  }
+
+  .app { display: flex; flex-direction: column; height: 100vh; }
+
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px;
+    background: #fff;
+    border-bottom: 1px solid #e3e6ea;
+    flex-shrink: 0;
+  }
+  header h1 { font-size: 15px; font-weight: 600; margin: 0; letter-spacing: .2px; }
+  header .status {
+    margin-left: auto; font-size: 12px; color: #6b7280;
+    max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  header .status.ok { color: #1a7f37; }
+  header .status.error { color: #cf222e; }
+
+  /* ============ 主区域：flex + 可拖拽分隔条 ============ */
+  main {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    background: #e3e6ea;
+    --left-size: 50%;          /* 左栏占比，可被 JS 修改 */
+  }
+
+  .pane {
+    background: #fff;
+    display: flex; flex-direction: column;
+    min-height: 0; min-width: 0;
+  }
+  .left-pane  { flex: 0 0 var(--left-size); }
+  .right-pane { flex: 1 1 0; }
+
+  /* ---- 分隔条 ---- */
+  .divider {
+    flex: 0 0 6px;
+    position: relative;
+    cursor: col-resize;
+    background: #e3e6ea;
+    touch-action: none;           /* 触摸拖拽时不触发滚动 */
+    transition: background .12s;
+  }
+  .divider::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3px; height: 36px;
+    border-radius: 2px;
+    background: #b8c0c8;
+    transition: background .12s;
+  }
+  .divider:hover,
+  .divider.dragging { background: #d3dae0; }
+  .divider:hover::after,
+  .divider.dragging::after { background: #57606a; }
+
+  /* 拖拽期间禁止选中文字 */
+  body.dragging { cursor: col-resize; user-select: none; }
+
+  .pane-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    background: #fafbfc;
+    border-bottom: 1px solid #eef0f2;
+    font-size: 12px; font-weight: 600; color: #57606a;
+    flex-shrink: 0;
+  }
+  .pane-header .spacer { flex: 1; }
+
+  button {
+    font: inherit; font-size: 12px;
+    padding: 4px 10px;
+    border: 1px solid #d0d7de;
+    background: #fff; color: #24292f;
+    border-radius: 6px; cursor: pointer;
+    transition: background .12s;
+    white-space: nowrap;
+  }
+  button:hover { background: #f3f4f6; }
+  button:active { background: #e9ecef; }
+
+  textarea {
+    flex: 1; width: 100%; border: none; outline: none; resize: none;
+    padding: 12px 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+    font-size: 12.5px; line-height: 1.65;
+    color: #1f2328; tab-size: 2;
+  }
+
+  .tree {
+    flex: 1; overflow: auto; padding: 10px 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+    font-size: 12.5px; line-height: 1.7;
+  }
+  .tree .placeholder { color: #9aa4af; font-style: italic; }
+
+  /* ---- JSON 树 ---- */
+  .node .head {
+    display: flex; align-items: flex-start;
+    border-radius: 4px;
+    padding: 0 4px 0 0;
+  }
+  .node .head:hover { background: #f6f8fa; }
+
+  .toggle, .toggle-spacer {
+    flex-shrink: 0; width: 16px; display: inline-block;
+    text-align: center; user-select: none;
+  }
+  .toggle { cursor: pointer; color: #8b949e; }
+  .toggle:hover { color: #1f2328; }
+
+  .node .children {
+    padding-left: 14px;
+    margin-left: 7px;
+    border-left: 1px solid #eef0f2;
+  }
+  .node .foot { padding-left: 16px; }
+
+  .node.collapsed > .children,
+  .node.collapsed > .foot { display: none; }
+  .node .ellipsis, .node .inline-close { display: none; }
+  .node.collapsed .ellipsis,
+  .node.collapsed .inline-close { display: inline; }
+
+  .k    { color: #0550ae; }
+  .str  { color: #0a7d40; white-space: pre-wrap; word-break: break-word; }
+  .num  { color: #b35900; }
+  .bool { color: #8250df; }
+  .null { color: #6e7781; }
+  .p    { color: #6e7781; }
+
+  /* ---- 窄屏：改为上下堆叠，隐藏分隔条 ---- */
+  @media (max-width: 820px) {
+    main { flex-direction: column; }
+    .left-pane, .right-pane { flex: 1 1 0; }   /* 覆盖桌面的 flex-basis */
+    .divider { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>ToolResponse → Pretty JSON</h1>
+    <span class="status" id="status">等待输入…</span>
+  </header>
+
+  <main id="main">
+    <section class="pane left-pane">
+      <div class="pane-header">
+        <span>输入</span>
+        <span class="spacer"></span>
+        <button id="btnSample">示例</button>
+        <button id="btnClear">清空</button>
+      </div>
+      <textarea id="input" spellcheck="false"
+        placeholder="把 ToolResponse(content=[...], metadata=None, ...) 粘贴到这里…"></textarea>
+    </section>
+
+    <div class="divider" id="divider" title="拖动调整宽度，双击恢复 50/50"></div>
+
+    <section class="pane right-pane">
+      <div class="pane-header">
+        <span>Pretty JSON</span>
+        <span class="spacer"></span>
+        <button id="btnExpand">全部展开</button>
+        <button id="btnCollapse">全部折叠</button>
+        <button id="btnCopy">复制</button>
+        <button id="btnDownload">下载</button>
+      </div>
+      <div class="tree" id="output">
+        <span class="placeholder">解析结果会显示在这里</span>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =========================================================
+   *  1. 解析器：Python 字面量语法 → JS 值
+   * ========================================================= */
+
+  function ParseError(msg, pos) {
+    var e = new Error(pos != null ? msg + '（位置 ' + pos + '）' : msg);
+    e.pos = pos;
+    return e;
+  }
+
+  var IDENT_RE = /[A-Za-z_\u0080-\uFFFF][A-Za-z0-9_\u0080-\uFFFF]*/y;
+  var NUM_RE   = /[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/y;
+
+  function isWs(ch) {
+    return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r' ||
+           ch === '\f' || ch === '\v' || ch === '\u00a0' || ch === '\u3000';
+  }
+  function skipWs(s, i) {
+    while (i < s.length && isWs(s[i])) i++;
+    return i;
+  }
+  function isIdentStart(ch) {
+    return !!ch && /[A-Za-z_\u0080-\uFFFF]/.test(ch);
+  }
+
+  function readIdent(s, i) {
+    IDENT_RE.lastIndex = i;
+    var m = IDENT_RE.exec(s);
+    if (!m) throw ParseError('无效标识符', i);
+    return { value: m[0], next: i + m[0].length };
+  }
+
+  function readEscape(s, i) {
+    var c = s[i + 1];
+    if (c === undefined) throw ParseError('转义不完整', i);
+
+    var simple = {
+      'n': '\n', 't': '\t', 'r': '\r', '\\': '\\',
+      "'": "'", '"': '"', '0': '\0',
+      'a': '\x07', 'b': '\b', 'f': '\f', 'v': '\v',
+      '\n': ''
+    };
+    if (Object.prototype.hasOwnProperty.call(simple, c)) {
+      return { value: simple[c], next: i + 2 };
+    }
+    if (c === 'x') {
+      var h2 = s.substr(i + 2, 2);
+      if (!/^[0-9a-fA-F]{2}$/.test(h2)) throw ParseError('无效 \\x 转义', i);
+      return { value: String.fromCharCode(parseInt(h2, 16)), next: i + 4 };
+    }
+    if (c === 'u') {
+      var h4 = s.substr(i + 2, 4);
+      if (!/^[0-9a-fA-F]{4}$/.test(h4)) throw ParseError('无效 \\u 转义', i);
+      return { value: String.fromCharCode(parseInt(h4, 16)), next: i + 6 };
+    }
+    if (c === 'U') {
+      var h8 = s.substr(i + 2, 8);
+      if (!/^[0-9a-fA-F]{8}$/.test(h8)) throw ParseError('无效 \\U 转义', i);
+      return { value: String.fromCodePoint(parseInt(h8, 16)), next: i + 10 };
+    }
+    if (c === 'N') {
+      var end = s.indexOf('}', i);
+      if (end === -1) throw ParseError('无效 \\N 转义', i);
+      return { value: '', next: end + 1 };
+    }
+    return { value: c, next: i + 2 };
+  }
+
+  function parseString(s, i) {
+    var start = i;
+    var q = s[i];
+
+    if (s[i + 1] === q && s[i + 2] === q) {
+      var close = s.indexOf(q + q + q, i + 3);
+      if (close === -1) throw ParseError('三引号字符串未闭合', start);
+      return { value: s.slice(i + 3, close), next: close + 3 };
+    }
+
+    var out = '';
+    var j = i + 1;
+    while (j < s.length) {
+      var ch = s[j];
+      if (ch === '\\') {
+        var esc = readEscape(s, j);
+        out += esc.value;
+        j = esc.next;
+      } else if (ch === q) {
+        return { value: out, next: j + 1 };
+      } else {
+        out += ch;
+        j++;
+      }
+    }
+    throw ParseError('字符串未闭合', start);
+  }
+
+  function parseNumber(s, i) {
+    NUM_RE.lastIndex = i;
+    var m = NUM_RE.exec(s);
+    if (!m) throw ParseError('无效数字', i);
+    return { value: Number(m[0]), next: i + m[0].length };
+  }
+
+  function parseValue(s, i) {
+    i = skipWs(s, i);
+    if (i >= s.length) throw ParseError('输入意外结束', i);
+
+    var ch = s[i];
+    if (ch === '[') return parseList(s, i);
+    if (ch === '{') return parseDict(s, i);
+    if (ch === '(') return parseParen(s, i);
+    if (ch === '"' || ch === "'") return parseString(s, i);
+    if (ch === '-' || ch === '+' || ch === '.' || (ch >= '0' && ch <= '9')) {
+      return parseNumber(s, i);
+    }
+    if (isIdentStart(ch)) return parseIdent(s, i);
+
+    throw ParseError('意外字符 "' + ch + '"', i);
+  }
+
+  function parseList(s, i) {
+    var start = i;
+    i++;
+    var arr = [];
+    for (;;) {
+      i = skipWs(s, i);
+      if (i >= s.length) throw ParseError('列表未闭合', start);
+      if (s[i] === ']') return { value: arr, next: i + 1 };
+
+      var r = parseValue(s, i);
+      arr.push(r.value);
+      i = skipWs(s, r.next);
+
+      if (s[i] === ',') { i++; continue; }
+      if (s[i] === ']') return { value: arr, next: i + 1 };
+      throw ParseError('列表语法错误，期望 , 或 ]', i);
+    }
+  }
+
+  function parseDict(s, i) {
+    var start = i;
+    i++;
+    var obj = {};
+    for (;;) {
+      i = skipWs(s, i);
+      if (i >= s.length) throw ParseError('对象未闭合', start);
+      if (s[i] === '}') return { value: obj, next: i + 1 };
+
+      var key, r;
+      if (s[i] === '"' || s[i] === "'") {
+        r = parseString(s, i);
+        key = r.value;
+        i = r.next;
+      } else if (isIdentStart(s[i])) {
+        r = readIdent(s, i);
+        key = r.value;
+        i = r.next;
+      } else if (s[i] === '-' || (s[i] >= '0' && s[i] <= '9')) {
+        r = parseNumber(s, i);
+        key = String(r.value);
+        i = r.next;
+      } else {
+        throw ParseError('对象键无效', i);
+      }
+
+      i = skipWs(s, i);
+      if (s[i] !== ':') throw ParseError('对象缺少冒号', i);
+      i++;
+
+      var v = parseValue(s, i);
+      obj[key] = v.value;
+      i = skipWs(s, v.next);
+
+      if (s[i] === ',') { i++; continue; }
+      if (s[i] === '}') return { value: obj, next: i + 1 };
+      throw ParseError('对象语法错误，期望 , 或 }', i);
+    }
+  }
+
+  function parseParen(s, i) {
+    var start = i;
+    i++;
+    var items = [];
+    for (;;) {
+      i = skipWs(s, i);
+      if (i >= s.length) throw ParseError('括号未闭合', start);
+
+      if (s[i] === ')') {
+        return { value: items.length === 1 ? items[0] : items, next: i + 1 };
+      }
+
+      var r = parseValue(s, i);
+      items.push(r.value);
+      i = skipWs(s, r.next);
+
+      if (s[i] === ',') { i++; continue; }
+      if (s[i] === ')') {
+        return { value: items.length === 1 ? items[0] : items, next: i + 1 };
+      }
+      throw ParseError('括号语法错误', i);
+    }
+  }
+
+  function parseIdent(s, i) {
+    var idr = readIdent(s, i);
+    var name = idr.value;
+    var j = skipWs(s, idr.next);
+
+    if (s[j] === '(') return parseCall(s, name, j);
+
+    switch (name) {
+      case 'True': case 'true':       return { value: true,  next: idr.next };
+      case 'False': case 'false':     return { value: false, next: idr.next };
+      case 'None': case 'null':
+      case 'undefined':               return { value: null,  next: idr.next };
+      default:                        return { value: name,  next: idr.next };
+    }
+  }
+
+  function parseCall(s, name, i) {
+    var start = i;
+    i++;
+    var args = [];
+    var kwargs = {};
+    var hasKw = false;
+
+    for (;;) {
+      i = skipWs(s, i);
+      if (i >= s.length) throw ParseError('调用未闭合', start);
+      if (s[i] === ')') { i++; break; }
+
+      var isKw = false, key = null, save = i;
+
+      if (isIdentStart(s[i])) {
+        var idr = readIdent(s, i);
+        var k = skipWs(s, idr.next);
+        if (s[k] === '=' && s[k + 1] !== '=') {
+          isKw = true;
+          key = idr.value;
+          i = k + 1;
+        }
+      }
+      if (!isKw) i = save;
+
+      var v = parseValue(s, i);
+      if (isKw) { kwargs[key] = v.value; hasKw = true; }
+      else args.push(v.value);
+
+      i = skipWs(s, v.next);
+      if (s[i] === ',') { i++; continue; }
+      if (s[i] === ')') { i++; break; }
+      throw ParseError('调用参数语法错误', i);
+    }
+
+    if (hasKw && args.length === 0) return { value: kwargs, next: i };
+    if (!hasKw && args.length === 0) return { value: {}, next: i };
+
+    var out = { __call__: name };
+    if (args.length) out.__args__ = args;
+    Object.assign(out, kwargs);
+    return { value: out, next: i };
+  }
+
+  function scanToolResponses(src) {
+    var re = /ToolResponse\s*\(/g;
+    var m, lastEnd = 0, out = [];
+
+    while ((m = re.exec(src)) !== null) {
+      if (m.index < lastEnd) continue;
+      try {
+        var r = parseValue(src, m.index);
+        out.push(r.value);
+        lastEnd = r.next;
+        re.lastIndex = r.next;
+      } catch (e) {
+        re.lastIndex = m.index + 1;
+      }
+    }
+    return out;
+  }
+
+  function looksLikeJson(str) {
+    var t = str.replace(/^\s+/, '');
+    return t.charAt(0) === '{' || t.charAt(0) === '[';
+  }
+
+  function decodeJsonStrings(value) {
+    if (Array.isArray(value)) return value.map(decodeJsonStrings);
+    if (value && typeof value === 'object') {
+      var out = {};
+      for (var k in value) {
+        if (!Object.prototype.hasOwnProperty.call(value, k)) continue;
+        var v = value[k];
+        if (k === 'text' && typeof v === 'string' && looksLikeJson(v)) {
+          try { out[k] = JSON.parse(v); }
+          catch (e) { out[k] = v; }
+        } else {
+          out[k] = decodeJsonStrings(v);
+        }
+      }
+      return out;
+    }
+    return value;
+  }
+
+  function parseInput(src) {
+    var trimmed = src.trim();
+    if (!trimmed) return { value: null, kind: 'empty' };
+
+    if (trimmed.charAt(0) === '{' || trimmed.charAt(0) === '[') {
+      try { return { value: JSON.parse(trimmed), kind: 'json' }; }
+      catch (e) { /* 继续 */ }
+    }
+
+    var records = scanToolResponses(src);
+    if (records.length) {
+      var decoded = records.map(decodeJsonStrings);
+      return {
+        value: decoded.length === 1 ? decoded[0] : decoded,
+        kind: 'toolresponse',
+        count: records.length
+      };
+    }
+
+    var start = 0;
+    while (start < src.length && isWs(src[start])) start++;
+    try {
+      var r = parseValue(src, start);
+      return { value: decodeJsonStrings(r.value), kind: 'expr' };
+    } catch (e) {
+      throw new Error('无法识别输入格式：' + e.message);
+    }
+  }
+
+  /* =========================================================
+   *  2. 渲染：JSON 树
+   * ========================================================= */
+
+  function span(cls, text) {
+    var el = document.createElement('span');
+    if (cls) el.className = cls;
+    el.textContent = text;
+    return el;
+  }
+
+  function primitiveSpan(v) {
+    if (v === null)            return span('null', 'null');
+    if (typeof v === 'string') return span('str', JSON.stringify(v));
+    if (typeof v === 'number') return span('num', String(v));
+    if (typeof v === 'boolean') return span('bool', String(v));
+    return span('', String(v));
+  }
+
+  function buildNode(value, key, isLast) {
+    var isObj = value !== null && typeof value === 'object';
+    var isArr = Array.isArray(value);
+
+    var entries = isObj
+      ? (isArr ? value.map(function (v, i) { return [i, v]; }) : Object.entries(value))
+      : [];
+
+    var isEmpty = isObj && entries.length === 0;
+
+    var node = document.createElement('div');
+    node.className = 'node';
+
+    var head = document.createElement('div');
+    head.className = 'head';
+
+    if (isObj && !isEmpty) {
+      var toggle = span('toggle', '▾');
+      toggle.addEventListener('click', function () {
+        var collapsed = node.classList.toggle('collapsed');
+        toggle.textContent = collapsed ? '▸' : '▾';
+      });
+      head.appendChild(toggle);
+    } else {
+      head.appendChild(span('toggle-spacer', ''));
+    }
+
+    if (key !== null && key !== undefined) {
+      head.appendChild(span('k', JSON.stringify(String(key))));
+      head.appendChild(span('p', ': '));
+    }
+
+    if (!isObj) {
+      head.appendChild(primitiveSpan(value));
+      if (!isLast) head.appendChild(span('p', ','));
+      node.appendChild(head);
+      return node;
+    }
+
+    if (isEmpty) {
+      head.appendChild(span('p', isArr ? '[' : '{'));
+      head.appendChild(span('p', isArr ? ']' : '}'));
+      if (!isLast) head.appendChild(span('p', ','));
+      node.appendChild(head);
+      return node;
+    }
+
+    head.appendChild(span('p', isArr ? '[' : '{'));
+    head.appendChild(span('p ellipsis', ' … '));
+    head.appendChild(span('p inline-close', isArr ? ']' : '}'));
+    node.appendChild(head);
+
+    var children = document.createElement('div');
+    children.className = 'children';
+    for (var i = 0; i < entries.length; i++) {
+      var k = entries[i][0];
+      var v = entries[i][1];
+      children.appendChild(buildNode(v, isArr ? null : k, i === entries.length - 1));
+    }
+    node.appendChild(children);
+
+    var foot = document.createElement('div');
+    foot.className = 'foot';
+    foot.appendChild(span('p', isArr ? ']' : '}'));
+    if (!isLast) foot.appendChild(span('p', ','));
+    node.appendChild(foot);
+
+    return node;
+  }
+
+  function renderTree(container, value) {
+    container.innerHTML = '';
+    container.appendChild(buildNode(value, null, true));
+  }
+
+  /* =========================================================
+   *  3. 交互：解析 / 渲染 / 按钮
+   * ========================================================= */
+
+  var inputEl  = document.getElementById('input');
+  var outputEl = document.getElementById('output');
+  var statusEl = document.getElementById('status');
+
+  var currentJsonText = '';
+  var timer = null;
+
+  function setStatus(text, type) {
+    statusEl.textContent = text;
+    statusEl.className = 'status' + (type ? ' ' + type : '');
+  }
+
+  function convert() {
+    var src = inputEl.value;
+
+    if (!src.trim()) {
+      currentJsonText = '';
+      outputEl.innerHTML = '<span class="placeholder">解析结果会显示在这里</span>';
+      setStatus('等待输入…');
+      return;
+    }
+
+    try {
+      var result = parseInput(src);
+      currentJsonText = JSON.stringify(result.value, null, 2);
+      renderTree(outputEl, result.value);
+
+      var msg = '解析成功';
+      if (result.kind === 'toolresponse') {
+        msg += result.count > 1 ? '，共 ' + result.count + ' 条记录' : '，1 条记录';
+      }
+      setStatus(msg, 'ok');
+    } catch (e) {
+      currentJsonText = '';
+      outputEl.innerHTML = '';
+      var err = document.createElement('div');
+      err.className = 'placeholder';
+      err.style.color = '#cf222e';
+      err.textContent = '解析失败：' + e.message;
+      outputEl.appendChild(err);
+      setStatus('解析失败：' + e.message, 'error');
+    }
+  }
+
+  function debounceConvert() {
+    clearTimeout(timer);
+    timer = setTimeout(convert, 250);
+  }
+
+  inputEl.addEventListener('input', debounceConvert);
+  inputEl.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      convert();
+    }
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    inputEl.value = '';
+    convert();
+    inputEl.focus();
+  });
+
+  document.getElementById('btnSample').addEventListener('click', function () {
+    inputEl.value =
+      "ToolResponse(content=[{'type': 'text', 'text': '{\"match_status\": \"retrieved\", " +
+      "\"chapter_code\": \"opportunity_analysis\", \"chapter_name\": \"交易机会分析\", " +
+      "\"candidate_options\": [{\"candidate_id\": \"0\", \"chapter_code\": \"opportunity_analysis\"}]}'}], " +
+      "metadata=None, stream=False, is_last=True, is_interrupted=False, id='2026-10-19 09:06:27.959_0145f5')";
+    convert();
+  });
+
+  document.getElementById('btnCopy').addEventListener('click', function () {
+    if (!currentJsonText) { setStatus('没有可复制的内容', 'error'); return; }
+    navigator.clipboard.writeText(currentJsonText).then(function () {
+      setStatus('已复制到剪贴板', 'ok');
+    }, function () {
+      setStatus('复制失败，请手动选择右侧内容', 'error');
+    });
+  });
+
+  document.getElementById('btnDownload').addEventListener('click', function () {
+    if (!currentJsonText) { setStatus('没有可下载的内容', 'error'); return; }
+    var blob = new Blob([currentJsonText], { type: 'application/json;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'output.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 0);
+    setStatus('已下载 output.json', 'ok');
+  });
+
+  function setAllCollapsed(collapsed) {
+    var nodes = outputEl.querySelectorAll('.node');
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      var toggle = node.querySelector(':scope > .head > .toggle');
+      if (!toggle) continue;
+      node.classList.toggle('collapsed', collapsed);
+      toggle.textContent = collapsed ? '▸' : '▾';
+    }
+  }
+
+  document.getElementById('btnCollapse').addEventListener('click', function () {
+    setAllCollapsed(true);
+  });
+  document.getElementById('btnExpand').addEventListener('click', function () {
+    setAllCollapsed(false);
+  });
+
+  /* =========================================================
+   *  4. 分隔条拖拽
+   * ========================================================= */
+
+  var mainEl    = document.getElementById('main');
+  var dividerEl = document.getElementById('divider');
+  var dragging  = false;
+
+  function setLeftPercent(percent) {
+    // 限制在 15% ~ 85% 之间，避免任一侧过窄
+    var clamped = Math.max(15, Math.min(85, percent));
+    mainEl.style.setProperty('--left-size', clamped + '%');
+  }
+
+  function onPointerMove(e) {
+    if (!dragging) return;
+
+    // 阻止拖拽过程中的默认行为（选择文字、页面滚动等）
+    if (e.cancelable) e.preventDefault();
+
+    var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    var rect = mainEl.getBoundingClientRect();
+    if (rect.width <= 0) return;
+
+    var x = clientX - rect.left;
+    setLeftPercent((x / rect.width) * 100);
+  }
+
+  function startDrag(e) {
+    if (e.button !== undefined && e.button !== 0) return; // 只响应左键
+    dragging = true;
+    dividerEl.classList.add('dragging');
+    document.body.classList.add('dragging');
+  }
+
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    dividerEl.classList.remove('dragging');
+    document.body.classList.remove('dragging');
+  }
+
+  dividerEl.addEventListener('mousedown', function (e) {
+    e.preventDefault();
+    startDrag(e);
+  });
+  dividerEl.addEventListener('touchstart', function (e) {
+    startDrag(e);
+  }, { passive: true });
+
+  document.addEventListener('mousemove', onPointerMove);
+  document.addEventListener('touchmove', onPointerMove, { passive: false });
+
+  document.addEventListener('mouseup', endDrag);
+  document.addEventListener('touchend', endDrag);
+  document.addEventListener('touchcancel', endDrag);
+
+  // 双击分隔条恢复 50 / 50
+  dividerEl.addEventListener('dblclick', function () {
+    setLeftPercent(50);
+  });
+
+  /* 初始聚焦 */
+  inputEl.focus();
+})();
+</script>
+</body>
+</html>
