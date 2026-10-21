@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Pharma - MCP 开放平台</title>
+    <style>
+        /* 全局样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 品牌色定义 */
+        :root {
+            --primary-blue: #0066ff;
+            --primary-blue-hover: #0052cc;
+            --dark-navy: #0f172a;
+            --secondary-bg: #f1f5f9;
+            --border-color: #e2e8f0;
+            --text-muted: #64748b;
+            --code-bg: #1e293b;
+        }
+
+        /* ================= 导航栏（主页） ================= */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 72px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--dark-navy);
+        }
+
+        .navbar-brand .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-blue);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-blue);
+        }
+
+        .nav-links a.nav-highlight {
+            color: var(--primary-blue);
+            font-weight: 600;
+            position: relative;
+        }
+
+        .nav-links a.nav-highlight::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-blue);
+            border-radius: 2px;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--dark-navy);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 102, 255, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-blue-hover);
+            box-shadow: 0 6px 16px rgba(0, 102, 255, 0.3);
+        }
+
+        /* ================= 主页 Hero 区域（示意） ================= */
+        .hero-section {
+            padding: 160px 48px 80px;
+            max-width: 1280px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .hero-section h1 {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--dark-navy);
+            line-height: 1.2;
+            margin-bottom: 24px;
+        }
+
+        .hero-section h1 span {
+            color: var(--primary-blue);
+        }
+
+        .hero-section p {
+            font-size: 18px;
+            color: var(--text-muted);
+            max-width: 720px;
+            margin: 0 auto 40px;
+        }
+
+        /* ================= 开放平台 MCP 模块（核心锚点区域） ================= */
+        #open-platform-mcp {
+            background: white;
+            padding: 96px 48px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .mcp-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .mcp-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .mcp-header .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(0, 102, 255, 0.08);
+            color: var(--primary-blue);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .mcp-header h2 {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--dark-navy);
+            margin-bottom: 16px;
+        }
+
+        .mcp-header p {
+            font-size: 16px;
+            color: var(--text-muted);
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        /* 左右分栏布局 */
+        .mcp-feature-layout {
+            display: flex;
+            align-items: center;
+            gap: 64px;
+        }
+
+        .mcp-feature-text {
+            flex: 1;
+        }
+
+        .mcp-feature-text h3 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark-navy);
+            line-height: 1.4;
+            margin-bottom: 20px;
+        }
+
+        .mcp-feature-text h3 span {
+            color: var(--primary-blue);
+        }
+
+        .mcp-feature-text p {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            line-height: 1.8;
+        }
+
+        .mcp-buttons {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .btn-large {
+            padding: 14px 32px;
+            font-size: 16px;
+            border-radius: 10px;
+        }
+
+        /* 统计数据 */
+        .mcp-stats {
+            display: flex;
+            gap: 40px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 32px;
+        }
+
+        .stat-item .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--dark-navy);
+            margin-bottom: 4px;
+        }
+
+        .stat-item .stat-label {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* 右侧对话/代码演示卡片 */
+        .mcp-feature-visual {
+            flex: 1;
+            position: relative;
+        }
+
+        .visual-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .visual-card-header {
+            background: #f8fafc;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.red { background: #ff5f56; }
+        .dot.yellow { background: #ffbd2e; }
+        .dot.green { background: #27c93f; }
+
+        .visual-card-header span {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        .visual-card-body {
+            padding: 24px;
+            background: white;
+        }
+
+        .chat-bubble {
+            background: #f1f5f9;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: var(--dark-navy);
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .chat-bubble .highlight {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .loading-lines { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+        .loading-line { height: 12px; background: #e2e8f0; border-radius: 6px; }
+        .loading-line.w-100 { width: 100%; }
+        .loading-line.w-80 { width: 80%; }
+        .loading-line.w-60 { width: 60%; }
+
+        .source-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #ecfdf5;
+            color: #059669;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .report-badge {
+            position: absolute;
+            bottom: -20px;
+            right: -20px;
+            background: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+            100% { transform: translateY(0); }
+        }
+
+        .report-badge .check-icon {
+            width: 24px; height: 24px; background: #d1fae5; color: #059669;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: bold;
+        }
+
+        .report-badge .report-text { font-size: 14px; font-weight: 600; color: var(--dark-navy); }
+        .report-badge .report-sub { font-size: 12px; color: var(--text-muted); }
+
+        /* 响应式适配 */
+        @media (max-width: 992px) {
+            .mcp-feature-layout { flex-direction: column; }
+            .navbar { padding: 0 24px; }
+            .nav-links { display: none; }
+            .hero-section h1 { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <div class="logo-icon">D</div>
+            Deep Pharma
+        </div>
+        <div class="nav-links">
+            <a href="#">应用场景</a>
+            <a href="#">核心价值</a>
+            <a href="#">技术原理</a>
+            <a href="#open-platform-mcp" class="nav-highlight" onclick="scrollToMCP(event)">开放平台</a>
+            <a href="#">安全合规</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn btn-outline">登录</button>
+            <button class="btn btn-primary">立即申请</button>
+        </div>
+    </nav>
+
+    <!-- 2. 主页 Hero 示意区域 -->
+    <section class="hero-section">
+        <h1>为新药立项、BD 决策<br>打造的 <span>AI 情报调研团队</span></h1>
+        <p>将繁杂的新药情报调研工作流统一整合，输入需求，直达高质量的决策报告输出。基于 19 年医药行业数据沉淀与多 Agent 协同引擎，让每一条结论都有据可查。</p>
+        <button class="btn btn-primary btn-large">立即申请演示 →</button>
+    </section>
+
+    <!-- 3. 开放平台 MCP 锚点区域 -->
+    <section id="open-platform-mcp">
+        <div class="mcp-container">
+            <div class="mcp-header">
+                <div class="badge">开放平台 · 开发者能力</div>
+                <h2>让 AI 直接读懂新药情报</h2>
+                <p>Deep Pharma 将全球新药管线、临床试验、竞品格局与市场销售数据封装为 MCP 能力。接入你的 AI Agent 后，用自然语言即可触发完整调研。</p>
+            </div>
+
+            <div class="mcp-feature-layout">
+                <div class="mcp-feature-text">
+                    <h3>一句话完成调研与问答，<br><span>结果自带溯源，可核验、可导出。</span></h3>
+                    <p>不再需要编写复杂的 API 调用代码。通过 MCP（Model Context Protocol）协议，你的 AI 助手可以直接连接 Deep Pharma 的医药数据网络，实时获取结构化情报与深度研究报告。</p>
+                    <div class="mcp-buttons">
+                        <button class="btn btn-primary btn-large" onclick="openMCPPage()">开始使用 →</button>
+                        <button class="btn btn-outline btn-large">了解 MCP 能力</button>
+                    </div>
+                    <div class="mcp-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">17+</div>
+                            <div class="stat-label">MCP Tools 自动执行</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">99.2%</div>
+                            <div class="stat-label">近 30 天调用成功率</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">&lt;3s</div>
+                            <div class="stat-label">问答平均响应</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mcp-feature-visual">
+                    <div class="visual-card">
+                        <div class="visual-card-header">
+                            <div class="dot red"></div>
+                            <div class="dot yellow"></div>
+                            <div class="dot green"></div>
+                            <span>MCP · 调研报告</span>
+                        </div>
+                        <div class="visual-card-body">
+                            <div class="chat-bubble">
+                                生成一份 <span class="highlight">PD-1 抑制剂</span> · <span class="highlight">中国市场</span> 的竞争格局调研报告，限定近 12 个月数据。
+                            </div>
+                            <div class="loading-lines">
+                                <div class="loading-line w-100"></div>
+                                <div class="loading-line w-80"></div>
+                                <div class="loading-line w-60"></div>
+                                <div class="loading-line w-80"></div>
+                                <div class="loading-line w-100"></div>
+                            </div>
+                            <div class="source-tag">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                来源已溯源 · 临床 / 注册 / 市场 / 竞品
+                            </div>
+                        </div>
+                    </div>
+                    <div class="report-badge">
+                        <div class="check-icon">✓</div>
+                        <div>
+                            <div class="report-text">报告已生成</div>
+                            <div class="report-sub">含 24 条溯源引用</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // 平滑滚动定位
+        function scrollToMCP(event) {
+            event.preventDefault();
+            const target = document.getElementById('open-platform-mcp');
+            if (target) {
+                const headerOffset = 80;
+                const elementPosition = target.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+            }
+        }
+
+        // 打开新标签页，渲染丰富的 MCP 详情页
+        function openMCPPage() {
+            const mcpDetailHTML = `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Pharma - MCP 数据开放平台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.6; }
+        :root { --primary-blue: #0066ff; --dark-navy: #0f172a; --text-muted: #64748b; --border: #e2e8f0; --bg-card: #ffffff; }
+        
+        /* 顶部导航 */
+        .nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 48px; background: white; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .brand { font-size: 20px; font-weight: 700; color: var(--dark-navy); display: flex; align-items: center; gap: 8px; }
+        .brand-icon { width: 28px; height: 28px; background: var(--primary-blue); border-radius: 6px; color: white; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .nav-right { display: flex; gap: 16px; }
+        .btn { padding: 8px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
+        .btn-primary { background: var(--primary-blue); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--dark-navy); }
+
+        /* 头部 Hero */
+        .hero { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 80px 48px; text-align: center; color: white; }
+        .hero h1 { font-size: 42px; font-weight: 800; margin-bottom: 16px; }
+        .hero p { font-size: 18px; color: #94a3b8; max-width: 680px; margin: 0 auto 32px; }
+        .hero .stats { display: flex; justify-content: center; gap: 64px; margin-top: 48px; }
+        .hero .stat h3 { font-size: 28px; font-weight: 700; color: #60a5fa; margin-bottom: 4px; }
+        .hero .stat span { font-size: 14px; color: #94a3b8; }
+
+        /* 通用区块 */
+        .section { padding: 80px 48px; max-width: 1200px; margin: 0 auto; }
+        .section-title { text-align: center; margin-bottom: 48px; }
+        .section-title h2 { font-size: 32px; font-weight: 700; color: var(--dark-navy); margin-bottom: 12px; }
+        .section-title p { font-size: 16px; color: var(--text-muted); }
+
+        /* 核心 MCP 能力矩阵 (核心更新部分) */
+        .mcp-grid { display: flex; flex-direction: column; gap: 24px; }
+        .mcp-card { background: var(--bg-card); padding: 32px; border-radius: 12px; border: 1px solid var(--border); display: flex; gap: 32px; align-items: flex-start; transition: box-shadow 0.2s; }
+        .mcp-card:hover { box-shadow: 0 12px 24px rgba(0,0,0,0.06); border-color: #cbd5e1; }
+        .mcp-card-left { flex: 1; }
+        .mcp-card-right { width: 240px; display: flex; flex-direction: column; gap: 12px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid var(--border); }
+        
+        .mcp-icon { width: 48px; height: 48px; background: rgba(0,102,255,0.08); color: var(--primary-blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 16px; }
+        .mcp-card h3 { font-size: 20px; font-weight: 700; color: var(--dark-navy); margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+        .mcp-code { font-family: monospace; font-size: 13px; background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+        .mcp-desc { font-size: 15px; color: var(--text-muted); line-height: 1.7; }
+        
+        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+        .tag { padding: 4px 10px; background: #f1f5f9; border-radius: 6px; font-size: 12px; font-weight: 500; color: #475569; border: 1px solid #e2e8f0; }
+        .tag-blue { background: #eff6ff; color: var(--primary-blue); border-color: #bfdbfe; }
+
+        .attr-item { display: flex; justify-content: space-between; font-size: 13px; }
+        .attr-label { color: var(--text-muted); }
+        .attr-value { font-weight: 600; color: var(--dark-navy); text-align: right; max-width: 140px; }
+
+        /* 应用场景 */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .scene-card { background: white; padding: 32px; border-radius: 12px; border: 1px solid var(--border); }
+        .scene-card h3 { font-size: 18px; font-weight: 700; color: var(--dark-navy); margin-bottom: 12px; }
+        .scene-card p { font-size: 14px; color: var(--text-muted); }
+
+        /* 接入流程 */
+        .steps { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-top: 48px; }
+        .step { flex: 1; text-align: center; position: relative; }
+        .step .num { width: 40px; height: 40px; background: var(--primary-blue); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; margin: 0 auto 16px; }
+        .step h4 { font-size: 16px; font-weight: 600; color: var(--dark-navy); margin-bottom: 8px; }
+        .step p { font-size: 13px; color: var(--text-muted); }
+        .step:not(:last-child)::after { content: '→'; position: absolute; right: -20px; top: 20px; color: #cbd5e1; font-weight: bold; }
+
+        /* 底部 CTA */
+        .cta { background: white; border-top: 1px solid var(--border); padding: 64px 48px; text-align: center; }
+        .cta h2 { font-size: 28px; font-weight: 700; color: var(--dark-navy); margin-bottom: 16px; }
+        .cta p { font-size: 16px; color: var(--text-muted); margin-bottom: 32px; }
+
+        @media (max-width: 768px) {
+            .mcp-card { flex-direction: column; }
+            .mcp-card-right { width: 100%; }
+            .grid { grid-template-columns: 1fr; }
+            .steps { flex-direction: column; gap: 32px; }
+            .step::after { display: none; }
+            .hero h1 { font-size: 28px; }
+            .hero .stats { flex-direction: column; gap: 24px; }
+            .nav { padding: 16px 24px; }
+            .section { padding: 48px 24px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="brand">
+            <div class="brand-icon">D</div>
+            Deep Pharma <span style="font-weight:400; font-size:14px; color:var(--text-muted); margin-left:8px;">| 开放平台</span>
+        </div>
+        <div class="nav-right">
+            <button class="btn btn-outline" onclick="window.close()">返回首页</button>
+            <button class="btn btn-primary">立即咨询</button>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>MCP 数据开放平台</h1>
+        <p>我们提供高质量的医药情报数据接口与模型上下文协议（MCP）服务，让企业内部 AI 智能体的数据建设更加便捷高效。将全球新药管线、临床试验、竞品格局与市场销售数据封装为标准能力，供 AI 直接调用。</p>
+        <div class="stats">
+            <div class="stat">
+                <h3>30,000+</h3>
+                <span>全球医药数据源</span>
+            </div>
+            <div class="stat">
+                <h3>17+</h3>
+                <span>核心 MCP Tools</span>
+            </div>
+            <div class="stat">
+                <h3>&lt;8min</h3>
+                <span>P99 问答响应</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 核心 MCP 能力矩阵 (按素材填充) -->
+    <section class="section">
+        <div class="section-title">
+            <h2>核心 MCP 能力矩阵</h2>
+            <p>封装专业的医药数据模型上下文，无缝接入您的 AI Agent 应用</p>
+        </div>
+        <div class="mcp-grid">
+            
+            <!-- Tool 1: 报告生成 -->
+            <div class="mcp-card">
+                <div class="mcp-card-left">
+                    <div class="mcp-icon">📄</div>
+                    <h3>医药调研报告生成 <span class="mcp-code">deep_pharma_deep_research</span></h3>
+                    <p class="mcp-desc">支持根据药物、适应症、靶点、药物类型及其组合条件，生成结构化的医药调研报告。报告章节会按调研主题动态编排，可涵盖流行病学、竞争格局、临床分析、交易机会、注册申报与准入、商业化空间测算、开发风险等模块，并包含丰富的分析图表。</p>
+                    <div class="tag-list">
+                        <span class="tag tag-blue">结构化报告</span>
+                        <span class="tag">多条件组合</span>
+                        <span class="tag">分析图表</span>
+                        <span class="tag">PDF / Word 输出</span>
+                    </div>
+                </div>
+                <div class="mcp-card-right">
+                    <div class="attr-item">
+                        <span class="attr-label">预计耗时</span>
+                        <span class="attr-value">~20 分钟</span>
+                    </div>
+                    <div class="attr-item">
+                        <span class="attr-label">最长耗时</span>
+                        <span class="attr-value">~40 分钟</span>
+                    </div>
+                    <div class="attr-item">
+                        <span class="attr-label">输出格式</span>
+                        <span class="attr-value">PDF, Word</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tool 2: 问答与销售数据 -->
+            <div class="mcp-card">
+                <div class="mcp-card-left">
+                    <div class="mcp-icon">💬</div>
+                    <h3>医药问答与销售数据查询 <span class="mcp-code">deep_pharma_simple_qa</span></h3>
+                    <p class="mcp-desc">支持医药领域事实问答；可通过 ATC 编码或药品通用名查询国内上市药物的销售数据。销售数据查询返回聚合后的销售额、销售量及销售曲线图，不包含患者级或企业机密数据。</p>
+                    <div class="tag-list">
+                        <span class="tag tag-blue">事实问答</span>
+                        <span class="tag">ATC 编码查询</span>
+                        <span class="tag">聚合销售数据</span>
+                        <span class="tag">销售曲线图</span>
+                    </div>
+                </div>
+                <div class="mcp-card-right">
+                    <div class="attr-item">
+                        <span class="attr-label">问答完成率</span>
+                        <span class="attr-value">99% (≤8分钟)</span>
+                    </div>
+                    <div class="attr-item">
+                        <span class="attr-label">P99 响应时间</span>
+                        <span class="attr-value">≤ 8 分钟</span>
+                    </div>
+                    <div class="attr-item">
+                        <span class="attr-label">数据隐私</span>
+                        <span class="attr-value">无机密数据</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tool 3: 任务状态查询 -->
+            <div class="mcp-card">
+                <div class="mcp-card-left">
+                    <div class="mcp-icon">⏱️</div>
+                    <h3>任务状态查询 <span class="mcp-code">deep_pharma_task_status</span></h3>
+                    <p class="mcp-desc">查询任务最新状态与结果；查询不扣额度。待处理或运行中可稍后再查。专为长耗时任务（如报告生成、复杂问答）设计的状态轮询接口。</p>
+                    <div class="tag-list">
+                        <span class="tag tag-blue">实时状态</span>
+                        <span class="tag">零额度消耗</span>
+                        <span class="tag">异步轮询</span>
+                    </div>
+                </div>
+                <div class="mcp-card-right">
+                    <div class="attr-item">
+                        <span class="attr-label">计费规则</span>
+                        <span class="attr-value">查询不扣额度</span>
+                    </div>
+                    <div class="attr-item">
+                        <span class="attr-label">适用场景</span>
+                        <span class="attr-value">轮询、重试</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 应用场景 -->
+    <section class="section" style="background: white; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+        <div class="section-title">
+            <h2>多场景一站式解决</h2>
+            <p>提供专业的 MCP 服务与标准数据接口，解决医药 AI 应用的核心数据痛点</p>
+        </div>
+        <div class="grid">
+            <div class="scene-card">
+                <div class="mcp-icon" style="margin-bottom: 20px;">🔌</div>
+                <h3>AI 能力探索赋能</h3>
+                <p>为内部智能体持续注入高质量的医药行业结构化数据，通过 MCP 协议让 AI 直接“读懂”新药情报，使数据分析与报告生成更加精准。</p>
+            </div>
+            <div class="scene-card">
+                <div class="mcp-icon" style="margin-bottom: 20px;">📊</div>
+                <h3>自建行业情报平台</h3>
+                <p>轻松将 Deep Pharma 高质量医药数据通过 MCP 或标准 API 标准化接入内部数据库与工作流，方便情报分析与决策支持。</p>
+            </div>
+            <div class="scene-card">
+                <div class="mcp-icon" style="margin-bottom: 20px;">💡</div>
+                <h3>挖掘潜在商机</h3>
+                <p>直连 CRM 等内部系统，利用 MCP 工具自动调用真实数据，赋能目标客户挖掘、捕获更多潜在商机与 BD 交易机会。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 接入流程 -->
+    <section class="section">
+        <div class="section-title">
+            <h2>简洁高效的合作流程</h2>
+            <p>成熟的企业级服务流程，简化的沟通环节，让接入更省心</p>
+        </div>
+        <div class="steps">
+            <div class="step">
+                <div class="num">1</div>
+                <h4>需求咨询与洽谈</h4>
+                <p>对接业务场景，明确数据与 MCP 工具需求，提交合作意向</p>
+            </div>
+            <div class="step">
+                <div class="num">2</div>
+                <h4>接口测试对接</h4>
+                <p>接入沙箱测试环境，完成 MCP Server 连接与工具调试</p>
+            </div>
+            <div class="step">
+                <div class="num">3</div>
+                <h4>正式密钥授予</h4>
+                <p>获取正式 API Key 与 MCP 连接凭证，完成安全授权</p>
+            </div>
+            <div class="step">
+                <div class="num">4</div>
+                <h4>平台正式使用</h4>
+                <p>接入生产环境，开启稳定的数据服务与 AI 智能体应用</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="cta">
+        <h2>立即接入 Deep Pharma MCP 开放平台</h2>
+        <p>专属顾问一对一解答需求，助力您的 AI 应用快速获得专业医药数据能力。</p>
+        <button class="btn btn-primary" style="padding: 12px 32px; font-size: 16px;">申请免费试用</button>
+    </div>
+
+</body>
+</html>
+            `;
+
+            const newWindow = window.open();
+            if (newWindow) {
+                newWindow.document.write(mcpDetailHTML);
+                newWindow.document.close();
+            } else {
+                alert('浏览器拦截了弹出窗口，请允许弹出窗口以查看 MCP 详细介绍页。');
+            }
+        }
+    </script>
+</body>
+</html>
