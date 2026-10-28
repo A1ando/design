@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Pharma 深度报告</title>
+    <style>
+        /* 基础重置 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            color: #334155;
+            background-color: #f8fafc;
+            line-height: 1.6;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        :root {
+            --primary-blue: #0047B3; 
+            --secondary-blue: #2563EB; 
+            --bg-light: #F8FAFC;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --sidebar-width: 300px;
+        }
+
+        /* ================= 移动端顶部导航 (默认隐藏) ================= */
+        .mobile-header {
+            display: none;
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 16px;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .mobile-header .logo-title { font-size: 16px; font-weight: 700; color: #1a3b8b; }
+        .menu-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 14px;
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            background-color: #f8fafc;
+        }
+
+        /* 移动端遮罩层 */
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(2px);
+        }
+        .mobile-overlay.active { display: block; opacity: 1; }
+
+        /* ================= 左侧侧边栏 ================= */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: #ffffff;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            height: 100vh;
+            z-index: 1001;
+            /* 改用 margin-left 实现折叠，释放文档流空间 */
+            margin-left: 0;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 桌面端收起状态：向左侧移出自身宽度 */
+        .sidebar.collapsed {
+            margin-left: calc(-1 * var(--sidebar-width));
+        }
+
+        /* 移动端关闭按钮 (默认隐藏) */
+        .mobile-close-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-muted);
+            cursor: pointer;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            line-height: 1;
+        }
+
+        /* Logo 区域 */
+        .logo-container {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            white-space: nowrap; /* 防止收起时内容折行 */
+        }
+
+        .logo-svg { height: 36px; width: auto; }
+        .logo-text { display: flex; flex-direction: column; line-height: 1.2; }
+        .logo-title { font-size: 18px; font-weight: 700; color: #1a3b8b; letter-spacing: -0.5px; }
+        .logo-subtitle { font-size: 12px; color: #3b82f6; font-weight: 500; }
+
+        /* 桌面端折叠按钮 */
+        .desktop-toggle-btn {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #f1f5f9;
+            border: none;
+            border-radius: 4px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        .desktop-toggle-btn:hover { background: #e2e8f0; color: var(--primary-blue); }
+
+        /* 目录导航 */
+        .toc { flex: 1; overflow-y: auto; padding: 20px 16px; }
+        .toc::-webkit-scrollbar { width: 4px; }
+        .toc::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        .toc ul { list-style: none; }
+        .toc > ul > li { margin-bottom: 8px; }
+
+        .toc-link-level-1 {
+            display: block;
+            padding: 8px 12px;
+            font-weight: 600;
+            color: var(--text-main);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .toc-link-level-1:hover, .toc-link-level-1.active { background-color: #EFF6FF; color: var(--secondary-blue); }
+
+        .toc-sub { margin-top: 4px; margin-left: 12px; border-left: 2px solid var(--border-color); padding-left: 8px; }
+        .toc-link-level-2 {
+            display: block;
+            padding: 6px 12px;
+            font-size: 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .toc-link-level-2:hover, .toc-link-level-2.active { color: var(--secondary-blue); background-color: #F1F5F9; }
+
+        /* ================= 悬浮展开按钮 (桌面端) ================= */
+        .floating-open-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 999;
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 71, 179, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.8);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .floating-open-btn.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+        .floating-open-btn:hover { background: var(--secondary-blue); }
+
+        /* ================= 右侧主内容区 ================= */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px 60px;
+            scroll-behavior: smooth;
+            scroll-padding-top: 40px;
+            /* 加上过渡，确保宽度扩展时内容平顺居中 */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 报告容器居中 */
+        .report-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 48px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 排版样式 */
+        .report-header { border-bottom: 2px solid var(--secondary-blue); padding-bottom: 20px; margin-bottom: 40px; }
+        .report-header h1 { font-size: 28px; color: var(--text-main); margin-bottom: 8px; }
+        .report-meta { font-size: 14px; color: var(--text-muted); }
+        h2 { font-size: 22px; color: var(--primary-blue); margin: 40px 0 16px 0; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+        h3 { font-size: 18px; color: var(--text-main); margin: 28px 0 12px 0; }
+        p { margin-bottom: 16px; text-align: justify; }
+        
+        .highlight-box { background-color: #F0F7FF; border-left: 4px solid var(--secondary-blue); padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0; color: var(--primary-blue); }
+
+        /* 图文混排 */
+        .img-wrapper { margin: 32px 0; text-align: center; }
+        .img-wrapper img { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .img-caption { margin-top: 12px; font-size: 13px; color: var(--text-muted); font-style: italic; }
+
+        /* 表格样式 */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            margin: 24px 0;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            scrollbar-width: thin;
+        }
+        .table-responsive::-webkit-scrollbar { height: 8px; }
+        .table-responsive::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 0 0 8px 8px; }
+        .table-responsive::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .table-responsive::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; white-space: nowrap; }
+        .data-table th, .data-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+        .data-table th { background-color: #F8FAFC; font-weight: 600; color: var(--primary-blue); border-bottom: 2px solid var(--border-color); }
+        .data-table tbody tr { transition: background-color 0.2s ease; }
+        .data-table tbody tr:hover { background-color: #F0F7FF; }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+
+        .status-badge { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .status-success { background: #dcfce7; color: #166534; }
+        .status-warning { background: #fef08a; color: #854d0e; }
+        .status-info { background: #dbeafe; color: #1e40af; }
+
+        .scroll-hint { font-size: 12px; color: var(--text-muted); text-align: right; margin-top: -16px; margin-bottom: 24px; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+
+        /* ================= 移动端响应式适配 ================= */
+        @media (max-width: 768px) {
+            body { flex-direction: column; overflow: auto; height: auto; }
+            .mobile-header { display: flex; }
+
+            /* 移动端将侧边栏作为抽屉，覆盖并重置桌面端的收起逻辑 */
+            .sidebar {
+                position: fixed; top: 0; left: 0; height: 100vh;
+                margin-left: 0 !important; /* 强制覆盖，防止桌面端margin影响 */
+                transform: translateX(-100%); /* 默认隐藏 */
+                box-shadow: 2px 0 12px rgba(0,0,0,0.1);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .sidebar.active { transform: translateX(0); } /* 激活时滑入 */
+            
+            /* 隐藏桌面端的折叠/展开按钮 */
+            .desktop-toggle-btn, .floating-open-btn { display: none !important; }
+            .mobile-close-btn { display: block; }
+
+            /* 内容区适配 */
+            .main-content { padding: 80px 16px 20px 16px; overflow: visible; }
+            .report-container { padding: 24px; border-radius: 8px; }
+            h1 { font-size: 24px !important; }
+            h2 { font-size: 20px; }
+            h3 { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 移动端顶部导航栏 -->
+    <header class="mobile-header">
+        <div class="logo-title">Deep Pharma</div>
+        <button class="menu-btn" id="mobileMenuBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            目录
+        </button>
+    </header>
+
+    <!-- 悬浮展开按钮 (桌面端目录收起时显示) -->
+    <button class="floating-open-btn" id="floatingOpenBtn" title="展开目录">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
+
+    <!-- 移动端遮罩层 -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- 左侧导航 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo-container">
+            <svg class="logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGradient" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#0047B3"/>
+                        <stop offset="100%" stop-color="#8B5CF6"/>
+                    </linearGradient>
+                </defs>
+                <path d="M20 20 H60 C75 20 85 30 85 50 C85 70 75 80 60 80 H40" stroke="url(#logoGradient)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M35 40 H55 C62 40 65 45 65 52 C65 60 60 65 55 65 H35 V80" stroke="#2563EB" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+            <div class="logo-text">
+                <span class="logo-title">Deep Pharma</span>
+                <span class="logo-subtitle">by Sinohealth</span>
+            </div>
+
+            <!-- 桌面端收起按钮 -->
+            <button class="desktop-toggle-btn" id="desktopCollapseBtn" title="收起目录">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+
+            <!-- 移动端关闭按钮 -->
+            <button class="mobile-close-btn" id="mobileCloseBtn">&times;</button>
+        </div>
+
+        <nav class="toc">
+            <ul>
+                <li>
+                    <a href="#section-1" class="toc-link-level-1">1. 行业概况与趋势</a>
+                    <ul class="toc-sub">
+                        <li><a href="#section-1-1" class="toc-link-level-2">1.1 市场规模分析</a></li>
+                        <li><a href="#section-1-2" class="toc-link-level-2">1.2 核心驱动因素</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#section-2" class="toc-link-level-1">2. 产品线深度解析</a>
+                    <ul class="toc-sub">
+                        <li><a href="#section-2-1" class="toc-link-level-2">2.1 核心产品矩阵</a></li>
+                        <li><a href="#section-2-2" class="toc-link-level-2">2.2 研发管线进展</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#section-3" class="toc-link-level-1">3. 市场竞争格局</a>
+                    <ul class="toc-sub">
+                        <li><a href="#section-3-1" class="toc-link-level-2">3.1 主要竞争对手</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- 右侧主内容区 -->
+    <main class="main-content" id="mainContent">
+        <div class="report-container">
+            
+            <header class="report-header">
+                <h1>Deep Pharma 行业深度分析报告</h1>
+                <div class="report-meta">
+                    生成日期：2023年10月 | 数据来源：Sinohealth 数据库
+                </div>
+            </header>
+
+            <!-- 第一章 -->
+            <section id="section-1">
+                <h2>1. 行业概况与趋势</h2>
+                <p>近年来，全球医药行业经历了深刻的变革。随着人口老龄化加剧以及创新疗法的不断涌现，行业整体呈现出稳步增长的态势。Deep Pharma 作为行业内的新兴力量，正面临前所未有的发展机遇。</p>
+                
+                <div class="img-wrapper">
+                    <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="全球医药市场规模趋势图">
+                    <div class="img-caption">图 1：2018-2025年全球医药市场规模及预测 (数据来源: Sinohealth)</div>
+                </div>
+
+                <div class="highlight-box">
+                    <strong>核心洞察：</strong> 预计到2025年，相关细分市场的复合年增长率（CAGR）将达到 12.5%。
+                </div>
+
+                <h3 id="section-1-1">1.1 市场规模分析</h3>
+                <p>根据最新调研数据显示，该领域的全球市场规模已突破千亿美元大关。亚太地区尤其是中国市场，由于政策利好和医疗需求的释放，成为了增长最为迅速的区域。</p>
+                
+                <h3 id="section-1-2">1.2 核心驱动因素</h3>
+                <p>推动行业发展的核心因素主要包括：生物技术的突破（如基因治疗、细胞疗法）、数字化转型带来的研发效率提升，以及资本市场的持续投入。</p>
+            </section>
+
+            <!-- 第二章 -->
+            <section id="section-2">
+                <h2>2. 产品线深度解析</h2>
+                <p>Deep Pharma 依托强大的研发团队，已构建起丰富且具有差异化的产品矩阵，覆盖肿瘤、免疫及罕见病等多个重大疾病领域。</p>
+
+                <h3 id="section-2-1">2.1 核心产品矩阵</h3>
+                <p>目前公司已上市的三款核心产品在市场上表现优异，其疗效和安全性获得了临床医生的广泛认可。</p>
+                
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>产品名称</th>
+                                <th>靶点</th>
+                                <th>适应症领域</th>
+                                <th>最新研发阶段</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>DP-101</td>
+                                <td>PD-1/VEGF</td>
+                                <td>非小细胞肺癌</td>
+                                <td><span class="status-badge status-success">已上市</span></td>
+                            </tr>
+                            <tr>
+                                <td>DP-205</td>
+                                <td>HER2 ADC</td>
+                                <td>乳腺癌</td>
+                                <td><span class="status-badge status-warning">临床 III 期</span></td>
+                            </tr>
+                            <tr>
+                                <td>DP-311</td>
+                                <td>IL-23</td>
+                                <td>银屑病</td>
+                                <td><span class="status-badge status-info">临床 II 期</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="img-caption" style="text-align: left; margin-top: -10px; margin-bottom: 24px;">表 1：Deep Pharma 核心产品矩阵</div>
+
+                <h3 id="section-2-2">2.2 研发管线进展</h3>
+                <p>在研管线中，有多个具有“First-in-class”潜力的创新药物正处于临床二期和三期阶段。Sinohealth 的数据分析显示，其研发效率和成功率均处于行业领先水平。</p>
+            </section>
+
+            <!-- 第三章 -->
+            <section id="section-3">
+                <h2>3. 市场竞争格局</h2>
+                <p>该领域的竞争日益激烈，传统跨国药企与新兴生物科技公司同台竞技。下面是各项关键指标的长表格对比（由于数据项较多，左右滑动查看完整表格）。</p>
+
+                <h3 id="section-3-1">3.1 主要竞争对手</h3>
+                
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>企业名称</th>
+                                <th>总部所在地</th>
+                                <th>成立年份</th>
+                                <th>2022年营收(亿美元)</th>
+                                <th>核心研发领域</th>
+                                <th>代表产品</th>
+                                <th>研发投入占比</th>
+                                <th>市场占有率</th>
+                                <th>综合竞争力评级</th>
+                                <th>备注信息</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight: 600; color: var(--secondary-blue);">Deep Pharma</td>
+                                <td>中国 / 上海</td>
+                                <td>2015</td>
+                                <td>12.5</td>
+                                <td>肿瘤、免疫、罕见病</td>
+                                <td>DP-101</td>
+                                <td>45%</td>
+                                <td>8.2%</td>
+                                <td><span class="status-badge status-success">A+ (高成长)</span></td>
+                                <td>新兴Biotech领军者</td>
+                            </tr>
+                            <tr>
+                                <td>Global Pharma Corp</td>
+                                <td>美国 / 纽约</td>
+                                <td>1950</td>
+                                <td>850.0</td>
+                                <td>心血管、代谢、肿瘤</td>
+                                <td>GPC-99</td>
+                                <td>22%</td>
+                                <td>25.4%</td>
+                                <td><span class="status-badge status-info">A (稳健)</span></td>
+                                <td>传统跨国巨头</td>
+                            </tr>
+                            <tr>
+                                <td>EuroBioTech AG</td>
+                                <td>德国 / 柏林</td>
+                                <td>1988</td>
+                                <td>150.2</td>
+                                <td>神经科学、免疫</td>
+                                <td>EBA-12</td>
+                                <td>30%</td>
+                                <td>12.1%</td>
+                                <td><span class="status-badge status-info">A (稳健)</span></td>
+                                <td>欧洲老牌创新药企</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="scroll-hint">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                    左右滑动查看完整表格
+                </div>
+
+                <p>对比分析发现，Deep Pharma 在特定靶点的研发进度上具有先发优势，且研发投入占比极高，展现了极强的创新决心，但在商业化渠道覆盖上仍需向传统巨头学习。</p>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // ================= 1. 滚动监听目录高亮 =================
+            const observerOptions = { root: null, rootMargin: '0px 0px -80% 0px', threshold: 0 };
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        document.querySelectorAll('.toc-link-level-1, .toc-link-level-2').forEach(link => {
+                            link.classList.remove('active');
+                        });
+                        const id = entry.target.getAttribute('id');
+                        const activeLink = document.querySelector(`.toc a[href="#${id}"]`);
+                        if (activeLink) {
+                            activeLink.classList.add('active');
+                            if(activeLink.classList.contains('toc-link-level-2')){
+                                const parentLink = activeLink.closest('li').parentElement.previousElementSibling;
+                                if(parentLink) parentLink.classList.add('active');
+                            }
+                        }
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('section[id], h3[id]').forEach(section => {
+                observer.observe(section);
+            });
+
+            // ================= 2. 移动端抽屉逻辑 =================
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileCloseBtn = document.getElementById('mobileCloseBtn');
+            const tocLinks = document.querySelectorAll('.toc a');
+
+            function openMobileMenu() {
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden'; 
+            }
+
+            function closeMobileMenu() {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = ''; 
+            }
+
+            mobileMenuBtn.addEventListener('click', openMobileMenu);
+            mobileCloseBtn.addEventListener('click', closeMobileMenu);
+            overlay.addEventListener('click', closeMobileMenu);
+
+            tocLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 768) closeMobileMenu();
+                });
+            });
+
+            // ================= 3. 桌面端展开/收起逻辑 =================
+            const desktopCollapseBtn = document.getElementById('desktopCollapseBtn');
+            const floatingOpenBtn = document.getElementById('floatingOpenBtn');
+
+            // 收起侧边栏
+            desktopCollapseBtn.addEventListener('click', () => {
+                sidebar.classList.add('collapsed');
+                floatingOpenBtn.classList.add('show');
+            });
+
+            // 展开侧边栏
+            floatingOpenBtn.addEventListener('click', () => {
+                sidebar.classList.remove('collapsed');
+                floatingOpenBtn.classList.remove('show');
+            });
+        });
+    </script>
+</body>
+</html>
