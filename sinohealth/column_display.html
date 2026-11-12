@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Pharma - 全球新药情报</title>
+    <style>
+        /* ================= 基础重置 & 全局变量 ================= */
+        :root {
+            --primary: #185cff;
+            --primary-hover: #4080ff;
+            --primary-light: #e8f3ff;
+            --bg-body: #f5f6f9;
+            --bg-sidebar: #fafafc;
+            --border-color: #e5e6eb;
+            --text-main: #1d2129;
+            --text-secondary: #86909c;
+            --text-muted: #c9cdd4;
+            --thead-bg: #f7f8fa;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-size: 14px;
+            overflow: hidden;
+        }
+
+        /* ================= 整体布局 ================= */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* 左侧侧边栏 */
+        .sidebar {
+            width: 240px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .logo {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .logo-icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, var(--primary), #7b61ff);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: bold; font-size: 18px;
+        }
+        .logo-text h1 { font-size: 16px; font-weight: 600; line-height: 1.2; }
+        .logo-text span { font-size: 11px; color: var(--text-secondary); }
+        
+        .nav-menu { padding: 16px 12px; flex: 1; }
+        .nav-item {
+            padding: 10px 12px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .nav-item:hover { background-color: #f2f3f5; }
+        .nav-item.active {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        .nav-badge {
+            margin-left: auto;
+            background: #ff4d4f; color: #fff;
+            font-size: 12px; padding: 0 6px; border-radius: 10px;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0; /* 防止 flex 子项溢出 */
+        }
+
+        /* 顶部 Header */
+        .top-header {
+            height: 60px;
+            background: #fff;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            flex-shrink: 0;
+        }
+        .header-title { display: flex; align-items: center; gap: 12px; }
+        .header-title h2 { font-size: 18px; font-weight: 600; }
+        .header-title .divider { color: var(--border-color); }
+        .header-title p { font-size: 13px; color: var(--text-secondary); }
+        
+        .user-info { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+        .user-avatar { width: 28px; height: 28px; background: var(--primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+        /* 内容滚动区 */
+        .page-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ================= 搜索面板 ================= */
+        .search-panel {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .search-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px 40px;
+        }
+        .form-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .form-group label {
+            width: 70px;
+            text-align: right;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        .form-input-wrapper {
+            flex: 1;
+            display: flex;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: #fff;
+            transition: border-color 0.2s;
+        }
+        .form-input-wrapper:focus-within { border-color: var(--primary); }
+        .form-input-wrapper input {
+            flex: 1; border: none; padding: 8px 12px; outline: none; background: transparent;
+        }
+        .form-input-wrapper select {
+            border: none; border-left: 1px solid var(--border-color); padding: 0 8px; background: #fafafa; outline: none; color: var(--text-secondary);
+        }
+        .tag-input-wrapper {
+            flex: 1; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px 8px; display: flex; align-items: center; min-height: 36px;
+        }
+        .inner-tag {
+            background: #f2f3f5; padding: 2px 8px; border-radius: 4px; font-size: 13px; display: flex; align-items: center; gap: 6px;
+        }
+        .inner-tag .close { cursor: pointer; color: var(--text-muted); font-size: 12px; }
+        .inner-tag .close:hover { color: #ff4d4f; }
+        
+        .search-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+        }
+        
+        /* 通用按钮 */
+        .btn { padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-outline { background: #fff; border-color: var(--border-color); color: var(--text-main); }
+        .btn-outline:hover { background: #f2f3f5; }
+        .btn-text { background: transparent; color: var(--primary); }
+        .btn-text:hover { color: var(--primary-hover); }
+        .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+        /* ================= 已选条件回显区 ================= */
+        .active-conditions {
+            background: #f7f8fa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 20px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .active-conditions-header {
+            display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text-secondary);
+        }
+        .clear-all { color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .clear-all:hover { color: var(--primary); }
+        .active-conditions-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .condition-tag {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #fff; border: 1px solid var(--border-color);
+            padding: 4px 12px; border-radius: 4px; font-size: 13px;
+        }
+        .condition-tag .close { cursor: pointer; color: var(--text-muted); font-size: 12px; }
+        .condition-tag .close:hover { color: #ff4d4f; }
+
+        /* ================= 表格区域 ================= */
+        .table-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            display: flex;
+            flex-direction: column;
+            flex: 1; /* 占满剩余高度 */
+            min-height: 400px;
+        }
+        
+        .table-toolbar {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 4px; background: #f2f3f5; padding: 4px; border-radius: 6px; }
+        .tab {
+            padding: 6px 16px; border-radius: 4px; font-size: 13px; cursor: pointer; color: var(--text-secondary); transition: all 0.2s;
+        }
+        .tab:hover { color: var(--text-main); }
+        .tab.active { background: var(--primary); color: #fff; font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        
+        .toolbar-actions { display: flex; align-items: center; gap: 12px; position: relative; }
+        .record-count { font-size: 13px; color: var(--text-secondary); margin-right: 8px; }
+        
+        /* 表格容器（表头吸顶关键） */
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: auto;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            background: #fff;
+            white-space: nowrap;
+        }
+        th {
+            background: var(--thead-bg);
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            user-select: none;
+            box-shadow: 0 1px 0 var(--border-color);
+        }
+        
+        /* 表头内部布局 */
+        .th-content { display: flex; align-items: center; gap: 8px; }
+        .th-title { cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .sort-icon { display: inline-flex; flex-direction: column; font-size: 9px; line-height: 1; color: var(--text-muted); transform: scale(0.9); }
+        .sort-icon .active { color: var(--primary); }
+        
+        .filter-icon {
+            cursor: pointer; color: var(--text-muted); padding: 2px; border-radius: 4px; transition: all 0.2s;
+        }
+        .filter-icon:hover { background: #e5e6eb; color: var(--text-main); }
+        .filter-icon.active { background: var(--primary-light); color: var(--primary); }
+
+        /* 表格状态标签 */
+        .tag-phase {
+            padding: 2px 8px; border-radius: 4px; font-size: 12px;
+            background-color: #e8f7f0; color: #00b42a; border: 1px solid #b7eb8f;
+        }
+
+        /* ================= 列展示面板 ================= */
+        .column-panel {
+            position: absolute; top: 40px; right: 0;
+            width: 260px; background: #fff;
+            border: 1px solid var(--border-color); border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100;
+            display: none; flex-direction: column;
+        }
+        .column-panel.show { display: flex; }
+        .panel-header { padding: 12px 16px; border-bottom: 1px solid var(--border-color); font-weight: 500; display: flex; justify-content: space-between; align-items: center; }
+        .panel-tip { font-size: 12px; color: var(--text-secondary); font-weight: normal; }
+        .column-list { list-style: none; max-height: 300px; overflow-y: auto; padding: 8px; }
+        .column-item {
+            display: flex; align-items: center; padding: 8px 12px; margin-bottom: 4px; border-radius: 4px; cursor: grab; transition: background 0.2s;
+        }
+        .column-item:hover { background: var(--bg-body); }
+        .column-item.dragging { opacity: 0.5; background: var(--primary-light); border: 1px dashed var(--primary); }
+        .column-item label { display: flex; align-items: center; gap: 8px; width: 100%; cursor: pointer; pointer-events: none; }
+        .column-item input[type="checkbox"] { pointer-events: auto; cursor: pointer; }
+        .drag-handle { margin-left: auto; color: var(--text-muted); pointer-events: none; }
+
+        /* ================= 筛选弹窗 ================= */
+        .filter-popover {
+            position: fixed; background: #fff; border: 1px solid var(--border-color);
+            border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); padding: 12px;
+            z-index: 1000; display: none; flex-direction: column; gap: 8px; width: 220px;
+        }
+        .filter-popover input { padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; }
+        .filter-popover input:focus { border-color: var(--primary); }
+        .filter-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+
+        /* ================= 分页区域 ================= */
+        .pagination-bar {
+            padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid var(--border-color); font-size: 13px; color: var(--text-secondary);
+        }
+        .pagination-controls { display: flex; gap: 4px; }
+        .page-btn {
+            min-width: 28px; height: 28px; border: 1px solid var(--border-color); background: #fff;
+            border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+        .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .page-btn:disabled { color: var(--text-muted); cursor: not-allowed; background: #f7f8fa; }
+        
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- 左侧侧边栏 -->
+    <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">D</div>
+            <div class="logo-text">
+                <h1>Deep Pharma</h1>
+                <span>by Sinohealth</span>
+            </div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item"><span>+</span> 新建对话</div>
+            <div class="nav-item active"><span>📁</span> 全球新药情报</div>
+            <div class="nav-item"><span>📈</span> 行业监控 <span class="nav-badge">99+</span></div>
+            <div class="nav-item" style="margin-top: auto;"><span>≡</span> 最近对话 <span style="margin-left:auto">›</span></div>
+        </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- 顶部导航 -->
+        <header class="top-header">
+            <div class="header-title">
+                <h2>全球新药情报</h2>
+                <span class="divider">|</span>
+                <p>针对药物、靶点、疾病、公司和研究阶段的多维检索管道，实时洞察竞争格局</p>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">W</div>
+                <span>wangao1@sinohealth.cn ▾</span>
+            </div>
+        </header>
+
+        <div class="page-body">
+            <!-- 搜索面板 -->
+            <div class="search-panel">
+                <div class="search-grid">
+                    <div class="form-group">
+                        <label>药物</label>
+                        <div class="form-input-wrapper">
+                            <input type="text" placeholder="请输入药物名称，如 Gedatolisib">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>靶点</label>
+                        <div class="form-input-wrapper">
+                            <input type="text" placeholder="请输入或选择靶点，如 BTK">
+                            <select><option>OR</option></select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>适应症</label>
+                        <div class="form-input-wrapper">
+                            <input type="text" placeholder="请输入或选择适应症，如 NSCLC">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>机构</label>
+                        <div class="tag-input-wrapper" id="searchOriginatorWrapper">
+                            <div class="inner-tag">
+                                1606 Corp. <span class="close" id="searchOriginatorClose">✕</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>药物类型</label>
+                        <div class="form-input-wrapper">
+                            <input type="text" placeholder="请输入或选择药物类型，如 ADC">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>药物最高阶段</label>
+                        <div class="form-input-wrapper">
+                            <input type="text" placeholder="请选择最高阶段（可多选）" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="search-actions">
+                    <button class="btn btn-primary">立即检索</button>
+                    <button class="btn btn-outline" id="btnResetSearch">重置筛选</button>
+                    <button class="btn btn-text">展开更多条件 ▾</button>
+                </div>
+            </div>
+
+            <!-- 已选条件回显区 -->
+            <div class="active-conditions" id="activeConditionsBox">
+                <div class="active-conditions-header">
+                    <span>已选条件 <span id="activeGroupCount">1组</span> · <span id="activeItemCount">1项</span></span>
+                    <span class="clear-all" id="btnClearAllConditions">🗑 清空</span>
+                </div>
+                <div class="active-conditions-list" id="activeConditionsList">
+                    <!-- JS 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 表格卡片区 -->
+            <div class="table-card">
+                <div class="table-toolbar">
+                    <div class="tabs">
+                        <div class="tab active">药物维度表</div>
+                        <div class="tab">研发状态表</div>
+                        <div class="tab">数据可视化</div>
+                    </div>
+                    <div class="toolbar-actions">
+                        <span class="record-count">当前记录 <strong id="recordCount">1</strong> 条</span>
+                        <button class="btn btn-outline" id="btnExport">⬇ 导出数据</button>
+                        <button class="btn btn-outline" id="btnColumnConfig">⚙ 列展示</button>
+                        
+                        <!-- 列展示面板 -->
+                        <div class="column-panel" id="columnPanel">
+                            <div class="panel-header">
+                                <span>列展示</span>
+                                <span class="panel-tip">拖拽调整顺序</span>
+                            </div>
+                            <ul class="column-list" id="columnList"></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table id="dataTable">
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-bar">
+                    <div class="page-size">每页 <select><option>25</option><option>50</option></select> 条</div>
+                    <div class="pagination-controls">
+                        <button class="page-btn" disabled>‹</button>
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn" disabled>›</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // ================= 数据源与配置 =================
+    
+    // 研发阶段的业务权重（用于正确的排序）
+    const phaseWeight = {
+        '临床前': 1, '临床一期': 2, '临床二期': 3, '临床三期': 4, '批准上市': 5
+    };
+
+    // 定义全部列的配置
+    let columnsConfig = [
+        { key: 'drugName', label: '药物名称', visible: true, sortable: true, filterable: true },
+        { key: 'alias', label: '别名', visible: true, sortable: false, filterable: true },
+        { key: 'target', label: '靶点', visible: true, sortable: false, filterable: true },
+        { key: 'drugType', label: '药物类型', visible: true, sortable: false, filterable: true },
+        { key: 'originator', label: '原研机构', visible: true, sortable: false, filterable: true },
+        { key: 'developer', label: '研发机构', visible: true, sortable: false, filterable: true },
+        { key: 'approvedIndication', label: '批准适应症', visible: true, sortable: false, filterable: true },
+        { key: 'devIndication', label: '研发适应症', visible: true, sortable: false, filterable: true },
+        { key: 'phase', label: '全球最高研发阶段', visible: true, sortable: true, filterable: true }
+    ];
+
+    // 模拟数据（加入了 1606 Corp 来匹配截图）
+    const rawData = [
+        { drugName: 'Anti-SARS-CoV-2 monoclonal antibodies', alias: 'Anti-SARS-CoV-2 monoclonal antibodies', target: '-', drugType: '单克隆抗体', originator: '1606 Corp.', developer: 'Adnexus Biotechnologies, Inc.', approvedIndication: '-', devIndication: '新型冠状病毒感染(临床前)', phase: '临床前' },
+        { drugName: 'Gedatolisib', alias: 'PF-05212384', target: 'PI3K/mTOR', drugType: '小分子', originator: 'Pfizer', developer: 'Celcuity Inc.', approvedIndication: '-', devIndication: '乳腺癌', phase: '临床三期' },
+        { drugName: 'Trastuzumab deruxtecan', alias: 'DS-8201', target: 'HER2', drugType: 'ADC', originator: 'Daiichi Sankyo', developer: 'AstraZeneca', approvedIndication: '乳腺癌', devIndication: '胃癌', phase: '批准上市' },
+        { drugName: 'Drug A', alias: 'A-01', target: 'EGFR', drugType: '小分子', originator: '1606 Corp.', developer: 'Company A', approvedIndication: '-', devIndication: '肺癌', phase: '临床二期' },
+        { drugName: 'Drug B', alias: 'B-02', target: 'PD-1', drugType: '单抗', originator: 'Company B', developer: 'Company C', approvedIndication: '黑色素瘤', devIndication: '肝癌', phase: '临床一期' }
+    ];
+
+    // 全局状态
+    // 初始状态默认筛选出 1606 Corp.
+    let filterState = { originator: '1606 Corp.' }; 
+    let sortState = { key: null, order: 'asc' };
+
+    // ================= 核心逻辑 =================
+
+    function init() {
+        renderColumnPanel();
+        renderTable();
+        bindGlobalEvents();
+    }
+
+    // 1. 渲染列配置面板
+    function renderColumnPanel() {
+        const list = document.getElementById('columnList');
+        list.innerHTML = '';
+        
+        columnsConfig.forEach((col, index) => {
+            const li = document.createElement('li');
+            li.className = 'column-item';
+            li.draggable = true;
+            li.dataset.index = index;
+            
+            li.innerHTML = `
+                <label>
+                    <input type="checkbox" ${col.visible ? 'checked' : ''} data-key="${col.key}">
+                    <span>${col.label}</span>
+                </label>
+                <span class="drag-handle">≡</span>
+            `;
+
+            li.querySelector('input').addEventListener('change', (e) => {
+                const key = e.target.dataset.key;
+                const config = columnsConfig.find(c => c.key === key);
+                if (config) config.visible = e.target.checked;
+                renderTable();
+            });
+
+            list.appendChild(li);
+        });
+
+        bindDragEvents();
+    }
+
+    // 拖拽逻辑
+    function bindDragEvents() {
+        const items = document.querySelectorAll('.column-item');
+        let draggedItem = null;
+
+        items.forEach(item => {
+            item.addEventListener('dragstart', function(e) {
+                draggedItem = this;
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            item.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+                draggedItem = null;
+            });
+
+            item.addEventListener('dragover', function(e) {
+                e.preventDefault(); 
+                if (this !== draggedItem) {
+                    const rect = this.getBoundingClientRect();
+                    const isAfter = (e.clientY - rect.top) > (rect.height / 2);
+                    const list = this.parentNode;
+                    if (isAfter) {
+                        list.insertBefore(draggedItem, this.nextSibling);
+                    } else {
+                        list.insertBefore(draggedItem, this);
+                    }
+                }
+            });
+
+            item.addEventListener('drop', function(e) {
+                e.preventDefault();
+                const newOrderKeys = Array.from(document.querySelectorAll('.column-item input')).map(input => input.dataset.key);
+                columnsConfig.sort((a, b) => newOrderKeys.indexOf(a.key) - newOrderKeys.indexOf(b.key));
+                renderTable();
+            });
+        });
+    }
+
+    // 2. 渲染顶部“已选条件”回显区
+    function renderActiveConditions() {
+        const container = document.getElementById('activeConditionsBox');
+        const listEl = document.getElementById('activeConditionsList');
+        
+        const keys = Object.keys(filterState);
+        if (keys.length === 0) {
+            container.style.display = 'none';
+            // 同步清空搜索框的Tag
+            document.getElementById('searchOriginatorWrapper').innerHTML = '<input type="text" placeholder="请输入或选择机构" style="border:none; outline:none; width:100%;">';
+            return;
+        }
+        
+        container.style.display = 'flex';
+        document.getElementById('activeGroupCount').innerText = keys.length + '组';
+        document.getElementById('activeItemCount').innerText = keys.length + '项';
+        
+        listEl.innerHTML = '';
+        keys.forEach(key => {
+            const config = columnsConfig.find(c => c.key === key);
+            const label = config ? config.label : key;
+            const val = filterState[key];
+            
+            const tag = document.createElement('div');
+            tag.className = 'condition-tag';
+            tag.innerHTML = `${label} ${val} <span class="close" title="清除此项">✕</span>`;
+            
+            tag.querySelector('.close').onclick = () => {
+                delete filterState[key];
+                // 如果清除的是机构，还原搜索框
+                if(key === 'originator') {
+                    document.getElementById('searchOriginatorWrapper').innerHTML = '<input type="text" placeholder="请输入或选择机构" style="border:none; outline:none; width:100%;">';
+                }
+                renderTable(); 
+            };
+            listEl.appendChild(tag);
+        });
+    }
+
+    // 3. 渲染表格
+    function renderTable() {
+        const thead = document.getElementById('tableHead');
+        const tbody = document.getElementById('tableBody');
+        
+        // 同步更新回显区
+        renderActiveConditions();
+
+        // 数据过滤与排序
+        let processedData = [...rawData];
+        
+        // 筛选
+        Object.keys(filterState).forEach(key => {
+            const keyword = filterState[key].toLowerCase().trim();
+            if (keyword) {
+                processedData = processedData.filter(row => 
+                    String(row[key] || '').toLowerCase().includes(keyword)
+                );
+            }
+        });
+
+        // 排序
+        if (sortState.key) {
+            processedData.sort((a, b) => {
+                const key = sortState.key;
+                let valA = a[key] || '';
+                let valB = b[key] || '';
+
+                if (key === 'phase') {
+                    const weightA = phaseWeight[valA] || 0;
+                    const weightB = phaseWeight[valB] || 0;
+                    return sortState.order === 'asc' ? weightA - weightB : weightB - weightA;
+                }
+
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+                
+                if (valA < valB) return sortState.order === 'asc' ? -1 : 1;
+                if (valA > valB) return sortState.order === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        // 更新记录数
+        document.getElementById('recordCount').innerText = processedData.length;
+
+        // 渲染表头
+        const visibleCols = columnsConfig.filter(c => c.visible);
+        thead.innerHTML = '';
+        const trHead = document.createElement('tr');
+        
+        visibleCols.forEach(col => {
+            const th = document.createElement('th');
+            const isFilterActive = filterState[col.key] ? 'active' : '';
+            
+            let sortHtml = '';
+            if (col.sortable) {
+                const upClass = (sortState.key === col.key && sortState.order === 'asc') ? 'active' : '';
+                const downClass = (sortState.key === col.key && sortState.order === 'desc') ? 'active' : '';
+                sortHtml = `
+                    <span class="sort-icon">
+                        <span class="${upClass}">▲</span>
+                        <span class="${downClass}">▼</span>
+                    </span>
+                `;
+            }
+
+            let filterHtml = '';
+            if (col.filterable) {
+                filterHtml = `<span class="filter-icon ${isFilterActive}" data-key="${col.key}" data-label="${col.label}">▼</span>`;
+            }
+
+            th.innerHTML = `
+                <div class="th-content">
+                    <span class="th-title" data-key="${col.key}" data-sortable="${col.sortable}">
+                        ${col.label} ${sortHtml}
+                    </span>
+                    ${filterHtml}
+                </div>
+            `;
+            trHead.appendChild(th);
+        });
+        thead.appendChild(trHead);
+
+        // 渲染表体
+        tbody.innerHTML = '';
+        if (processedData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${visibleCols.length}" style="text-align:center; padding: 40px; color:#86909c;">暂无匹配数据</td></tr>`;
+        } else {
+            processedData.forEach(row => {
+                const tr = document.createElement('tr');
+                visibleCols.forEach(col => {
+                    const td = document.createElement('td');
+                    let cellValue = row[col.key] || '-';
+                    if (col.key === 'phase' && cellValue !== '-') {
+                        td.innerHTML = `<span class="tag-phase">${cellValue}</span>`;
+                    } else {
+                        td.textContent = cellValue;
+                    }
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        bindTableHeadEvents();
+    }
+
+    // 绑定表头交互
+    function bindTableHeadEvents() {
+        // 排序
+        document.querySelectorAll('.th-title').forEach(titleEl => {
+            titleEl.addEventListener('click', function() {
+                if (this.dataset.sortable === 'false') return;
+                const key = this.dataset.key;
+                if (sortState.key === key) {
+                    sortState.order = sortState.order === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortState.key = key;
+                    sortState.order = 'asc';
+                }
+                renderTable();
+            });
+        });
+
+        // 筛选弹窗
+        document.querySelectorAll('.filter-icon').forEach(iconEl => {
+            iconEl.addEventListener('click', function(e) {
+                e.stopPropagation();
+                showFilterPopover(this, this.dataset.key, this.dataset.label);
+            });
+        });
+    }
+
+    // 弹出筛选框
+    function showFilterPopover(targetEl, key, label) {
+        const oldPopover = document.querySelector('.filter-popover');
+        if (oldPopover) oldPopover.remove();
+
+        const popover = document.createElement('div');
+        popover.className = 'filter-popover';
+        
+        const titleDiv = document.createElement('div');
+        titleDiv.style.cssText = 'font-size:12px; color:#86909c; margin-bottom:4px;';
+        titleDiv.textContent = `筛选: ${label}`;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = '输入关键字搜索...';
+        input.value = filterState[key] || ''; // 回显
+
+        const actions = document.createElement('div');
+        actions.className = 'filter-actions';
+        
+        const btnReset = document.createElement('button');
+        btnReset.className = 'btn btn-sm btn-outline';
+        btnReset.textContent = '重置';
+        
+        const btnApply = document.createElement('button');
+        btnApply.className = 'btn btn-sm btn-primary';
+        btnApply.textContent = '确定';
+
+        actions.appendChild(btnReset);
+        actions.appendChild(btnApply);
+        popover.appendChild(titleDiv);
+        popover.appendChild(input);
+        popover.appendChild(actions);
+        document.body.appendChild(popover);
+
+        // 定位 (处理滚动情况，使用 fixed)
+        const rect = targetEl.getBoundingClientRect();
+        let top = rect.bottom + 8;
+        let left = rect.left - 80;
+        if (left + 220 > window.innerWidth) left = window.innerWidth - 230;
+        
+        popover.style.top = `${top}px`;
+        popover.style.left = `${left}px`;
+        popover.style.display = 'flex';
+        input.focus();
+
+        // 确定
+        btnApply.onclick = () => {
+            const val = input.value.trim();
+            if (val) {
+                filterState[key] = val;
+                // 如果修改的是机构，同步更新搜索框状态
+                if (key === 'originator') {
+                    document.getElementById('searchOriginatorWrapper').innerHTML = `
+                        <div class="inner-tag">${val} <span class="close" id="searchOriginatorClose">✕</span></div>
+                    `;
+                    // 重新绑定事件
+                    document.getElementById('searchOriginatorClose').onclick = () => {
+                        delete filterState['originator'];
+                        document.getElementById('searchOriginatorWrapper').innerHTML = '<input type="text" placeholder="请输入或选择机构" style="border:none; outline:none; width:100%;">';
+                        renderTable();
+                    };
+                }
+            } else {
+                delete filterState[key];
+            }
+            popover.remove();
+            renderTable();
+        };
+
+        // 重置
+        btnReset.onclick = () => {
+            input.value = '';
+            delete filterState[key];
+            popover.remove();
+            renderTable();
+        };
+
+        input.onkeypress = (e) => {
+            if (e.key === 'Enter') btnApply.click();
+        };
+
+        // 点外部关闭
+        setTimeout(() => {
+            const closePopover = (ev) => {
+                if (!popover.contains(ev.target) && !targetEl.contains(ev.target)) {
+                    popover.remove();
+                    document.removeEventListener('click', closePopover);
+                }
+            };
+            document.addEventListener('click', closePopover);
+        }, 0);
+    }
+
+    // 全局事件
+    function bindGlobalEvents() {
+        // 列展示开关
+        const btnConfig = document.getElementById('btnColumnConfig');
+        const panel = document.getElementById('columnPanel');
+        
+        btnConfig.addEventListener('click', (e) => {
+            e.stopPropagation();
+            panel.classList.toggle('show');
+        });
+        
+        document.addEventListener('click', (e) => {
+            if (!panel.contains(e.target) && e.target !== btnConfig) {
+                panel.classList.remove('show');
+            }
+        });
+
+        // 清空所有条件
+        document.getElementById('btnClearAllConditions').onclick = () => {
+            filterState = {};
+            renderTable();
+        };
+
+        // 搜索框里的默认机构Tag关闭事件
+        const searchTagClose = document.getElementById('searchOriginatorClose');
+        if (searchTagClose) {
+            searchTagClose.onclick = () => {
+                delete filterState['originator'];
+                document.getElementById('searchOriginatorWrapper').innerHTML = '<input type="text" placeholder="请输入或选择机构" style="border:none; outline:none; width:100%;">';
+                renderTable();
+            };
+        }
+
+        // 重置搜索按钮
+        document.getElementById('btnResetSearch').onclick = () => {
+            filterState = {};
+            sortState = { key: null, order: 'asc' };
+            renderTable();
+        };
+
+        // 导出按钮
+        document.getElementById('btnExport').onclick = () => {
+            const exportFields = columnsConfig.filter(c => c.visible).map(c => c.label);
+            alert(`（模拟导出成功）\n当前导出字段：\n${exportFields.join(', ')}\n\n同时会带上当前生效的筛选条件：\n${JSON.stringify(filterState)}`);
+        };
+    }
+
+    // 启动
+    init();
+
+</script>
+</body>
+</html>
